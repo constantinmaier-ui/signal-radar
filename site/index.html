@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Signal-Radar</title>
+  <meta name="description" content="Täglich verstehen, wo der Markt heiß läuft: Blasen-Meter, Hype-Karte, IPO-Radar und Live-Signale aus Dutzenden Quellen. Ohne Login.">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Signal-Radar – Wo läuft der Markt heiß?">
+  <meta property="og:description" content="Blasen-Meter, Hype-Karte, Claude/OpenAI-IPO-Radar und Live-Signale. Kostenlos, ohne Login.">
+  <meta property="og:image" content="og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23e66767'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Zum Inhalt</a>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" /><circle cx="16" cy="16" r="7" /><circle class="dot" cx="16" cy="16" r="2.6" /></svg>
+        <div>
+          <div class="brand-name">Signal-Radar</div>
+          <div class="brand-sub" id="stamp">lädt …</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="live-pill" id="livePill" title="Seite aktualisiert sich selbst"><span class="pulse"></span><span id="liveText">LIVE</span></span>
+        <button class="btn btn-wa" id="shareBtn" type="button" aria-label="In WhatsApp teilen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>
+          <span>Teilen</span>
+        </button>
+        <button class="btn btn-icon" id="themeBtn" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
+        </button>
+      </div>
+    </div>
+    <nav class="wrap tabs" aria-label="Bereiche">
+      <a href="#lage">Lage</a><a href="#plan">Mein Plan</a><a href="#anlagen">Anlagen</a><a href="#karte">Hype-Karte</a><a href="#perlen">Perlen</a><a href="#profis">Profis</a><a href="#ipo">IPO-Radar</a><a href="#stimmung">Stimmung</a><a href="#feed">News</a><a href="#lexikon">Lexikon</a>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap">
+    <div id="banner" class="banner" hidden></div>
+    <section id="ampel" class="ampel" aria-live="polite"></section>
+
+    <section id="lage" class="grid-hero">
+      <article class="card gauge-card">
+        <div class="card-head">
+          <h2>Blasen-Meter</h2>
+          <button class="info" type="button" data-pop="bubbleInfo" aria-label="Wie wird das berechnet?">?</button>
+        </div>
+        <div id="gauge" class="gauge" role="img" aria-label="Blasen-Meter"></div>
+        <div id="gaugeDelta" class="gauge-delta"></div>
+        <div id="bubbleHist" class="bubble-hist"></div>
+        <div id="bubbleInfo" class="pop" hidden>
+          Ein Wert aus 7 Bausteinen: Krypto-Gier, Überdehnung von Nasdaq &amp; Nvidia über der 200-Tage-Linie, Spekulationslaune (ARKK), Sorglosigkeit (VIX), IPO-Fieber und Blasen-Berichterstattung. 0 = Angst, 100 = Blasen-Alarm. Kein Timing-Signal, sondern ein Thermometer.
+        </div>
+        <ul id="components" class="components"></ul>
+      </article>
+
+      <article class="card brief-card">
+        <div class="card-head">
+          <h2>Heute in 30 Sekunden</h2>
+          <span class="chip" id="briefSource">automatisch</span>
+        </div>
+        <ol id="briefing" class="briefing"></ol>
+        <div class="brief-actions">
+          <button class="btn btn-wa btn-wide" id="shareBtn2" type="button">Briefing in WhatsApp teilen</button>
+          <button class="btn btn-ghost" id="imgBtn" type="button">Als Bild</button>
+          <button class="btn btn-ghost" id="copyBtn" type="button">Text kopieren</button>
+        </div>
+      </article>
+    </section>
+
+    <section aria-label="Märkte" class="market-strip" id="market"></section>
+
+    <section id="plan" class="card plan-card">
+      <div class="card-head">
+        <div>
+          <h2>Mein Plan: Wie viel, wohin, ohne auf Hype reinzufallen?</h2>
+          <p class="sub">Gib ein, was du anlegen willst. Du bekommst eine Beispiel-Aufteilung, eine ehrliche Prognose-Spanne und einen Crash-Test. Alles bleibt auf deinem Gerät, nichts wird gesendet.</p>
+        </div>
+      </div>
+      <div class="plan-grid">
+        <form id="planForm" class="plan-form" autocomplete="off">
+          <label>Einmalbetrag<span class="inp"><input name="once" type="number" inputmode="decimal" min="0" step="100" value="5000"><em>€</em></span></label>
+          <label>Monatlicher Sparplan<span class="inp"><input name="monthly" type="number" inputmode="decimal" min="0" step="25" value="200"><em>€</em></span></label>
+          <label>Wie lange kannst du das Geld liegen lassen? <b id="yearsOut">15 Jahre</b><input name="years" type="range" min="1" max="40" value="15"></label>
+          <fieldset><legend>Hast du 3 Monatsgehälter als Notgroschen auf dem Tagesgeld?</legend>
+            <label class="radio"><input type="radio" name="reserve" value="yes" checked> Ja</label>
+            <label class="radio"><input type="radio" name="reserve" value="no"> Nein / weiß nicht</label></fieldset>
+          <fieldset><legend>1 · Dein Depot fällt in einem Monat um 30 %. Was tust du?</legend>
+            <label class="radio"><input type="radio" name="q1" value="0"> Verkaufen, bevor es schlimmer wird</label>
+            <label class="radio"><input type="radio" name="q1" value="1" checked> Abwarten und Tee trinken</label>
+            <label class="radio"><input type="radio" name="q1" value="2"> Nachkaufen, jetzt ist es billig</label></fieldset>
+          <fieldset><legend>2 · Wie viel Erfahrung hast du mit Geldanlage?</legend>
+            <label class="radio"><input type="radio" name="q2" value="0" checked> Keine</label>
+            <label class="radio"><input type="radio" name="q2" value="1"> Etwas</label>
+            <label class="radio"><input type="radio" name="q2" value="2"> Viel</label></fieldset>
+          <fieldset><legend>3 · Was ist dir wichtiger?</legend>
+            <label class="radio"><input type="radio" name="q3" value="0"> Nichts verlieren</label>
+            <label class="radio"><input type="radio" name="q3" value="1" checked> Gute Mischung</label>
+            <label class="radio"><input type="radio" name="q3" value="2"> Maximale Rendite</label></fieldset>
+          <label>Anlage-Typ <select name="profile"><option value="auto">Automatisch aus deinen Antworten</option><option value="sicherheit">Sicherheit</option><option value="ausgewogen">Ausgewogen</option><option value="wachstum">Wachstum</option><option value="mutig">Mutig</option></select></label>
+        </form>
+        <div id="planOut" class="plan-out"></div>
+      </div>
+    </section>
+
+    <section id="anlagen" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Alle Anlageklassen auf einen Blick</h2>
+          <p class="sub">Was es ist, wie es läuft und wie riskant es ist. Die Risikoklasse 1–7 folgt der EU-Regel, nach der auch Fonds eingestuft werden: Sie misst, wie stark der Kurs im letzten Jahr geschwankt hat.</p>
+        </div>
+      </div>
+      <div id="rates" class="rates"></div>
+      <div id="assetGrid" class="asset-grid"></div>
+    </section>
+
+    <section id="karte" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Hype-Karte</h2>
+          <p class="sub">Rechts = viel Aufmerksamkeit (Wikipedia, News, Tech-Szene). Oben = Kurs steigt (Themen-ETF). Wo ein Thema steht, sagt mehr als jede Schlagzeile.</p>
+        </div>
+      </div>
+      <div class="map-layout">
+        <div id="scatter" class="scatter"></div>
+        <div class="quad-guide" id="quadGuide"></div>
+      </div>
+    </section>
+
+    <section id="themen" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Themen-Ranking</h2>
+          <p class="sub">Tippe ein Thema für Details. ☆ = auf deine Merkliste (bleibt auf diesem Gerät).</p>
+        </div>
+        <div class="seg" role="tablist" id="sortSeg">
+          <button type="button" data-sort="hype" class="on">Hype</button>
+          <button type="button" data-sort="momentum">Momentum</button>
+          <button type="button" data-sort="heat">Überhitzung</button>
+          <button type="button" data-sort="news7d">News</button>
+        </div>
+      </div>
+      <div id="themeList" class="theme-list" role="list"></div>
+    </section>
+
+    <section id="perlen" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Versteckte Perlen 💎</h2>
+          <p class="sub">So wird gesucht: Aufwärtstrend, aber nicht überhitzt. Stärker als der Markt. Viele Analysten sehen deutlich Luft nach oben. Die Bewertung ist nicht verrückt. Das sind Kandidaten für deine eigene Recherche, keine Kauftipps.</p>
+        </div>
+      </div>
+      <div id="gemGrid" class="gem-grid"></div>
+    </section>
+
+    <section id="profis" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Was die Profis machen</h2>
+          <p class="sub">Große Investoren müssen der US-Börsenaufsicht (SEC) jedes Quartal ihre Aktien melden (Formular 13F). Diese Meldungen kommen bis zu 45 Tage nach Quartalsende, du siehst also, was sie <i>getan haben</i>, nicht was sie heute tun.</p>
+        </div>
+      </div>
+      <div id="consensus" class="consensus"></div>
+      <div id="investorGrid" class="investor-grid"></div>
+      <h3 class="sec-h">Analysten-Stimmen live <span class="count" id="voiceCount"></span></h3>
+      <div id="voiceBalance" class="balance"></div>
+      <div id="voices" class="voices"></div>
+      <h3 class="sec-h">Kursziele der Analysten</h3>
+      <p class="sub">Durchschnittliches Kursziel der Banken-Analysten für die nächsten 12 Monate im Vergleich zum aktuellen Kurs. Analysten liegen oft daneben, sind aber ein guter Stimmungsmesser.</p>
+      <div id="targets" class="targets"></div>
+    </section>
+
+    <section id="ipo" class="card ipo-card">
+      <div class="card-head">
+        <div>
+          <h2>IPO-Radar: Wenn Claude an die Börse geht …</h2>
+          <p class="sub">Mega-Börsengänge von KI-Laboren gelten als Spätzyklus-Marker: 2000 und 2021 kamen die größten Hype-IPOs kurz vor dem Hoch. Ein Anthropic- oder OpenAI-IPO wäre ein Euphorie-Signal – kein Kaufsignal an sich.</p>
+        </div>
+      </div>
+      <div id="ipoMeter" class="ipo-meter"></div>
+      <div id="ipoGrid" class="ipo-grid"></div>
+    </section>
+
+    <section id="stimmung" class="grid-2">
+      <article class="card">
+        <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
+        <ul id="poly" class="poly"></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Angst oder Gier?</h2><p class="sub">Stimmungs-Barometer: 0 = Panik, 100 = Gier. Warren Buffett sagt: „Sei ängstlich, wenn andere gierig sind, und gierig, wenn andere ängstlich sind.“</p></div></div>
+        <h3 class="mini-h">Aktien (CNN)</h3>
+        <div id="cnn" class="fng"></div>
+        <h3 class="mini-h">Krypto</h3>
+        <div id="fng" class="fng"></div>
+        <ul id="trending" class="trending"></ul>
+      </article>
+    </section>
+
+    <section id="feed" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Signal-Feed <span class="count" id="feedCount"></span></h2>
+          <p class="sub">Aus Nachrichtenportalen, Google News, Reddit und Hacker News zusammengeführt, Dubletten entfernt. „×3“ = so viele Quellen melden dasselbe.</p>
+        </div>
+      </div>
+      <div class="feed-controls">
+        <input id="search" type="search" placeholder="Suchen: Nvidia, Börsengang, Gold …" aria-label="Meldungen durchsuchen">
+        <label class="toggle"><input type="checkbox" id="onlySignals"> nur Signale</label>
+      </div>
+      <div class="chips" id="themeChips"></div>
+      <ul id="feedList" class="feed"></ul>
+      <button class="btn btn-ghost btn-wide" id="moreBtn" type="button" hidden>Mehr anzeigen</button>
+    </section>
+
+    <section id="lexikon" class="card">
+      <div class="card-head"><div><h2>Lexikon: Börse in einfachen Worten</h2><p class="sub">Alle Begriffe vom Radar, ohne Fachchinesisch. Unterstrichene Wörter auf der Seite kannst du antippen.</p></div></div>
+      <input id="lexSearch" type="search" placeholder="Begriff suchen …" aria-label="Lexikon durchsuchen">
+      <dl id="lexList" class="lex"></dl>
+    </section>
+
+    <section id="methodik" class="card method">
+      <h2>Methodik &amp; Quellen</h2>
+      <div class="method-grid">
+        <div>
+          <h3>Hype (0–100)</h3>
+          <p>Wikipedia-Aufrufe der letzten 7 Tage im Vergleich zu den 90 Tagen davor (z-Wert + Trend), Tempo der Schlagzeilen (48 h vs. Woche) und Erwähnungen auf Hacker News.</p>
+          <h3>Momentum (0–100)</h3>
+          <p>Kursentwicklung des Themen-ETFs über 1 und 3 Monate sowie Abstand zur 200-Tage-Linie.</p>
+          <h3>Überhitzung (0–100)</h3>
+          <p>Abstand zur 200-Tage-Linie, RSI und Hype zusammen. Ab 75 gilt ein Thema als überhitzt.</p>
+        </div>
+        <div>
+          <h3>Die vier Felder der Hype-Karte</h3>
+          <p><b>Stiller Aufstieg</b>: Kurs steigt, kaum jemand redet darüber, oft die interessanteste Phase. <b>Heißes Momentum</b>: alle schauen hin, der Kurs auch, der Einstieg wird teurer. <b>Hype ohne Kurs</b>: viel Lärm, der Kurs folgt nicht. <b>Vergessen</b>: Kurs schwach, kein Interesse – Chance oder Falle.</p>
+          <h3>Profis &amp; Perlen</h3>
+          <p>Superinvestoren aus den 13F-Pflichtmeldungen der SEC (bis zu 45 Tage verzögert). Analysten-Kursziele und -Noten aus dem Yahoo-Finance-Konsens. Analysten-Stimmen aus Schlagzeilen der letzten 3 Tage, automatisch als optimistisch oder vorsichtig eingestuft. Versteckte Perlen: Regel-Suche in rund 55 bekannten Aktien.</p>
+          <h3>Mein Plan</h3>
+          <p>Beispiel-Aufteilungen nach dem Kern-Satellit-Prinzip. Die Prognose kommt aus 2.000 Zufalls-Simulationen mit vorsichtigen Langfrist-Annahmen. Die Marktlage verschiebt nur den kleinen Satelliten, nie den Kern.</p>
+          <h3>Aktualisierung</h3>
+          <p>Ein Sammler holt alle Quellen jede Stunde. Die Seite lädt alle 5 Minuten neu und holt Bitcoin-Kurs und Tech-Meldungen jede Minute direkt nach.</p>
+        </div>
+      </div>
+      <details class="sources">
+        <summary id="sourceSummary">Quellen-Status</summary>
+        <ul id="sourceList"></ul>
+      </details>
+      <p class="disclaimer"><b>Keine Anlageberatung.</b> Das Radar zeigt Aufmerksamkeit und Kursdynamik, keine Empfehlungen. Hype kann lange anhalten, und Blasen können weiter wachsen. Investiere nur, was du verstehst und verlieren kannst.</p>
+    </section>
+  </main>
+
+  <div id="drawer" class="drawer" hidden>
+    <div class="drawer-backdrop" data-close></div>
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <button class="btn btn-icon drawer-close" type="button" data-close aria-label="Schließen">✕</button>
+      <div id="drawerBody"></div>
+    </div>
+  </div>
+  <div id="tooltip" class="tooltip" role="status" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

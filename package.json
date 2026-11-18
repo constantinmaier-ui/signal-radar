@@ -1,0 +1,16 @@
+{
+  "name": "signal-radar",
+  "private": true,
+  "type": "module",
+  "description": "Signal-Radar: täglicher Investment-Signal-Aggregator mit Blasen-Meter, Hype-Karte und IPO-Radar.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "collect": "node collector/collect.mjs",
+    "demo": "node collector/demo.mjs",
+    "test": "node --test test/lib.test.mjs && ANTHROPIC_API_KEY=test RADAR_OUT_DIR=.test-out node --import ./test/mock-fetch.mjs collector/collect.mjs",
+    "serve": "python3 -m http.server 8080 -d site"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0"
+  }
+}

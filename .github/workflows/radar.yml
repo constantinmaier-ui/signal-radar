@@ -1,0 +1,59 @@
+name: Signal-Radar
+
+# Sammelt stündlich alle Quellen und veröffentlicht die Seite auf GitHub Pages.
+on:
+  schedule:
+    - cron: "7 * * * *"      # jede Stunde (GitHub kann sich um ein paar Minuten verspäten)
+  workflow_dispatch:          # „Run workflow“-Knopf für sofortiges Aktualisieren
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: signal-radar
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Tests
+        run: node --test test/lib.test.mjs
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Daten sammeln
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}/
+          # Optional: Repo-Secret ANTHROPIC_API_KEY anlegen → Claude schreibt alle 6 Stunden den Lagebericht.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Die US-Börsenaufsicht verlangt einen Absender. Optional: Secret SEC_USER_AGENT = "Name deine@mail.de"
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || format('SignalRadar dashboard {0}/{1}', github.server_url, github.repository) }}
+        run: node collector/collect.mjs
+      - name: Absolute Vorschaubild-URL für WhatsApp
+        run: sed -i "s|content=\"og.png\"|content=\"${{ steps.pages.outputs.base_url }}/og.png\"|" site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+          retention-days: 1   # stündliche Läufe sollen den Artefakt-Speicher des Kontos nicht füllen
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
