@@ -1,10 +1,10 @@
 name: Signal-Radar
 
-# Sammelt stündlich alle Quellen und veröffentlicht die Seite auf GitHub Pages.
+# Collects all sources every 15 minutes and publishes the site to GitHub Pages.
 on:
   schedule:
-    - cron: "*/15 * * * *"   # alle 15 Minuten (GitHub kann sich um ein paar Minuten verspäten)
-  workflow_dispatch:          # „Run workflow“-Knopf für sofortiges Aktualisieren
+    - cron: "*/15 * * * *"   # every 15 minutes (GitHub may start a few minutes late)
+  workflow_dispatch:          # "Run workflow" button for an immediate refresh
   push:
     branches: [main]
 
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write   # nur für die tägliche Verlaufs-Sicherung im Zweig "data"
+      contents: write   # only for the daily history archive in branch "data"
       pages: write
       id-token: write
     steps:
@@ -37,22 +37,22 @@ jobs:
         run: node --test test/lib.test.mjs
       - id: pages
         uses: actions/configure-pages@v5
-      - name: Daten sammeln
+      - name: Collect data
         env:
           PAGES_URL: ${{ steps.pages.outputs.base_url }}/
-          # Optional: Repo-Secret ANTHROPIC_API_KEY anlegen → Claude schreibt alle 6 Stunden den Lagebericht.
+          # Optional: repo secret ANTHROPIC_API_KEY → Claude writes the briefing every 6 hours.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Höheres Abruf-Limit für die GitHub-Trend-Suche (automatisch vorhanden, nur Leserechte)
+          # Higher rate limit for the GitHub trend search (provided automatically)
           GITHUB_TOKEN: ${{ github.token }}
-          # Die US-Börsenaufsicht verlangt einen Absender. Optional: Secret SEC_USER_AGENT = "Name deine@mail.de"
+          # The SEC requires a contact string. Optional secret SEC_USER_AGENT = "Name mail@example.com"
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || format('SignalRadar dashboard {0}/{1}', github.server_url, github.repository) }}
           HISTORY_FALLBACK_URL: https://raw.githubusercontent.com/${{ github.repository }}/data/history.json
         run: node collector/collect.mjs
-      - name: Verlauf dauerhaft sichern (einmal täglich, Zweig "data")
+      - name: Archive history (daily, branch "data")
         if: github.ref == 'refs/heads/main'
         run: |
           now=$(date -u +%H%M)
-          if [ "${{ github.event_name }}" != "workflow_dispatch" ] && { [ "$now" \< "2200" ] || [ ! "$now" \< "2215" ]; }; then echo "Nicht 22:00–22:15 UTC, übersprungen"; exit 0; fi
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] && { [ "$now" \< "2200" ] || [ ! "$now" \< "2215" ]; }; then echo "Not 22:00-22:15 UTC, skipped"; exit 0; fi
           git config --global user.name "signal-radar-bot"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           REMOTE="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
@@ -63,14 +63,14 @@ jobs:
           fi
           cp "$GITHUB_WORKSPACE/site/data/history.json" /tmp/data-branch/history.json
           cd /tmp/data-branch && git add history.json
-          if git diff --cached --quiet; then echo "Keine Änderung"; exit 0; fi
-          git commit -q -m "Verlauf $(date -u +%F)" && git push -q origin data
-      - name: Absolute Vorschaubild-URL für WhatsApp
+          if git diff --cached --quiet; then echo "No change"; exit 0; fi
+          git commit -q -m "History $(date -u +%F)" && git push -q origin data
+      - name: Absolute preview image URL for WhatsApp
         run: sed -i "s|content=\"og.png\"|content=\"${{ steps.pages.outputs.base_url }}/og.png\"|" site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
-          retention-days: 1   # stündliche Läufe sollen den Artefakt-Speicher des Kontos nicht füllen
+          retention-days: 1   # frequent runs must not fill the account's artifact storage
 
   deploy:
     needs: build

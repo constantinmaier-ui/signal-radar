@@ -256,3 +256,18 @@ test("Mietspiegel-Liste: 20 Städte, nur https-Links, München mit Rechner", () 
   for (const [c, m] of Object.entries(MIETSPIEGEL)) { if (m.url) assert.ok(m.url.startsWith("https://"), c); assert.ok(m.inputs.length >= 3, c); }
   assert.ok(MIETSPIEGEL["münchen"].calc);
 });
+
+import { hypeInfo, ideasFor } from "../site/signals.js";
+test("Profile: bold investors get lump-sum advice, cautious ones get interest; hype is detected", () => {
+  const d = { risk: { level: "gelb" }, rates: { ecb: 0.02 }, themes: [
+    { id: "q", name: "Quanten", etf: "QTUM", scores: { quadrant: "overheated", hype: 80, heat: 85 }, price: { ext200: 0.6 } },
+    { id: "g", name: "Gold", etf: "GLD", scores: { quadrant: "quiet", momentum: 80, heat: 40, hype: 30 }, price: { chg3m: 0.12 } } ] };
+  assert.ok(dailyVerdict(d, "wachstum", 20).doList.some((x) => x.includes("Einmalbeträge direkt anlegen")));
+  assert.ok(dailyVerdict(d, "sicherheit", 20).doList[0].includes("Tagesgeld"));
+  assert.ok(dailyVerdict(d, "mutig", 20).dontList.some((x) => x.includes("Einzelposition")));
+  assert.ok(hypeInfo(d.themes[0]));
+  assert.equal(hypeInfo(d.themes[1]), null);
+  assert.ok(ideasFor(d, "wachstum").some((i) => i.title.startsWith("Gold")));
+  assert.ok(!ideasFor(d, "mutig").some((i) => i.title.startsWith("Quanten")));
+  assert.equal(ideasFor(d, "sicherheit")[0].tag, "sicher");
+});

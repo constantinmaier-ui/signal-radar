@@ -1,6 +1,6 @@
 // Service Worker: macht die App installierbar und offline nutzbar.
 // Strategie: App-Dateien aus dem Speicher (schnell), Daten immer zuerst frisch aus dem Netz.
-const VERSION = "radar-v2.0d";
+const VERSION = "radar-v2.0e";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "ui.js", "plan.js", "extras.js", "heute.js", "signals.js", "insights.js", "trust.js", "mietspiegel.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

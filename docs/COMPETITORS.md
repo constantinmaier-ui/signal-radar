@@ -1,22 +1,22 @@
-# Vergleichbare Tools – und was das Radar anders macht
+# Comparable tools – and what Signal-Radar does differently
 
-Stand: November 2026. Grundlage ist Produktwissen, kein bezahlter Test. Funktionen können sich geändert haben.
+As of November 2026. Based on product knowledge, not a paid test; features may have changed.
 
-| Tool | Stärke | Schwäche für Privatanleger | Was wir übernehmen / besser machen |
+| Tool | Strength | Weakness for retail investors | What we adopt / do better |
 |---|---|---|---|
-| **Finanzfluss Copilot, Parqet, getquin** | Depot-Tracking, Dividenden, Steuer | Zeigen den eigenen Stand, sagen wenig zur Marktlage | V2.1: eigenes Depot verschlüsselt lokal + Abgleich mit Plan & Klumpenrisiko |
-| **justETF** | ETF-Suche, Kosten, Sparplan-Vergleich | Datenbank, keine Einordnung der Lage | ISIN-Beispiele im Plan; V3: kleine kuratierte ETF-Liste mit Kosten |
-| **Koyfin, TradingView** | Profi-Charts, Makro-Dashboards | Für Einsteiger überfordernd | Profi-Modus mit Kennzahlen, Einsteiger-Modus mit Klartext |
-| **Finviz, Stockanalysis** | Screener, Heatmaps | Englisch, keine Erklärung | Trend-Radar in „Vielfachen der normalen Schwankung“ – verständlicher als Prozent allein |
-| **Simply Wall St** | Visuelle Firmen-Bewertung („Schneeflocke“) | Bezahlschranke, Fokus Einzelaktien | Beweislage-Etiketten statt Pseudo-Genauigkeit |
-| **TipRanks, Seeking Alpha** | Analysten- & Insider-Daten, Quant-Ratings | Viel Abo-Werbung, Ratings intransparent | Insider-Käufe direkt von der SEC, offene Regeln, Hinweis auf schwache Beweislage von Kurszielen |
-| **Quiver Quant, Unusual Whales** | Alternative Daten (Politiker-Trades, Wikipedia, Reddit) | Englisch, US-Fokus, teils kostenpflichtig | Alternative Daten (Wikipedia, GitHub, Hugging Face, Downloads, DefiLlama, Strompreis) in Klartext + Beweislage |
-| **OpenBB** (Open Source) | Riesige Datenplattform für Analysten | Programmierkenntnisse nötig | Gleiche offene Quellen, aber ohne Installation und für Laien |
-| **CNN Fear & Greed** | Bekannter Stimmungsindex | Eine Quelle, Methodik grob | Eingebaut in ein Stimmungs-Barometer aus 5 Quellen, mit ehrlicher Beweislage |
+| **Finanzfluss Copilot, Parqet, getquin** | Portfolio tracking, dividends, tax | Show your own holdings, say little about the market situation | 2.1: own portfolio, encrypted locally, compared with the plan & concentration risk |
+| **justETF** | ETF search, costs, savings-plan comparison | Database without interpretation | ISIN examples in the plan; 3.0: small curated ETF list with costs |
+| **Koyfin, TradingView** | Pro charts, macro dashboards | Overwhelming for beginners | Pro mode with metrics, beginner mode in plain language |
+| **Finviz, Stockanalysis** | Screeners, heat maps | English only, no explanation | Trend radar in "multiples of normal volatility" – easier to read than raw % |
+| **Simply Wall St** | Visual company scoring ("snowflake") | Paywall, single-stock focus | Evidence labels instead of pseudo-precision |
+| **TipRanks, Seeking Alpha** | Analyst & insider data, quant ratings | Subscription upsell, opaque ratings | Insider purchases straight from the SEC, open rules, note on weak evidence of price targets |
+| **Quiver Quant, Unusual Whales** | Alternative data (politician trades, Wikipedia, Reddit) | US-focused, partly paid | Alternative data (Wikipedia, GitHub, Hugging Face, downloads, DefiLlama, power price) in plain language + evidence level |
+| **OpenBB** (open source) | Huge data platform for analysts | Requires programming | Same open sources, no install, for laypeople |
+| **CNN Fear & Greed** | Well-known sentiment index | Single source, coarse method | Part of a 5-source sentiment barometer with honest evidence level |
 
-## Was das Radar einzigartig macht
-1. **Übersetzt statt nur anzuzeigen:** Jede Zahl wird zu einem Hinweis mit möglichem nächsten Schritt.
-2. **Beweislage an jedem Bereich:** stark / mittel / schwach / Fakten – mit Studie.
-3. **Alternative Daten für alle:** Entwickler-Downloads, KI-Modelle, Insider-Käufe, Strompreis, Stablecoins – kostenlos, ohne Abo.
-4. **Ehrlich messbar:** Signale und Kurse werden täglich gesichert; geplant ist eine öffentliche Trefferquote.
-5. **Privat:** kein Konto, keine Werbung, persönliche Daten nur verschlüsselt auf dem eigenen Gerät.
+## What makes Signal-Radar unique
+1. **Translates instead of just displaying:** every number becomes a signal with a possible next step.
+2. **Evidence level on every section:** strong / medium / weak / facts – with the study.
+3. **Alternative data for everyone:** developer downloads, AI models, insider purchases, power price, stablecoins – free, no subscription.
+4. **Honestly measurable:** signals and prices are archived daily; a public hit rate is planned.
+5. **Private:** no account, no ads, personal data only encrypted on the own device.

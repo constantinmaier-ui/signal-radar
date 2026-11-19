@@ -2,6 +2,7 @@
 // Was nachweislich Geld vermehrt (Kosten-Rechner), Finanz-Fitness-Check & Quiz.
 import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark } from "./ui.js";
 import { LEX } from "./extras.js";
+import { hypeInfo } from "./signals.js";
 
 // ---------- Quellen & Beweislage je Bereich ----------
 // level: 3 = stark belegt, 2 = mittel, 1 = schwach, 0 = reine Fakten/Daten (keine Prognose)
@@ -91,14 +92,14 @@ export function renderTrends() {
   for (const t of d.themes || []) if (t.price) rows.push({ name: t.name, kind: "Thema", chg: t.price.chg1m, z: norm({ chg1m: t.price.chg1m, vol: t.price.vol }), view: "chancen" });
   const up = rows.filter((r) => ok(r.z) && r.z >= 1).sort((a, b) => b.z - a.z).slice(0, 6);
   const down = rows.filter((r) => ok(r.z) && r.z <= -1).sort((a, b) => a.z - b.z).slice(0, 4);
-  const attn = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom }))]
+  const attn = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom, hype: hypeInfo(t) })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom }))]
     .filter((x) => ok(x.mom) && x.mom > 0.25).sort((a, b) => b.mom - a.mom).slice(0, 5);
   const row = (r) => `<li><a href="#${r.view}"><b>${esc(r.name)}</b><span class="fine">${esc(r.kind)}</span></a><span class="${r.chg >= 0 ? "up" : "down"}">${pct(r.chg, 0)}</span><span class="zbadge" title="So viele typische Monats-Schwankungen weit">${fmt(Math.abs(r.z), 1)}×</span></li>`;
   const t = d.tech || {};
   $("#trendsBody").innerHTML = `
     <div class="trend-col"><h3>🚀 Hebt ab (1 Monat)</h3><ul class="trend-list">${up.map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul></div>
     <div class="trend-col"><h3>🪂 Stürzt ab (1 Monat)</h3><ul class="trend-list">${down.map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul></div>
-    <div class="trend-col"><h3>👀 Aufmerksamkeit explodiert</h3><ul class="trend-list">${attn.map((x) => `<li><b>${esc(x.name)}</b><span class="up">${pct(x.mom, 0)}</span><span class="fine">Aufrufe vs. Vormonat</span></li>`).join("") || '<li class="empty">Ruhig.</li>'}</ul></div>
+    <div class="trend-col"><h3>👀 Aufmerksamkeit explodiert</h3><ul class="trend-list">${attn.map((x) => `<li><b>${esc(x.name)}${x.hype ? ` <span class="hype" data-tip="${esc(`<b>Warum Hype?</b><br>${esc(x.hype)}`)}">⚡ Hype</span>` : ""}</b><span class="up">${pct(x.mom, 0)}</span><span class="fine">Aufrufe vs. Vormonat</span></li>`).join("") || '<li class="empty">Ruhig.</li>'}</ul></div>
     <div class="trend-col wide"><h3>🧠 KI-Software, die gerade explodiert</h3>
       <ul class="trend-list">${[...(t.models || []).slice(0, 4).map((m) => ({ ...m, kind: `KI-Modell · ${m.task || ""}`, metric: `${fmt(m.downloads)} Downloads` })), ...(t.repos || []).slice(0, 4).map((r) => ({ ...r, kind: `GitHub-Projekt · ${r.lang || ""}`, metric: `${fmt(r.stars)} ★ in 30 Tagen` }))]
         .map((x) => `<li><a href="${safeUrl(x.url)}" target="_blank" rel="noopener"><b>${esc(x.name)}</b><span class="fine">${esc(x.kind)}</span></a><span class="fine">${esc(x.metric)}</span>${x.ticker ? `<span class="chip" title="Börsennotierte Firma dahinter">${esc(x.ticker)}</span>` : ""}</li>`).join("") || '<li class="empty">Gerade keine Daten.</li>'}</ul>
@@ -170,7 +171,7 @@ function renderQuiz() {
 
 // ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
 // Passwort → Schlüssel (PBKDF2, 310.000 Runden, SHA-256) → AES-256-GCM. Alles lokal im Browser.
-const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "re"];
+const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "re", "goal"];
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 async function deriveKey(pass, salt) {
