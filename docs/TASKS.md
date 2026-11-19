@@ -30,7 +30,7 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 - [x] Verschlüsselte Sicherung (AES-256, Passwort) zum Übertragen auf andere Geräte
 - [x] Verlauf dauerhaft im Zweig `data` (täglich), Ersatzquelle für den Sammler
 - [x] Mietspiegel-Assistent (was der Rechner abfragt) + Tipp Claude in Chrome
-- [~] Offizielle Mietspiegel-Links für die 20 größten Städte (Recherche läuft)
+- [x] Offizielle Mietspiegel-Links für die 20 größten Städte (mit Ausgabe, Herausgeber, Rechner ja/nein, verlangten Angaben)
 - [x] docs/COMPETITORS.md: Vergleich mit 9 Tool-Gruppen
 - [ ] 👤 GitHub Pages einschalten: Settings → Pages → Source „GitHub Actions“
 - [ ] 👤 Pull Request #1 zusammenführen („Merge“)

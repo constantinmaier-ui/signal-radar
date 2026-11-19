@@ -249,3 +249,10 @@ test("Verschlüsselte Sicherung: Hin- und Rückweg, falsches Passwort scheitert"
   assert.deepEqual(await decryptBackup(file, "richtig-langes-passwort"), data);
   await assert.rejects(decryptBackup(file, "falsches-passwort-xx"));
 });
+
+import { MIETSPIEGEL } from "../site/mietspiegel.js";
+test("Mietspiegel-Liste: 20 Städte, nur https-Links, München mit Rechner", () => {
+  assert.equal(Object.keys(MIETSPIEGEL).length, 20);
+  for (const [c, m] of Object.entries(MIETSPIEGEL)) { if (m.url) assert.ok(m.url.startsWith("https://"), c); assert.ok(m.inputs.length >= 3, c); }
+  assert.ok(MIETSPIEGEL["münchen"].calc);
+});

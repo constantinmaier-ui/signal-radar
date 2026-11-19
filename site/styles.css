@@ -709,3 +709,4 @@ a.btn { text-decoration: none; }
 #usageBody .trend-col:first-child { grid-column: 1 / -1; }
 #usageBody .trend-col:first-child .trend-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 720px) { #usageBody .trend-col:first-child .trend-list { grid-template-columns: 1fr; } }
+.ms-info { grid-column: 1 / -1; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 13.5px; display: grid; gap: 4px; }

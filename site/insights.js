@@ -175,19 +175,21 @@ export function renderMacro() {
 }
 
 // ---------- Mietspiegel-Finder & -Check ----------
-const OFFICIAL = { "münchen": "https://www.mietspiegel-muenchen.de", "berlin": "https://www.stadtentwicklung.berlin.de/wohnen/mietspiegel/", "hamburg": "https://www.hamburg.de/mietspiegel/" };
+import { MIETSPIEGEL, CHECKED } from "./mietspiegel.js";
 const search = (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
 export function renderMietspiegelLinks() {
   const city = ($("#msCity").value || "").trim();
   if (!city) { $("#msLinks").innerHTML = ""; return; }
-  const direct = OFFICIAL[city.toLowerCase()];
+  const ms = MIETSPIEGEL[city.toLowerCase()];
+  const direct = ms?.url;
   const links = [
-    [direct || search(`Mietspiegel ${city} offiziell Stadt`), "Offizieller Mietspiegel", direct ? "direkt zur Stadt" : "Suche nach der offiziellen Seite"],
+    [direct || search(`Mietspiegel ${city} offiziell Stadt`), ms?.calc ? "Mietspiegel-Rechner der Stadt" : "Offizieller Mietspiegel", direct ? `${ms.ed} · ${ms.pub}` : ms?.note || "Suche nach der offiziellen Seite"],
     [search(`Grundstücksmarktbericht Gutachterausschuss ${city}`), "Grundstücksmarktbericht", "amtliche Kaufpreise pro m² (Gutachterausschuss)"],
     ["https://www.bodenrichtwerte-boris.de", "Bodenrichtwerte (BORIS-D)", "amtlicher Grundstückswert, bundesweites Portal"],
     [search(`Zensus 2022 Nettokaltmiete ${city}`), "Zensus 2022: Mieten", "amtliche Durchschnittsmieten je Gemeinde"],
   ];
-  $("#msLinks").innerHTML = links.map(([u, t, d]) => `<a class="ms-link" href="${safeUrl(u)}" target="_blank" rel="noopener"><b>${esc(t)} ↗</b><span>${esc(d)}</span></a>`).join("");
+  $("#msLinks").innerHTML = links.map(([u, t, d]) => `<a class="ms-link" href="${safeUrl(u)}" target="_blank" rel="noopener"><b>${esc(t)} ↗</b><span>${esc(d)}</span></a>`).join("")
+    + (ms ? `<div class="ms-info"><b>Diese Angaben verlangt der Mietspiegel in ${esc(city)}:</b> ${ms.inputs.map(esc).join(" · ")}${ms.calc ? "" : ". Kein Online-Rechner: Wert aus der PDF-Tabelle ablesen."}<span class="fine">Quelle recherchiert im ${CHECKED}. Neue Ausgaben ändern Adressen gelegentlich.</span></div>` : "");
 }
 export function calcMietspiegel() {
   const f = $("#msForm"); if (!f) return;
