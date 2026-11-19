@@ -3,7 +3,7 @@ name: Signal-Radar
 # Sammelt stündlich alle Quellen und veröffentlicht die Seite auf GitHub Pages.
 on:
   schedule:
-    - cron: "7 * * * *"      # jede Stunde (GitHub kann sich um ein paar Minuten verspäten)
+    - cron: "*/15 * * * *"   # alle 15 Minuten (GitHub kann sich um ein paar Minuten verspäten)
   workflow_dispatch:          # „Run workflow“-Knopf für sofortiges Aktualisieren
   push:
     branches: [main]

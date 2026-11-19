@@ -12,6 +12,8 @@
   <meta property="og:image" content="og.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23e66767'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -26,24 +28,44 @@
         </div>
       </div>
       <div class="top-actions">
-        <span class="live-pill" id="livePill" title="Seite aktualisiert sich selbst"><span class="pulse"></span><span id="liveText">LIVE</span></span>
+        <button class="refresh" id="refreshBtn" type="button" title="Jetzt aktualisieren. Automatisch jede Minute.">
+          <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-bg" cx="18" cy="18" r="15"/><circle class="ring" id="refreshRing" cx="18" cy="18" r="15"/><path class="arrow" d="M23.5 13.5A7 7 0 1 0 25 18m-1.5-4.5V9.8m0 3.7h-3.7"/></svg>
+          <span id="refreshText">Aktualisieren</span>
+        </button>
+        <span class="live-pill" id="livePill" hidden><span class="pulse"></span><span id="liveText">LIVE</span></span>
         <button class="btn btn-wa" id="shareBtn" type="button" aria-label="In WhatsApp teilen">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>
           <span>Teilen</span>
         </button>
+        <a class="btn btn-icon" href="#wissen" title="Lexikon &amp; Erklärungen" aria-label="Lexikon und Erklärungen">?</a>
         <button class="btn btn-icon" id="themeBtn" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
         </button>
       </div>
     </div>
-    <nav class="wrap tabs" aria-label="Bereiche">
-      <a href="#lage">Lage</a><a href="#plan">Mein Plan</a><a href="#anlagen">Anlagen</a><a href="#karte">Hype-Karte</a><a href="#perlen">Perlen</a><a href="#profis">Profis</a><a href="#ipo">IPO-Radar</a><a href="#stimmung">Stimmung</a><a href="#feed">News</a><a href="#lexikon">Lexikon</a>
+    <nav class="views" id="views" aria-label="Bereiche">
+      <a href="#heute" data-nav="heute"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 7v5l3 2"/></svg><span>Heute</span></a>
+      <a href="#plan" data-nav="plan"><svg viewBox="0 0 24 24"><path d="M12 3v9h9A9 9 0 1 1 12 3Zm3-.5A9 9 0 0 1 21.5 9H15Z"/></svg><span>Mein Plan</span></a>
+      <a href="#maerkte" data-nav="maerkte"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-9M15 7h5v5"/></svg><span>Märkte</span></a>
+      <a href="#chancen" data-nav="chancen"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.6 6.5 19.5l1-6.2L3 8.9 9 8Z"/></svg><span>Chancen</span></a>
+      <a href="#profis" data-nav="profis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>Profis</span></a>
+      <a href="#news" data-nav="news"><svg viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2Zm13 4h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></svg><span>News</span></a>
     </nav>
   </header>
 
   <main id="main" class="wrap">
     <div id="banner" class="banner" hidden></div>
-    <section id="ampel" class="ampel" aria-live="polite"></section>
+
+    <div class="view" data-view="heute">
+    <section id="check" class="check" aria-live="polite"></section>
+    <section id="signals" class="card">
+      <div class="card-head">
+        <div><h2>Die wichtigsten Signale</h2><p class="sub">Aus allen Quellen gelesen und übersetzt: Was ist los, was heißt das für dich, was könntest du tun?</p></div>
+        <div class="seg" id="sigFilter"><button type="button" data-k="all" class="on">Alle</button><button type="button" data-k="chance">Chancen</button><button type="button" data-k="warnung">Warnungen</button></div>
+      </div>
+      <div id="sigList" class="sig-list"></div>
+      <button class="btn btn-ghost btn-wide" id="sigMore" type="button" hidden></button>
+    </section>
 
     <section id="lage" class="grid-hero">
       <article class="card gauge-card">
@@ -75,7 +97,9 @@
     </section>
 
     <section aria-label="Märkte" class="market-strip" id="market"></section>
+    </div>
 
+    <div class="view" data-view="plan" hidden>
     <section id="plan" class="card plan-card">
       <div class="card-head">
         <div>
@@ -109,6 +133,19 @@
       </div>
     </section>
 
+    <section id="howto" class="card">
+      <div class="card-head"><div><h2>So setzt du den Plan um: in 4 Schritten</h2><p class="sub">Das Wie und Wo, ohne Fachchinesisch. Einmal einrichten, danach läuft es von allein.</p></div></div>
+      <ol class="steps">
+        <li><b>Depot eröffnen</b><span>Bei einer Direktbank oder einem Neobroker mit kostenlosen ETF-Sparplänen. Achte auf: Sitz in der EU, Einlagensicherung, Sparplan ab 1 €, keine Depotgebühr. Die Eröffnung dauert online etwa 15 Minuten.</span></li>
+        <li><b>ETF über die ISIN suchen</b><span>Die ISIN ist die eindeutige Nummer eines Fonds, z. B. IE00B4L5Y983 für den MSCI World. Gib sie in die Suche deines Brokers ein. So kaufst du genau das richtige Produkt.</span></li>
+        <li><b>Sparplan anlegen</b><span>Betrag und Tag wählen, z. B. 200 € am 2. des Monats. Ab jetzt kauft das Depot automatisch, egal ob die Kurse oben oder unten sind. Genau das schützt dich vor Hype und Panik.</span></li>
+        <li><b>Einmal im Jahr prüfen</b><span>Stimmt die Aufteilung noch? Wenn ein Baustein stark gewachsen ist, schichtest du zurück. Sonst gilt: nicht ständig reinschauen, nicht nervös werden.</span></li>
+      </ol>
+      <p class="fine">Steuer-Tipp: Mit einem Freistellungsauftrag bei deinem Broker bleiben in Deutschland 1.000 € Kapitalerträge pro Jahr steuerfrei (2.000 € für Paare).</p>
+    </section>
+    </div>
+
+    <div class="view" data-view="maerkte" hidden>
     <section id="anlagen" class="card">
       <div class="card-head">
         <div>
@@ -120,6 +157,23 @@
       <div id="assetGrid" class="asset-grid"></div>
     </section>
 
+    <section id="stimmung" class="grid-2">
+      <article class="card">
+        <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
+        <ul id="poly" class="poly"></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Angst oder Gier?</h2><p class="sub">Stimmungs-Barometer: 0 = Panik, 100 = Gier. Warren Buffett sagt: „Sei ängstlich, wenn andere gierig sind, und gierig, wenn andere ängstlich sind.“</p></div></div>
+        <h3 class="mini-h">Aktien (CNN)</h3>
+        <div id="cnn" class="fng"></div>
+        <h3 class="mini-h">Krypto</h3>
+        <div id="fng" class="fng"></div>
+        <ul id="trending" class="trending"></ul>
+      </article>
+    </section>
+    </div>
+
+    <div class="view" data-view="chancen" hidden>
     <section id="karte" class="card">
       <div class="card-head">
         <div>
@@ -140,8 +194,8 @@
           <p class="sub">Tippe ein Thema für Details. ☆ = auf deine Merkliste (bleibt auf diesem Gerät).</p>
         </div>
         <div class="seg" role="tablist" id="sortSeg">
-          <button type="button" data-sort="hype" class="on">Hype</button>
-          <button type="button" data-sort="momentum">Momentum</button>
+          <button type="button" data-sort="hype" class="on">Aufmerksamkeit</button>
+          <button type="button" data-sort="momentum">Kurs-Trend</button>
           <button type="button" data-sort="heat">Überhitzung</button>
           <button type="button" data-sort="news7d">News</button>
         </div>
@@ -159,6 +213,20 @@
       <div id="gemGrid" class="gem-grid"></div>
     </section>
 
+
+    <section id="ipo" class="card ipo-card">
+      <div class="card-head">
+        <div>
+          <h2>IPO-Radar: Wenn Claude an die Börse geht …</h2>
+          <p class="sub">Mega-Börsengänge von KI-Laboren gelten als Spätzyklus-Marker: 2000 und 2021 kamen die größten Hype-IPOs kurz vor dem Hoch. Ein Anthropic- oder OpenAI-IPO wäre ein Euphorie-Signal – kein Kaufsignal an sich.</p>
+        </div>
+      </div>
+      <div id="ipoMeter" class="ipo-meter"></div>
+      <div id="ipoGrid" class="ipo-grid"></div>
+    </section>
+    </div>
+
+    <div class="view" data-view="profis" hidden>
     <section id="profis" class="card">
       <div class="card-head">
         <div>
@@ -176,32 +244,11 @@
       <div id="targets" class="targets"></div>
     </section>
 
-    <section id="ipo" class="card ipo-card">
-      <div class="card-head">
-        <div>
-          <h2>IPO-Radar: Wenn Claude an die Börse geht …</h2>
-          <p class="sub">Mega-Börsengänge von KI-Laboren gelten als Spätzyklus-Marker: 2000 und 2021 kamen die größten Hype-IPOs kurz vor dem Hoch. Ein Anthropic- oder OpenAI-IPO wäre ein Euphorie-Signal – kein Kaufsignal an sich.</p>
-        </div>
-      </div>
-      <div id="ipoMeter" class="ipo-meter"></div>
-      <div id="ipoGrid" class="ipo-grid"></div>
-    </section>
 
-    <section id="stimmung" class="grid-2">
-      <article class="card">
-        <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
-        <ul id="poly" class="poly"></ul>
-      </article>
-      <article class="card">
-        <div class="card-head"><div><h2>Angst oder Gier?</h2><p class="sub">Stimmungs-Barometer: 0 = Panik, 100 = Gier. Warren Buffett sagt: „Sei ängstlich, wenn andere gierig sind, und gierig, wenn andere ängstlich sind.“</p></div></div>
-        <h3 class="mini-h">Aktien (CNN)</h3>
-        <div id="cnn" class="fng"></div>
-        <h3 class="mini-h">Krypto</h3>
-        <div id="fng" class="fng"></div>
-        <ul id="trending" class="trending"></ul>
-      </article>
-    </section>
 
+    </div>
+
+    <div class="view" data-view="news" hidden>
     <section id="feed" class="card">
       <div class="card-head">
         <div>
@@ -218,6 +265,9 @@
       <button class="btn btn-ghost btn-wide" id="moreBtn" type="button" hidden>Mehr anzeigen</button>
     </section>
 
+    </div>
+
+    <div class="view" data-view="wissen" hidden>
     <section id="lexikon" class="card">
       <div class="card-head"><div><h2>Lexikon: Börse in einfachen Worten</h2><p class="sub">Alle Begriffe vom Radar, ohne Fachchinesisch. Unterstrichene Wörter auf der Seite kannst du antippen.</p></div></div>
       <input id="lexSearch" type="search" placeholder="Begriff suchen …" aria-label="Lexikon durchsuchen">
@@ -243,7 +293,7 @@
           <h3>Mein Plan</h3>
           <p>Beispiel-Aufteilungen nach dem Kern-Satellit-Prinzip. Die Prognose kommt aus 2.000 Zufalls-Simulationen mit vorsichtigen Langfrist-Annahmen. Die Marktlage verschiebt nur den kleinen Satelliten, nie den Kern.</p>
           <h3>Aktualisierung</h3>
-          <p>Ein Sammler holt alle Quellen jede Stunde. Die Seite lädt alle 5 Minuten neu und holt Bitcoin-Kurs und Tech-Meldungen jede Minute direkt nach.</p>
+          <p>Ein Sammler holt alle Quellen alle 15 Minuten. Die Seite prüft jede Minute auf neue Daten und holt Bitcoin, Ethereum und Tech-Meldungen jede Minute live. Mit „Aktualisieren“ geht es sofort.</p>
         </div>
       </div>
       <details class="sources">
@@ -252,6 +302,7 @@
       </details>
       <p class="disclaimer"><b>Keine Anlageberatung.</b> Das Radar zeigt Aufmerksamkeit und Kursdynamik, keine Empfehlungen. Hype kann lange anhalten, und Blasen können weiter wachsen. Investiere nur, was du verstehst und verlieren kannst.</p>
     </section>
+    </div>
   </main>
 
   <div id="drawer" class="drawer" hidden>

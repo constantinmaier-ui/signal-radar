@@ -2,7 +2,8 @@
 
 import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
-import { renderAmpel, renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
+import { renderCheck, renderSignals, initSignalControls, showView } from "./heute.js";
+import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
 let matchers = { themes: [], signals: [] };
@@ -75,10 +76,8 @@ function renderStamp() {
   const d = state.data;
   const t = Date.parse(d.generatedAt);
   const when = new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-  $("#stamp").textContent = `Stand ${when} · ${ago(t)}`;
-  const stale = Date.now() - t > 3 * 3600e3;
-  $("#livePill").classList.toggle("stale", stale);
-  $("#liveText").textContent = stale ? "VERALTET" : "LIVE";
+  const live = state.lastLive ? ` · live geprüft ${ago(state.lastLive)}` : "";
+  $("#stamp").textContent = `Daten von ${when} Uhr${live}`;
 }
 
 function renderGauge() {
@@ -291,13 +290,13 @@ function renderSources() {
 function renderBanner() {
   const b = $("#banner");
   if (state.data.demo) { b.hidden = false; b.innerHTML = "<b>Demo-Daten.</b> Diese Ansicht zeigt erfundene Beispielwerte. Echte Daten erscheinen, sobald der Sammler (GitHub Action) einmal gelaufen ist."; }
-  else if (Date.now() - Date.parse(state.data.generatedAt) > 6 * 3600e3) { b.hidden = false; b.innerHTML = `<b>Daten sind ${ago(Date.parse(state.data.generatedAt))} alt.</b> Der stündliche Sammler ist wohl ausgefallen.`; }
+  else if (Date.now() - Date.parse(state.data.generatedAt) > 2 * 3600e3) { b.hidden = false; b.innerHTML = `<b>Daten sind ${ago(Date.parse(state.data.generatedAt))} alt.</b> Der Sammler (alle 15 Minuten) ist wohl gerade ausgefallen.`; }
   else b.hidden = true;
 }
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderAmpel, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -367,10 +366,16 @@ async function loadData(initial = false) {
 
 async function pollBtc() {
   try {
-    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true");
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
     const j = await r.json();
-    if (ok(j?.bitcoin?.usd)) { state.liveBtc = { usd: j.bitcoin.usd, chg: j.bitcoin.usd_24h_change }; safe(renderMarket); }
-  } catch { /* offline oder gesperrt – egal */ }
+    if (ok(j?.bitcoin?.usd)) { state.liveBtc = { usd: j.bitcoin.usd, chg: j.bitcoin.usd_24h_change }; state.lastLive = Date.now(); safe(renderMarket); return; }
+    throw new Error("leer");
+  } catch {
+    try { // Ersatz: Binance (ebenfalls frei abrufbar)
+      const j = await (await fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT")).json();
+      if (ok(+j.lastPrice)) { state.liveBtc = { usd: +j.lastPrice, chg: +j.priceChangePercent }; state.lastLive = Date.now(); safe(renderMarket); }
+    } catch { /* offline – egal */ }
+  }
 }
 
 async function pollHn() {
@@ -396,15 +401,35 @@ async function pollHn() {
   } catch { /* egal */ }
 }
 
+// Jede Minute: neue Sammler-Daten prüfen (alle 15 Min. neu), Bitcoin/Ethereum und Tech-News live holen.
+const PERIOD = 60000;
+let nextAt = 0, busy = false;
+async function refreshAll(manual = false) {
+  if (busy) return;
+  busy = true;
+  const btn = $("#refreshBtn"); btn.classList.add("spin");
+  await Promise.allSettled([loadData(), pollBtc(), pollHn()]);
+  state.lastLive = Date.now();
+  safe(renderStamp);
+  btn.classList.remove("spin");
+  nextAt = Date.now() + PERIOD;
+  busy = false;
+  if (manual) toast("Aktualisiert");
+}
 function startLive() {
-  const tick = () => { if (document.visibilityState === "visible") { pollBtc(); pollHn(); } };
-  tick();
-  setInterval(tick, 60000);
-  setInterval(() => { if (document.visibilityState === "visible") loadData(); }, 5 * 60000);
-  setInterval(() => { if (state.data) { safe(renderStamp); } }, 30000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") { tick(); if (Date.now() - state.lastLoad > 2 * 60000) loadData(); }
-  });
+  const ring = $("#refreshRing"), text = $("#refreshText"), C = 2 * Math.PI * 15;
+  ring.style.strokeDasharray = C;
+  $("#refreshBtn").addEventListener("click", () => refreshAll(true));
+  nextAt = Date.now() + PERIOD;
+  pollBtc(); pollHn();
+  setInterval(() => {
+    const left = Math.max(0, nextAt - Date.now());
+    ring.style.strokeDashoffset = C * (left / PERIOD);
+    text.textContent = busy ? "Lädt …" : `in ${Math.ceil(left / 1000)} s`;
+    if (left <= 0 && document.visibilityState === "visible") refreshAll();
+  }, 1000);
+  setInterval(() => safe(renderStamp), 15000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - state.lastLoad > PERIOD) refreshAll(); });
 }
 
 // ---------- Ereignisse ----------
@@ -469,6 +494,10 @@ if (savedTheme) document.documentElement.dataset.theme = savedTheme;
 $("#gauge").innerHTML = '<div class="skel" style="height:170px"></div>';
 bindEvents();
 initPlan();
+initSignalControls();
+const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "maerkte") [renderFng, renderCnn].forEach(safe); if (v === "heute") safe(renderGauge); };
+addEventListener("hashchange", () => { if (location.hash.startsWith("#thema=")) { showView(); const id = location.hash.slice(7); if (themeById(id)) openTheme(id, false); return; } showView(onShow); });
+showView();
 renderLexikon();
 await loadData(true);
 if (state.data) {

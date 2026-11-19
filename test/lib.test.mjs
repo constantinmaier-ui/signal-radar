@@ -119,3 +119,31 @@ test("Analysten-Ton und Zitate", () => {
   assert.equal(extractQuote('Burry: "We are in a massive bubble" says investor'), "We are in a massive bubble");
   assert.equal(extractQuote("Keine Anführungszeichen hier"), null);
 });
+
+import { buildSignals, dailyVerdict } from "../site/signals.js";
+
+test("Signal-Leser: Überhitzung, stiller Aufstieg, Euphorie, Sortierung", () => {
+  const d = {
+    bubble: { score: 82 }, risk: { level: "rot", stress: 30 }, fearGreed: { value: 85 },
+    themes: [
+      { id: "q", name: "Quanten", etf: "QTUM", scores: { quadrant: "overheated", heat: 90 }, price: { ext200: 0.6 } },
+      { id: "g", name: "Gold", etf: "GLD", scores: { quadrant: "quiet", momentum: 80 }, price: { chg3m: 0.12 } },
+    ],
+    assets: [{ id: "btc", name: "Bitcoin", group: "Krypto", chg1w: -0.2 }],
+  };
+  const s = buildSignals(d, [{ date: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), bubble: 60 }]);
+  const ids = s.map((x) => x.id);
+  for (const id of ["bubble-high", "bubble-move", "hot-q", "quiet-g", "crypto-greed", "move-btc"]) assert.ok(ids.includes(id), id);
+  assert.equal(s[0].id, "bubble-high"); // wichtigstes zuerst
+  for (const x of s) assert.ok(x.title && x.text && x.todo && ["chance", "warnung", "info"].includes(x.kind));
+  const v = dailyVerdict(d);
+  assert.equal(v.level, "rot");
+  assert.ok(v.dontList.some((t) => t.includes("Quanten")));
+  assert.ok(v.doList.some((t) => t.includes("Gold")));
+});
+
+test("Signal-Leser: leere oder fehlende Daten werfen nicht", () => {
+  assert.deepEqual(buildSignals(null), []);
+  assert.ok(Array.isArray(buildSignals({})));
+  assert.ok(dailyVerdict({}).head.length > 10);
+});
