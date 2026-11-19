@@ -133,3 +133,16 @@ export function hideTip() { tipEl().hidden = true; }
 let toastTimer;
 export function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600); }
 
+
+// ---------- "Show more" for any list (key → expanded) ----------
+const expanded = new Set();
+export const limitList = (key, list, n) => (expanded.has(key) ? list : list.slice(0, n));
+export function moreBtn(key, total, n, what = "anzeigen") {
+  if (total <= n) return "";
+  return `<button type="button" class="btn btn-ghost btn-sm more-btn" data-more="${esc(key)}">${expanded.has(key) ? "Weniger anzeigen" : `Alle ${total} ${esc(what)}`}</button>`;
+}
+export const toggleMore = (key) => (expanded.has(key) ? expanded.delete(key) : expanded.add(key));
+
+/** Text normalisation for search: lower case, umlauts folded (ä→a, ae→a), accents removed. */
+export const fold = (s) => String(s ?? "").toLowerCase().replace(/ß/g, "ss").replace(/ae/g, "a").replace(/oe/g, "o").replace(/ue/g, "u")
+  .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9.%&+ -]/g, " ").replace(/\s+/g, " ").trim();

@@ -35,6 +35,53 @@ export async function fetchResearch({ get, pool }, now = Date.now()) {
     .slice(0, 30);
 }
 
+// ---------- Peer-reviewed research via OpenAlex ----------
+/** Rebuilds plain text from OpenAlex's abstract_inverted_index. */
+export function openAlexAbstract(inv) {
+  if (!inv || typeof inv !== "object") return "";
+  const words = [];
+  for (const [w, pos] of Object.entries(inv)) for (const i of pos) words[i] = w;
+  return words.filter(Boolean).join(" ");
+}
+/** OpenAlex work → compact paper record. */
+export function mapOpenAlexWork(w) {
+  const loc = w.primary_location || {};
+  const abs = openAlexAbstract(w.abstract_inverted_index);
+  return {
+    title: String(w.display_name || w.title || "").replace(/<[^>]+>/g, "").trim(),
+    url: w.doi || loc.landing_page_url || w.id,
+    oa: w.open_access?.oa_url || null,
+    journal: loc.source?.display_name || "",
+    date: w.publication_date || null,
+    published: w.publication_date ? Date.parse(w.publication_date) : null,
+    cites: w.cited_by_count ?? 0,
+    fwci: Number.isFinite(w.fwci) ? Math.round(w.fwci * 10) / 10 : null,
+    authors: (w.authorships || []).slice(0, 3).map((a) => a.author?.display_name).filter(Boolean),
+    moreAuthors: Math.max(0, (w.authorships || []).length - 3),
+    summary: abs.length > 420 ? abs.slice(0, 400).replace(/\s+\S*$/, "") + " …" : abs,
+    lang: "en",
+  };
+}
+/**
+ * Two lists from peer-reviewed top journals: most cited of the last 24 months
+ * and newest of the last 120 days. Refreshed every 6 h (OpenAlex daily budget).
+ */
+export async function fetchJournalResearch({ get }, journals, prev, now = Date.now()) {
+  if (prev?.checkedAt && now - Date.parse(prev.checkedAt) < 6 * 3600e3 && prev.top?.length) return prev;
+  const key = process.env.OPENALEX_API_KEY ? `&api_key=${encodeURIComponent(process.env.OPENALEX_API_KEY)}` : "";
+  const issn = journals.map((j) => j.issn).join("|");
+  const day = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const sel = "id,doi,display_name,publication_date,cited_by_count,fwci,primary_location,authorships,open_access,abstract_inverted_index";
+  const q = (from, sort) => `https://api.openalex.org/works?filter=primary_location.source.issn:${issn},from_publication_date:${from},type:article&sort=${sort}&per-page=40&select=${sel}${key}`;
+  const [topJ, newJ] = await Promise.all([
+    get(q(day(now - 730 * DAY), "cited_by_count:desc"), { type: "json", label: "OpenAlex: meistzitierte Top-Journal-Studien", timeout: 25000 }),
+    get(q(day(now - 120 * DAY), "publication_date:desc"), { type: "json", label: "OpenAlex: neue Top-Journal-Studien", timeout: 25000 }),
+  ]);
+  if (!topJ && !newJ) return prev || null;
+  const clean = (j) => (j?.results || []).map(mapOpenAlexWork).filter((p) => p.title && !/^(front matter|back matter|issue information|erratum|corrigendum|editorial)/i.test(p.title));
+  return { checkedAt: new Date(now).toISOString(), top: topJ ? clean(topJ) : prev?.top || [], recent: newJ ? clean(newJ) : prev?.recent || [] };
+}
+
 // ---------- Offizielle Statistik ----------
 /** JSON-stat 2.0 (Eurostat) → [{period, value}] in zeitlicher Reihenfolge. */
 export function parseJsonStat(j) {
@@ -133,11 +180,11 @@ export async function fetchCommodities({ fetchSeries, priceStats, pool, status }
 import { AI_ORGS } from "./config.mjs";
 export async function fetchTechTrends({ get, status }, now = Date.now()) {
   const since = new Date(now - 30 * DAY).toISOString().slice(0, 10);
-  const gh = await get(`https://api.github.com/search/repositories?q=${encodeURIComponent(`created:>${since}`)}&sort=stars&order=desc&per_page=12`, {
+  const gh = await get(`https://api.github.com/search/repositories?q=${encodeURIComponent(`created:>${since}`)}&sort=stars&order=desc&per_page=30`, {
     type: "json", label: "GitHub: schnellst wachsende Projekte",
     headers: { Accept: "application/vnd.github+json", ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}) },
   });
-  const hf = await get("https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=12", { type: "json", label: "Hugging Face: Trend-KI-Modelle" });
+  const hf = await get("https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=30", { type: "json", label: "Hugging Face: Trend-KI-Modelle" });
   const owner = (full) => String(full || "").split("/")[0].toLowerCase();
   const repos = (gh?.items || []).map((r) => ({ name: r.full_name, url: r.html_url, stars: r.stargazers_count, desc: (r.description || "").slice(0, 140), lang: r.language, ticker: AI_ORGS[owner(r.full_name)] || null }));
   const models = (Array.isArray(hf) ? hf : []).map((m) => ({ name: m.id || m.modelId, url: `https://huggingface.co/${m.id || m.modelId}`, likes: m.likes, downloads: m.downloads, task: m.pipeline_tag || "", ticker: AI_ORGS[owner(m.id || m.modelId)] || null }));

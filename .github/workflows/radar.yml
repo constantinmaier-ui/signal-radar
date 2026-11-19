@@ -42,6 +42,8 @@ jobs:
           PAGES_URL: ${{ steps.pages.outputs.base_url }}/
           # Optional: repo secret ANTHROPIC_API_KEY → Claude writes the briefing every 6 hours.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional: free OpenAlex key (openalex.org) → larger daily budget for journal research.
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
           # Higher rate limit for the GitHub trend search (provided automatically)
           GITHUB_TOKEN: ${{ github.token }}
           # The SEC requires a contact string. Optional secret SEC_USER_AGENT = "Name mail@example.com"

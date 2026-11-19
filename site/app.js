@@ -1,11 +1,14 @@
 // Signal-Radar – Oberfläche. Keine Abhängigkeiten, alles inline-SVG.
 
-import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast } from "./ui.js";
+import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderCommodities, commodityShareText } from "./insights.js";
+import { openDetailFor } from "./detail.js";
+import { initSearch } from "./search.js";
+import { setTechKind } from "./trust.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -244,9 +247,9 @@ function renderIpo() {
 
 function renderPoly() {
   const p = state.data.polymarket || [];
-  $("#poly").innerHTML = p.length ? p.slice(0, 8).map((m) => `<li><a href="${safeUrl(m.url)}" target="_blank" rel="noopener">${esc(m.question)}</a><span class="pct">${fmt(m.prob * 100)} %</span>
+  $("#poly").innerHTML = p.length ? limitList("poly", p, 8).map((m) => `<li><a href="${safeUrl(m.url)}" target="_blank" rel="noopener">${esc(m.question)}</a><span class="pct">${fmt(m.prob * 100)} %</span>
     <span class="bar"><i style="width:${m.prob * 100}%;background:var(--s1)"></i></span>
-    <span class="meta">Einsatz ${compact(m.volume)} $${m.endDate ? ` · endet ${new Date(m.endDate).toLocaleDateString("de-DE")}` : ""}</span></li>`).join("")
+    <span class="meta">Einsatz ${compact(m.volume)} $${m.endDate ? ` · endet ${new Date(m.endDate).toLocaleDateString("de-DE")}` : ""}</span></li>`).join("") + (p.length > 8 ? `<li class="more-li">${moreBtn("poly", p.length, 8, "Wettmärkte")}</li>` : "")
     : '<li class="empty">Gerade keine passenden Wettmärkte gefunden.</li>';
 }
 
@@ -465,6 +468,17 @@ function bindEvents() {
       [renderThemes, renderScatter, renderChips].forEach(safe);
       return;
     }
+    const det = e.target.closest("[data-detail]");
+    if (det) { openDetailFor(det.dataset.detail); return; }
+    const mb = e.target.closest("[data-more]");
+    if (mb) {
+      const k = mb.dataset.more; toggleMore(k);
+      const RE = { trend: renderTrends, paper: renderResearch, study: renderResearch, ins: renderInsiders, cons: renderProfis, voices: renderProfis, poly: renderPoly };
+      safe(RE[k.split(":")[0]] || renderAll);
+      return;
+    }
+    const tk = e.target.closest("[data-tech]");
+    if (tk) { setTechKind(tk.dataset.tech); safe(renderTrends); return; }
     const open = e.target.closest("[data-open]");
     if (open) { openTheme(open.dataset.open); return; }
     const chip = e.target.closest("[data-chip]");
@@ -516,6 +530,7 @@ const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPl
 addEventListener("hashchange", () => { if (location.hash.startsWith("#thema=")) { showView(); const id = location.hash.slice(7); if (themeById(id)) openTheme(id, false); return; } showView(onShow); });
 showView();
 renderLexikon();
+initSearch(openDetailFor);
 // Als App installierbar machen (PWA) und Offline-Modus
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 let installEvt = null;

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { parseFeed, makeMatcher, dedupe, rsi, priceStats, attentionStats, themeScores, quadrant, scale, blend, zoneLabel, cleanText } from "../collector/lib.mjs";
 
 test("RSS (Google News) – Titel ohne Quellen-Suffix, Datum, Quelle", () => {
@@ -270,4 +271,52 @@ test("Profile: bold investors get lump-sum advice, cautious ones get interest; h
   assert.ok(ideasFor(d, "wachstum").some((i) => i.title.startsWith("Gold")));
   assert.ok(!ideasFor(d, "mutig").some((i) => i.title.startsWith("Quanten")));
   assert.equal(ideasFor(d, "sicherheit")[0].tag, "sicher");
+});
+
+test("OpenAlex: abstract rebuilt, work mapped with DOI, citations, open-access link", async () => {
+  const { openAlexAbstract, mapOpenAlexWork } = await import("../collector/insights.mjs");
+  assert.equal(openAlexAbstract({ Momentum: [0], works: [1], "well.": [2] }), "Momentum works well.");
+  const p = mapOpenAlexWork({ doi: "https://doi.org/10.1/x", display_name: "A <i>study</i>", publication_date: "2026-05-01", cited_by_count: 42, fwci: 3.14, primary_location: { source: { display_name: "Journal of Finance" } }, authorships: [1, 2, 3, 4].map((i) => ({ author: { display_name: `A${i}` } })), open_access: { oa_url: "https://x/pdf" } });
+  assert.equal(p.title, "A study"); assert.equal(p.url, "https://doi.org/10.1/x"); assert.equal(p.cites, 42); assert.equal(p.fwci, 3.1);
+  assert.deepEqual(p.authors, ["A1", "A2", "A3"]); assert.equal(p.moreAuthors, 1); assert.equal(p.journal, "Journal of Finance"); assert.equal(p.oa, "https://x/pdf");
+});
+
+test("OpenAlex: refreshed at most every 6 hours, keeps previous result on failure", async () => {
+  const { fetchJournalResearch } = await import("../collector/insights.mjs");
+  const now = Date.parse("2026-11-19T12:00:00Z");
+  const prev = { checkedAt: "2026-11-19T10:00:00Z", top: [{ title: "x" }], recent: [] };
+  let calls = 0; const get = async () => { calls++; return null; };
+  assert.equal(await fetchJournalResearch({ get }, [{ issn: "1" }], prev, now), prev); assert.equal(calls, 0);
+  const old = { ...prev, checkedAt: "2026-11-19T01:00:00Z" };
+  assert.equal(await fetchJournalResearch({ get }, [{ issn: "1" }], old, now), old); assert.equal(calls, 2);
+});
+
+test("Search: umlauts folded, all words required, title hits first", async () => {
+  const { fold } = await import("../site/ui.js");
+  const { search } = await import("../site/search.js");
+  assert.equal(fold("Mietspiegel München"), fold("mietspiegel muenchen"));
+  const idx = [
+    { i: 0, g: "lex", title: "ETF", sub: "Fonds", hay: fold("ETF Fonds Index"), t: fold("ETF") },
+    { i: 1, g: "price", title: "Welt-Aktien", sub: "ETF auf MSCI World", hay: fold("Welt-Aktien ETF auf MSCI World"), t: fold("Welt-Aktien") },
+    { i: 2, g: "city", title: "Mietspiegel München", sub: "", hay: fold("Mietspiegel München"), t: fold("Mietspiegel München") },
+  ];
+  assert.deepEqual(search(idx, "etf").map((h) => h.i), [0, 1]);
+  assert.deepEqual(search(idx, "muenchen miet").map((h) => h.i), [2]);
+  assert.equal(search(idx, "etf gold").length, 0);
+});
+
+test("Search index covers themes, assets, glossary, rent indices and studies", async () => {
+  const { buildIndex } = await import("../site/search.js");
+  const d = JSON.parse(readFileSync(new URL("../site/data/data.json", import.meta.url)));
+  const idx = buildIndex(d, null), groups = new Set(idx.map((x) => x.g));
+  for (const g of ["lex", "theme", "price", "city", "news"]) assert.ok(groups.has(g), g);
+  assert.ok(idx.every((x) => x.go && typeof x.hay === "string"));
+});
+
+test("Show more: list limited until expanded", async () => {
+  const { limitList, moreBtn, toggleMore } = await import("../site/ui.js");
+  const l = [1, 2, 3, 4, 5];
+  assert.equal(limitList("t", l, 2).length, 2); assert.match(moreBtn("t", 5, 2, "Studien"), /Alle 5 Studien/);
+  toggleMore("t"); assert.equal(limitList("t", l, 2).length, 5); assert.match(moreBtn("t", 5, 2), /Weniger/);
+  assert.equal(moreBtn("u", 2, 5), "");
 });

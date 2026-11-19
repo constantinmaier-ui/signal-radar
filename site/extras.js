@@ -1,5 +1,5 @@
 // Zusatzbereiche: Markt-Ampel, Anlageklassen, versteckte Perlen, Profis, Lexikon, Bild-Teilen.
-import { $, esc, fmt, pct, ok, ago, dirCls, arrow, compact, spark, lineChart, dayLabels, safeUrl, state, priceFmt, toast } from "./ui.js";
+import { $, esc, fmt, pct, ok, ago, dirCls, arrow, compact, spark, lineChart, dayLabels, safeUrl, state, priceFmt, toast, limitList, moreBtn } from "./ui.js";
 import { riskScale } from "./plan.js";
 
 // ---------- Lexikon ----------
@@ -103,8 +103,8 @@ export function renderProfis() {
   const si = state.data.superinvestors || { investors: [], consensusBuys: [], consensusSells: [] };
   const cb = si.consensusBuys || [], cs = si.consensusSells || [];
   $("#consensus").innerHTML = (cb.length || cs.length) ? `
-    <div class="cons-box buy"><h4>🤝 Mehrere Große kaufen</h4>${cb.slice(0, 6).map((c) => `<div class="cons-row"><b>${esc(pretty(c.name))}</b><span>${c.buy.length} Investoren: ${esc(c.buy.join(", "))}</span></div>`).join("") || '<div class="empty">–</div>'}</div>
-    <div class="cons-box sell"><h4>🚪 Mehrere Große verkaufen</h4>${cs.slice(0, 6).map((c) => `<div class="cons-row"><b>${esc(pretty(c.name))}</b><span>${c.sell.length} Investoren: ${esc(c.sell.join(", "))}</span></div>`).join("") || '<div class="empty">–</div>'}</div>` : "";
+    <div class="cons-box buy"><h4>🤝 Mehrere Große kaufen</h4>${limitList("cons:buy", cb, 6).map((c) => `<div class="cons-row"><b>${esc(pretty(c.name))}</b><span>${c.buy.length} Investoren: ${esc(c.buy.join(", "))}</span></div>`).join("") || '<div class="empty">–</div>'}${moreBtn("cons:buy", cb.length, 6)}</div>
+    <div class="cons-box sell"><h4>🚪 Mehrere Große verkaufen</h4>${limitList("cons:sell", cs, 6).map((c) => `<div class="cons-row"><b>${esc(pretty(c.name))}</b><span>${c.sell.length} Investoren: ${esc(c.sell.join(", "))}</span></div>`).join("") || '<div class="empty">–</div>'}${moreBtn("cons:sell", cs.length, 6)}</div>` : "";
   $("#investorGrid").innerHTML = si.investors.length ? si.investors.map((v) => `<article class="investor">
       <header><div><h3>${esc(v.person)}</h3><span class="fine">${esc(v.fund)} · ${quarterLabel(v.quarter)}, gemeldet ${new Date(v.filed).toLocaleDateString("de-DE")}</span></div><a class="fine" href="${safeUrl(v.url)}" target="_blank" rel="noopener" title="Original bei der SEC">SEC ↗</a></header>
       <p class="style">${esc(v.style)}</p>
@@ -119,13 +119,13 @@ export function renderProfis() {
   $("#voiceBalance").innerHTML = tot ? `<div class="bal-bar"><i class="bull" style="width:${(vo.bull / tot) * 100}%"></i><i class="bear" style="width:${(vo.bear / tot) * 100}%"></i></div>
     <div class="bal-lbl"><span class="up">📈 optimistisch ${vo.bull}</span><span class="down">vorsichtig ${vo.bear} 📉</span></div>` : "";
   const TONE = { bullish: ["📈", "optimistisch", "up"], bearish: ["📉", "vorsichtig", "down"], neutral: ["💬", "neutral", "flat"] };
-  $("#voices").innerHTML = vo.items.slice(0, 12).map((v) => {
+  $("#voices").innerHTML = limitList("voices", vo.items, 12).map((v) => {
     const t = TONE[v.tone] || TONE.neutral;
     const text = v.de || v.quote || v.title;
     return `<a class="voice" href="${safeUrl(v.url)}" target="_blank" rel="noopener">
       <div class="q">${v.quote || v.de ? `„${esc(text)}“` : esc(text)}</div>
       <div class="m"><span class="${t[2]}">${t[0]} ${t[1]}</span>${v.who ? `<b>${esc(v.who)}</b>` : ""}<span>${esc(v.source)} · ${ago(v.published)}</span>${v.lang === "en" && !v.de ? '<span class="chip">EN</span>' : ""}</div></a>`;
-  }).join("") || '<div class="empty">Gerade keine Stimmen gefunden.</div>';
+  }).join("") + moreBtn("voices", vo.items.length, 12, "Stimmen") || '<div class="empty">Gerade keine Stimmen gefunden.</div>';
 
   const an = (state.data.analysts || []).filter((a) => a.analysts >= 5 && ok(a.upside));
   const show = state.allTargets ? an : an.slice(0, 12);
