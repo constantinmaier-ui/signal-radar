@@ -8,7 +8,7 @@ export const store = {
 
 export const state = {
   data: null, history: [], sort: "hype", theme: "all", q: "", onlySignals: false, shown: typeof innerWidth !== "undefined" && innerWidth < 620 ? 20 : 40,
-  watch: new Set(store.get("watch", [])), live: [], liveKeys: new Set(), liveBtc: null, lastLoad: 0,
+  watch: new Set(((w) => (Array.isArray(w) ? w.filter((x) => typeof x === "string") : []))(store.get("watch", []))), live: [], liveKeys: new Set(), liveBtc: null, lastLoad: 0,
 };
 
 export const QUAD = {

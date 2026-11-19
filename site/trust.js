@@ -42,7 +42,7 @@ export function renderMeta() {
 // ---------- Anpassen: Interessen & Bereiche ----------
 export const TOPICS = [["stocks", "Aktien & ETFs"], ["themes", "Trend-Themen"], ["crypto", "Krypto"], ["commodities", "Rohstoffe"], ["realestate", "Immobilien"], ["macro", "Konjunktur & Zinsen"], ["news", "Politik & Nachrichten"], ["pros", "Profis & Insider"]];
 const SECTIONS = [["ipo", "IPO-Radar"], ["rohstoffe", "Rohstoff-Monitor"], ["immobilien", "Immobilien"], ["stimmung", "Stimmung & Wettmärkte"], ["perlen", "Aktien-Ideen"], ["weitere", "Weitere Anlageformen"], ["trends", "Trend-Radar"]];
-export const prefs = () => store.get("prefs", { off: [], hide: [] });
+export const prefs = () => { const p = store.get("prefs", {}) || {}; return { off: strList(p.off), hide: strList(p.hide) }; };
 export function applyPrefs() {
   const p = prefs();
   for (const [id] of SECTIONS) { const el = document.getElementById(id); if (el) el.classList.toggle("user-hidden", p.hide.includes(id)); }
@@ -120,7 +120,7 @@ export function renderTrends() {
 // ---------- Was nachweislich Geld vermehrt + Kosten-Rechner ----------
 export function renderLevers() {
   const p = store.get("plan", { once: 5000, monthly: 200, years: 15 });
-  const r = 0.065, n = p.years || 15, once = +p.once || 0, m = +p.monthly || 0;
+  const r = 0.065, n = Math.round(num(p.years, 1, 60, 15)), once = num(p.once, 0, 1e9, 0), m = num(p.monthly, 0, 1e7, 0);
   const fv = (rate) => { const rm = rate / 12; let v = once; for (let i = 0; i < n * 12; i++) v = (v + m) * (1 + rm); return v; };
   const cheap = fv(r - 0.002), pricey = fv(r - 0.015), late = (() => { const rm = (r - 0.002) / 12; let v = once; for (let i = 0; i < (n - 5) * 12; i++) v = (v + m) * (1 + rm); return v; })();
   const gap = fv(r - 0.002 - 0.012);
@@ -147,7 +147,7 @@ const FIT = [
 ];
 const LEVELS = [[0, "Startklar"], [3, "Auf Kurs"], [6, "Stark aufgestellt"], [8, "Finanz-Profi"]];
 export function renderFitness() {
-  const done = store.get("fit", []);
+  const done = strList(store.get("fit", []), 50);
   const n = FIT.filter(([k]) => done.includes(k)).length, lvl = [...LEVELS].reverse().find(([min]) => n >= min)[1];
   const C = 2 * Math.PI * 34;
   $("#fitBody").innerHTML = `
@@ -156,7 +156,7 @@ export function renderFitness() {
     <ul class="fit-list">${FIT.map(([k, t, why]) => `<li><label class="radio"><input type="checkbox" data-fit="${k}" ${done.includes(k) ? "checked" : ""}> <span><b>${esc(t)}</b><small>${esc(why)}</small></span></label></li>`).join("")}</ul>`;
   $("#fitBody").onchange = (e) => {
     const k = e.target.dataset.fit; if (!k) return;
-    const cur = store.get("fit", []);
+    const cur = strList(store.get("fit", []), 50);
     store.set("fit", e.target.checked ? [...new Set([...cur, k])] : cur.filter((x) => x !== k));
     renderFitness();
     if (e.target.checked) toast("Stark! Ein Schritt mehr in Richtung Finanz-Profi");
@@ -181,24 +181,53 @@ function renderQuiz() {
 }
 
 // ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
-// Passwort → Schlüssel (PBKDF2, 310.000 Runden, SHA-256) → AES-256-GCM. Alles lokal im Browser.
-const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "re", "goal"];
+// Password → key (PBKDF2-SHA256, 600,000 rounds as recommended by OWASP 2023) → AES-256-GCM. All local in the browser.
+const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal"];
+const KDF_ITER = 600000, KDF_ITER_V1 = 310000;
+// A restored backup is untrusted (someone could send a crafted file): keep only known keys with sane values.
+const SAFE_STR = /^[\w\-äöüÄÖÜß .,]{0,60}$/;
+const num = (x, lo, hi, d) => { const v = Number(x); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+const strList = (a, max = 100) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && /^[\w-]{1,40}$/.test(x)).slice(0, max) : []);
+const oneOf = (x, list, d) => (list.includes(x) ? x : d);
+export function sanitizeBackup(obj) {
+  const o = obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {}, out = {};
+  if (o.plan && typeof o.plan === "object") {
+    const p = o.plan;
+    out.plan = {
+      once: num(p.once, 0, 1e9, 0), monthly: num(p.monthly, 0, 1e7, 0), years: Math.round(num(p.years, 1, 60, 15)),
+      profile: oneOf(p.profile, ["auto", "sicherheit", "ausgewogen", "wachstum", "mutig", "kurz"], "auto"),
+      reserve: typeof p.reserve === "string" && /^[\w-]{0,20}$/.test(p.reserve) ? p.reserve : "",
+      q: strList(p.q, 10),
+    };
+  }
+  if ("watch" in o) out.watch = strList(o.watch);
+  if (o.prefs && typeof o.prefs === "object") out.prefs = { off: strList(o.prefs.off), hide: strList(o.prefs.hide) };
+  if ("fit" in o) out.fit = strList(o.fit, 50);
+  if (o.quiz && typeof o.quiz === "object") out.quiz = { last: Number.isInteger(o.quiz.last) ? o.quiz.last : null, streak: Math.round(num(o.quiz.streak, 0, 10000, 0)) };
+  if ("mode" in o) out.mode = oneOf(o.mode, ["easy", "pro"], "easy");
+  if ("theme" in o) out.theme = oneOf(o.theme, ["light", "dark"], null);
+  if ("goal" in o) out.goal = oneOf(o.goal, ["sicherheit", "ausgewogen", "wachstum", "mutig"], "ausgewogen");
+  for (const k of Object.keys(out)) if (out[k] === null) delete out[k];
+  return out;
+}
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-async function deriveKey(pass, salt) {
+async function deriveKey(pass, salt, iterations = KDF_ITER) {
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 310000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
 export async function encryptBackup(obj, pass) {
   const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(pass, salt);
   const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
-  return JSON.stringify({ app: "signal-radar", v: 1, kdf: "PBKDF2-SHA256-310000", cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
+  return JSON.stringify({ app: "signal-radar", v: 2, kdf: "PBKDF2-SHA256", it: KDF_ITER, cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
 }
 export async function decryptBackup(text, pass) {
   const f = JSON.parse(text);
   if (f.app !== "signal-radar") throw new Error("Keine Signal-Radar-Sicherung");
-  const key = await deriveKey(pass, unb64(f.salt));
+  // v1 files used 310,000 rounds; never accept fewer than that from a file
+  const it = f.v === 1 ? KDF_ITER_V1 : Number.isInteger(f.it) && f.it >= KDF_ITER && f.it <= 5e6 ? f.it : KDF_ITER;
+  const key = await deriveKey(pass, unb64(f.salt), it);
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(f.iv) }, key, unb64(f.data));
   return JSON.parse(new TextDecoder().decode(pt));
 }
@@ -221,7 +250,7 @@ export function initBackup() {
     const file = e.target.files[0]; if (!file) return;
     try {
       const obj = await decryptBackup(await file.text(), $("#bkPass").value);
-      for (const [k, v] of Object.entries(obj)) if (KEYS.includes(k)) store.set(k, v);
+      for (const [k, v] of Object.entries(sanitizeBackup(obj))) if (KEYS.includes(k)) store.set(k, v);
       msg("Sicherung geladen. Die Seite lädt neu …"); setTimeout(() => location.reload(), 900);
     } catch { msg("Das hat nicht geklappt: falsches Passwort oder keine gültige Sicherungsdatei."); }
     e.target.value = "";

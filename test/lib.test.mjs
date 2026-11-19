@@ -356,3 +356,31 @@ test("Scores follow the literature: 12-1 momentum, overheated only after a 2-yea
   const s2 = themeScores({ attention: { z: 0, mom: 0 }, newsAccel: 1, price: steady, hnRatio: 1 });
   assert.equal(s2.runUp, false); assert.notEqual(s2.quadrant, "overheated");
 });
+
+test("Backup restore drops crafted values (HTML, wrong types, huge numbers)", async () => {
+  const { sanitizeBackup } = await import("../site/trust.js");
+  const evil = '<meta http-equiv="refresh" content="0;url=https://evil.test">';
+  const o = sanitizeBackup({ plan: { years: evil, once: 1e15, monthly: "50", profile: evil, reserve: '"]x', q: [evil, "a"] }, watch: 5, prefs: { off: [evil, "news"], hide: "x" }, fit: [evil], quiz: { last: 3, streak: 1e9 }, mode: evil, goal: "mutig", __proto__: { polluted: 1 }, theme: "dark" });
+  assert.equal(o.plan.years, 15); assert.equal(o.plan.once, 1e9); assert.equal(o.plan.monthly, 50); assert.equal(o.plan.profile, "auto"); assert.equal(o.plan.reserve, "");
+  assert.deepEqual(o.plan.q, ["a"]); assert.deepEqual(o.watch, []); assert.deepEqual(o.prefs, { off: ["news"], hide: [] }); assert.deepEqual(o.fit, []);
+  assert.equal(o.quiz.streak, 10000); assert.equal(o.mode, "easy"); assert.equal(o.goal, "mutig"); assert.equal(o.theme, "dark");
+  assert.equal({}.polluted, undefined);
+  assert.ok(!JSON.stringify(o).includes("<"));
+});
+
+test("Backup: new files use 600k PBKDF2 rounds, old v1 files (310k) still open", async () => {
+  const { encryptBackup, decryptBackup } = await import("../site/trust.js");
+  const f = JSON.parse(await encryptBackup({ goal: "mutig" }, "correct horse battery"));
+  assert.equal(f.v, 2); assert.equal(f.it, 600000);
+  assert.deepEqual(await decryptBackup(JSON.stringify(f), "correct horse battery"), { goal: "mutig" });
+  // A file must not be able to weaken the key derivation: an invalid round count is ignored (600k are used)
+  assert.deepEqual(await decryptBackup(JSON.stringify({ ...f, it: 1 }), "correct horse battery"), { goal: "mutig" });
+  // Build a v1 file the old way (310k rounds) and check it still decrypts
+  const enc = new TextEncoder(), salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey("raw", enc.encode("old password!"), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 310000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(JSON.stringify({ mode: "pro" }))));
+  const b64 = (u) => Buffer.from(u).toString("base64");
+  const v1 = JSON.stringify({ app: "signal-radar", v: 1, kdf: "PBKDF2-SHA256-310000", cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
+  assert.deepEqual(await decryptBackup(v1, "old password!"), { mode: "pro" });
+});

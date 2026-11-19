@@ -12,7 +12,7 @@ function eventCard(e, compact) {
     return `<span class="imp ${cls}" title="${esc(`${l}: ${word}${note && note !== "–" ? ` (${note})` : ""}`)}"><b>${sym}</b> ${l}</span>`;
   }).join("");
   return `<article class="event">
-    <header><span class="ev-ico" aria-hidden="true">${e.icon}</span><div><h3>${esc(e.name)}</h3>
+    <header><span class="ev-ico" aria-hidden="true">${esc(e.icon)}</span><div><h3>${esc(e.name)}</h3>
       <span class="fine">${e.n48h} ${e.n48h === 1 ? "Meldung" : "Meldungen"} in 48 Std. · ${e.n7d} in 7 Tagen${hot ? ' · <b class="hotword">mehr als sonst</b>' : ""}</span></div></header>
     <div class="imps" aria-label="Typische Wirkung">${impacts}</div>
     <p>${esc(e.why)}</p>
@@ -111,8 +111,8 @@ export function renderRealEstate() {
   const m = re.mortgage, h = re.hpi, b = re.bund10, v = re.stocks?.["VNA.DE"];
   const per = (p) => (p ? String(p).replace(/-Q/, " Q").replace(/^(\d{4})-(\d{2})$/, "$2/$1") : "");
   $("#reKpis").innerHTML = `
-    <div class="rate"><span>Bauzins Deutschland (Durchschnitt)</span><b>${m ? fmt(m.rate * 100, 2) + " %" : "–"}</b>${m && ok(m.yearAgo) ? `<em class="${dirCls(-(m.rate - m.yearAgo))}">${m.rate >= m.yearAgo ? "▲" : "▼"} vor 1 Jahr ${fmt(m.yearAgo * 100, 2)} %</em>` : ""}<small>Stand ${per(m?.period)}, EZB</small></div>
-    <div class="rate"><span>Hauspreise Deutschland zum Vorjahr</span><b class="${dirCls(h?.yoy)}">${h ? pct(h.yoy, 1) : "–"}</b><small>Stand ${per(h?.period)}, Eurostat</small></div>
+    <div class="rate"><span>Bauzins Deutschland (Durchschnitt)</span><b>${m ? fmt(m.rate * 100, 2) + " %" : "–"}</b>${m && ok(m.yearAgo) ? `<em class="${dirCls(-(m.rate - m.yearAgo))}">${m.rate >= m.yearAgo ? "▲" : "▼"} vor 1 Jahr ${fmt(m.yearAgo * 100, 2)} %</em>` : ""}<small>Stand ${esc(per(m?.period))}, EZB</small></div>
+    <div class="rate"><span>Hauspreise Deutschland zum Vorjahr</span><b class="${dirCls(h?.yoy)}">${h ? pct(h.yoy, 1) : "–"}</b><small>Stand ${esc(per(h?.period))}, Eurostat</small></div>
     <div class="rate"><span>Rendite 10-jährige Staatsanleihen (Euroraum, beste Bonität)</span><b>${b ? fmt(b.rate * 100, 2) + " %" : "–"}</b><small>Bauzinsen folgen ihr meist mit Abstand</small></div>
     <div class="rate"><span>Immobilien-Aktie Vonovia (größter deutscher Vermieter)</span><b class="${dirCls(v?.chg1y)}">${v ? pct(v.chg1y, 0) + " in 1 Jahr" : "–"}</b><small>reagiert stark auf Zinsen</small></div>`;
   if (m?.series?.length > 3) lineChart($("#reChart"), m.series.map((p) => p.value), { labels: m.series.map((p) => per(p.period)), fmtV: (x) => `Bauzins ${fmt(x, 2)} %`, color: "var(--s2)", h: 120 });
