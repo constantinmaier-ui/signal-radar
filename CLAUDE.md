@@ -4,6 +4,7 @@
 - **Always explain what you build, how and why** – to the owner in **German**, in plain words. The owner is a beginner in tech and finance.
 - **Explain every technical term** the first time it comes up (e.g. API, MCP, agent, pull request, merge, secret, CI), in one plain German sentence, ideally with an everyday comparison.
 - **Coach the owner**: the owner wants to become an expert in Claude and AI. At the end of each answer give 1–2 concrete tips: how their last prompt could have been clearer, what to do better when building apps, and notable new Claude/AI features (check the web, don't rely on memory).
+- **Merging (owner's standing permission)**: Claude may merge its own pull requests without asking again, but only when the whole batch of work is finished, all tests pass, the PR has no conflicts, and the last workflow run on `main` is green. Merge one PR at a time and check that the run on `main` after each merge succeeds before the next. Until then say clearly "not ready to merge".
 - **Every owner request becomes a task**: add it to `docs/TASKS.md`, ordered by priority (value ÷ effort), and work through it in that order.
 - **Everything the user enters can be changed later** (profile, goal, portfolio, preferences). The app must work without optional inputs.
 - For every step say briefly: *what* changes, *why* it helps, *what* the owner has to do themselves (with click-by-click instructions; note when something only works in a desktop browser).
