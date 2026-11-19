@@ -119,3 +119,124 @@ test("Analysten-Ton und Zitate", () => {
   assert.equal(extractQuote('Burry: "We are in a massive bubble" says investor'), "We are in a massive bubble");
   assert.equal(extractQuote("Keine Anführungszeichen hier"), null);
 });
+
+import { buildSignals, dailyVerdict } from "../site/signals.js";
+
+test("Signal-Leser: Überhitzung, stiller Aufstieg, Euphorie, Sortierung", () => {
+  const d = {
+    bubble: { score: 82 }, risk: { level: "rot", stress: 30 }, fearGreed: { value: 85 },
+    themes: [
+      { id: "q", name: "Quanten", etf: "QTUM", scores: { quadrant: "overheated", heat: 90 }, price: { ext200: 0.6 } },
+      { id: "g", name: "Gold", etf: "GLD", scores: { quadrant: "quiet", momentum: 80 }, price: { chg3m: 0.12 } },
+    ],
+    assets: [{ id: "btc", name: "Bitcoin", group: "Krypto", chg1w: -0.2 }],
+  };
+  const s = buildSignals(d, [{ date: new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10), bubble: 60 }]);
+  const ids = s.map((x) => x.id);
+  for (const id of ["bubble-high", "bubble-move", "hot-q", "quiet-g", "crypto-greed", "move-btc"]) assert.ok(ids.includes(id), id);
+  assert.equal(s[0].id, "bubble-high"); // wichtigstes zuerst
+  for (const x of s) assert.ok(x.title && x.text && x.todo && ["chance", "warnung", "info"].includes(x.kind));
+  const v = dailyVerdict(d);
+  assert.equal(v.level, "rot");
+  assert.ok(v.dontList.some((t) => t.includes("Quanten")));
+  assert.ok(v.doList.some((t) => t.includes("Gold")));
+});
+
+test("Signal-Leser: leere oder fehlende Daten werfen nicht", () => {
+  assert.deepEqual(buildSignals(null), []);
+  assert.ok(Array.isArray(buildSignals({})));
+  assert.ok(dailyVerdict({}).head.length > 10);
+});
+
+import { computeEvents, parseJsonStat, parseEcb } from "../collector/insights.mjs";
+
+test("Ereignis-Arten: Zuordnung, Zählung, Beschleunigung", () => {
+  const now = Date.now(), h = 3600e3;
+  const news = [
+    { title: "EZB senkt den Leitzins", published: now - 5 * h },
+    { title: "Fed rate cut expected", published: now - 10 * h },
+    { title: "Neue Zölle auf Autos", published: now - 3 * 86400e3 },
+    { title: "Apple übertrifft Erwartungen bei Quartalszahlen", published: now - h },
+    { title: "Wetter wird schön", published: now - h },
+  ];
+  const ev = computeEvents(news, now);
+  const rates = ev.find((e) => e.id === "rates"), tariffs = ev.find((e) => e.id === "tariffs");
+  assert.equal(rates.n48h, 2);
+  assert.equal(tariffs.n48h, 0);
+  assert.equal(tariffs.n7d, 1);
+  assert.equal(ev[0].id, "rates"); // meistberichtet zuerst
+  assert.ok(rates.impact.aktien && rates.evidence.length > 20);
+});
+
+test("Statistik-Parser: Eurostat JSON-stat und EZB SDMX", () => {
+  const js = parseJsonStat({ label: "x", value: { 0: 1.5, 1: 2.5 }, dimension: { time: { category: { index: { "2026-Q2": 1, "2026-Q1": 0 } } } } });
+  assert.deepEqual(js.points.map((p) => p.period), ["2026-Q1", "2026-Q2"]);
+  const ecb = parseEcb({ structure: { dimensions: { observation: [{ values: [{ id: "2026-01" }, { id: "2026-02" }] }] } }, dataSets: [{ series: { "0": { observations: { 0: [3.5], 1: [3.4] } } } }] });
+  assert.equal(ecb.points[1].value, 3.4);
+  assert.equal(parseEcb({}), null);
+  assert.equal(parseJsonStat({}), null);
+});
+
+test("Signal-Leser: Nachrichtenlage und Bauzinsen", () => {
+  const d = {
+    events: [{ id: "tariffs", name: "Zölle & Handelsstreit", n48h: 12, accel: 2, why: "Zölle verteuern Waren." }],
+    realEstate: { mortgage: { rate: 0.031, yearAgo: 0.039 } },
+  };
+  const s = buildSignals(d);
+  const t = s.find((x) => x.id === "event-tariffs"), m = s.find((x) => x.id === "mortgage-move");
+  assert.equal(t.kind, "warnung");
+  assert.equal(m.kind, "chance");
+  assert.ok(m.title.includes("3,10"));
+});
+
+import { parseForm4 } from "../collector/lib.mjs";
+test("Form 4: Käufer, Funktion und Kauf-Transaktion erkennen", () => {
+  const f = parseForm4(`<ownershipDocument><reportingOwner><rptOwnerName>Jane Doe</rptOwnerName><reportingOwnerRelationship><isDirector>true</isDirector><isOfficer>1</isOfficer><officerTitle>CEO</officerTitle></reportingOwnerRelationship></reportingOwner>
+    <nonDerivativeTransaction><transactionDate><value>2026-11-10</value></transactionDate><transactionCoding><transactionCode>P</transactionCode></transactionCoding><transactionAmounts><transactionShares><value>500</value></transactionShares><transactionPricePerShare><value>20.5</value></transactionPricePerShare><transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode></transactionAmounts></nonDerivativeTransaction>
+    <nonDerivativeTransaction><transactionCoding><transactionCode>S</transactionCode></transactionCoding><transactionAmounts><transactionShares><value>100</value></transactionShares></transactionAmounts></nonDerivativeTransaction></ownershipDocument>`);
+  assert.equal(f.owner.name, "Jane Doe");
+  assert.ok(f.owner.officer && f.owner.director);
+  assert.equal(f.txs.length, 2);
+  assert.equal(f.txs[0].code, "P");
+  assert.equal(f.txs[0].shares * f.txs[0].price, 10250);
+});
+
+import { parseFredCsv } from "../collector/insights.mjs";
+test("FRED-CSV: fehlende Werte (.) werden übersprungen", () => {
+  const p = parseFredCsv("observation_date,T10Y3M\n2026-11-01,0.5\n2026-11-02,.\n2026-11-03,-0.2\n");
+  assert.equal(p.length, 2);
+  assert.equal(p[1].value, -0.2);
+  assert.equal(parseFredCsv("<html>Fehler</html>"), null);
+});
+
+import { moodScore } from "../site/insights.js";
+test("Stimmungs-Barometer: gewichtetes Mittel, fehlende Quellen werden ausgelassen", () => {
+  assert.equal(moodScore({}), null);
+  const m = moodScore({ cnnFearGreed: { value: 80 }, fearGreed: { value: 60 } });
+  assert.equal(m.score, Math.round((80 * 0.3 + 60 * 0.15) / 0.45));
+  assert.equal(m.parts.length, 2);
+});
+
+import { rangeStats } from "../collector/insights.mjs";
+test("Rohstoffe: Lage in der 52-Wochen-Spanne", () => {
+  const r = rangeStats([...Array(30).fill(0).map((_, i) => 100 + i), 110]);
+  assert.equal(r.low52, 100);
+  assert.equal(r.high52, 129);
+  assert.ok(Math.abs(r.pos52 - 10 / 29) < 1e-9);
+  assert.equal(rangeStats([1, 2]), null);
+});
+
+import { topicOf } from "../site/heute.js";
+import { aiPrompt } from "../site/trust.js";
+test("Anpassen: Signale werden Interessen zugeordnet; Gesamtmarkt nie ausgeblendet", () => {
+  assert.equal(topicOf("hot-quantum"), "themes");
+  assert.equal(topicOf("move-btc"), "crypto");
+  assert.equal(topicOf("move-gold"), "commodities");
+  assert.equal(topicOf("move-world"), "stocks");
+  assert.equal(topicOf("sahm"), "macro");
+  assert.equal(topicOf("bubble-high"), null);
+});
+test("KI-Zusammenfassung enthält Lage und Hinweis auf Vorschläge statt Empfehlungen", () => {
+  const t = aiPrompt({ generatedAt: "2026-11-19T08:00:00Z", risk: { level: "gelb" }, bubble: { score: 61 }, events: [] }, [{ title: "Gold steigt leise" }]);
+  assert.ok(t.includes("gelb") && t.includes("61") && t.includes("Gold steigt leise") && t.includes("Vorschläge statt Empfehlungen"));
+});

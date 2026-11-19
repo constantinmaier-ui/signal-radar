@@ -19,6 +19,14 @@ globalThis.fetch = async (url, opts) => {
     const price = 50 + rnd() * 200;
     return json({ quoteSummary: { result: [{ financialData: { currentPrice: { raw: price }, targetMeanPrice: { raw: price * (0.9 + rnd() * 0.6) }, targetLowPrice: { raw: price * 0.7 }, targetHighPrice: { raw: price * 1.8 }, recommendationMean: { raw: 1.5 + rnd() * 2 }, recommendationKey: "buy", numberOfAnalystOpinions: { raw: Math.round(3 + rnd() * 40) }, revenueGrowth: { raw: 0.1 }, profitMargins: { raw: 0.2 } }, summaryDetail: { trailingPE: { raw: 10 + rnd() * 50 }, forwardPE: { raw: 10 + rnd() * 40 } }, price: { shortName: "Demo-Firma " + u.split("quoteSummary/")[1].split("?")[0], currency: "USD" } }] } });
   }
+  if (u.includes("company_tickers.json")) return json({ 0: { cik_str: 320193, ticker: "AAPL", title: "Demo Apple" }, 1: { cik_str: 1045810, ticker: "NVDA", title: "Demo Nvidia" } });
+  if (u.includes("data.sec.gov/submissions") && !INVESTORS.some((i) => u.includes(String(i.cik).padStart(10, "0")))) {
+    return json({ name: "DEMO FIRMA INC", filings: { recent: { form: ["4", "4", "10-Q"], accessionNumber: ["0000-26-1", "0000-26-2", "x"], filingDate: [new Date(now - 3 * 86400000).toISOString().slice(0, 10), new Date(now - 5 * 86400000).toISOString().slice(0, 10), "2026-01-01"], primaryDocument: ["xslF345X05/form4.xml", "xslF345X05/form4b.xml", "q.htm"] } } });
+  }
+  if (u.includes("/form4")) {
+    const who = u.includes("form4b") ? "Demo Vorständin" : "Demo Vorstand";
+    return text(`<ownershipDocument><issuer><issuerName>DEMO FIRMA</issuerName></issuer><reportingOwner><reportingOwnerId><rptOwnerName>${who}</rptOwnerName></reportingOwnerId><reportingOwnerRelationship><isDirector>0</isDirector><isOfficer>1</isOfficer><officerTitle>CFO</officerTitle></reportingOwnerRelationship></reportingOwner><nonDerivativeTable><nonDerivativeTransaction><transactionDate><value>2026-11-15</value></transactionDate><transactionCoding><transactionCode>P</transactionCode></transactionCoding><transactionAmounts><transactionShares><value>1000</value></transactionShares><transactionPricePerShare><value>150</value></transactionPricePerShare><transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode></transactionAmounts></nonDerivativeTransaction></nonDerivativeTable></ownershipDocument>`);
+  }
   if (u.includes("data.sec.gov/submissions")) {
     const cik = Number(u.match(/CIK(\d+)/)[1]); const inv = INVESTORS.find((i) => i.cik === cik);
     return json({ name: inv.fund.toUpperCase() + " LP", filings: { recent: { form: ["4", "13F-HR", "SC 13G", "13F-HR"], accessionNumber: ["0-0-1", "0001-26-000002", "0-0-3", "0001-26-000001"], reportDate: ["", "2026-09-30", "", "2026-06-30"], filingDate: ["", "2026-11-14", "", "2026-08-14"] } } });
@@ -30,6 +38,19 @@ globalThis.fetch = async (url, opts) => {
     return text(`<informationTable xmlns="http://www.sec.gov/edgar/document/thirteenf/informationtable">${pick.map((n, i) => `<infoTable><nameOfIssuer>${n}</nameOfIssuer><titleOfClass>COM</titleOfClass><cusip>C${i}${n.length}</cusip><value>${Math.round(rnd() * 1e9)}</value><shrsOrPrnAmt><sshPrnamt>${Math.round(rnd() * 1e7)}</sshPrnamt><sshPrnamtType>SH</sshPrnamtType></shrsOrPrnAmt></infoTable>`).join("")}</informationTable>`);
   }
   if (u.includes("cnn.io")) return json({ fear_and_greed: { score: 62.4, rating: "greed", previous_1_week: 55, previous_1_month: 48 }, fear_and_greed_historical: { data: Array.from({ length: 120 }, (_, i) => ({ y: 40 + (i % 40) })) } });
+  if (u.includes("api.github.com/search")) return json({ items: [{ full_name: "meta-llama/demo-agent", html_url: "https://example.com/r1", stargazers_count: 12000, description: "Demo-Projekt", language: "Python" }, { full_name: "demo-org/tool", html_url: "https://example.com/r2", stargazers_count: 8000, description: "Demo", language: "TypeScript" }] });
+  if (u.includes("huggingface.co/api/models")) return json([{ id: "Qwen/Demo-Model", likes: 900, downloads: 120000, pipeline_tag: "text-generation" }, { id: "demo-lab/vision", likes: 300, downloads: 5000, pipeline_tag: "image-to-text" }]);
+  if (u.includes("onlinelibrary.wiley.com") || u.includes("sciencedirect.com")) return text(`<rss><channel><item><title>Demo: Journal-Artikel über Faktorprämien</title><link>https://example.com/j1</link><pubDate>${new Date(now - 10 * 86400000).toUTCString()}</pubDate></item></channel></rss>`);
+  if (u.includes("fred.stlouisfed.org")) {
+    const id = u.match(/id=([A-Z0-9]+)/)[1], base = { T10Y3M: -0.3, BAMLH0A0HYM2: 3.1, SAHMREALTIME: 0.3 }[id];
+    return text("observation_date," + id + "\n" + Array.from({ length: 400 }, (_, i) => `${new Date(now - (400 - i) * 86400000).toISOString().slice(0, 10)},${i % 50 === 7 ? "." : (base + Math.sin(i / 40) * 0.4).toFixed(2)}`).join("\n"));
+  }
+  if (u.includes("eurostat")) return json({ label: "Demo: Hauspreisindex", value: { "0": 5.1, "1": -2.3, "2": 1.4, "3": 3.2 }, dimension: { time: { category: { index: { "2025-Q3": 0, "2025-Q4": 1, "2026-Q1": 2, "2026-Q2": 3 } } } } });
+  if (u.includes("data-api.ecb.europa.eu") && (u.includes("/MIR/") || u.includes("/YC/"))) {
+    const n = 24, base = u.includes("/MIR/") ? 3.6 : 2.7;
+    return json({ structure: { name: "Demo", dimensions: { observation: [{ values: Array.from({ length: n }, (_, i) => ({ id: `${2024 + Math.floor((i + 10) / 12)}-${String(((i + 10) % 12) + 1).padStart(2, "0")}` })) }] } }, dataSets: [{ series: { "0:0": { observations: Object.fromEntries(Array.from({ length: n }, (_, i) => [String(i), [base + Math.sin(i / 4) * 0.3]])) } } }] });
+  }
+  if (u.includes("arxiv.org") || u.includes("nber.org")) return text(`<rss><channel>${["Demo: Do retail investors chase attention?", "Demo: Momentum and crash risk in thematic ETFs"].map((t, i) => `<item><title>${t}</title><link>https://example.com/paper${i}</link><description>Demo-Zusammenfassung.</description><pubDate>${new Date(now - i * 86400000).toUTCString()}</pubDate></item>`).join("")}</channel></rss>`);
   if (u.includes("data-api.ecb.europa.eu")) return json({ dataSets: [{ series: { "0:0:0:0:0:0:0": { observations: { "0": [2.0] } } } }] });
   if (u.includes("finance.yahoo.com/v8")) {
     if (u.includes("HAG.DE")) return new Response("", { status: 404 }); // Ausfall simulieren
@@ -52,5 +73,5 @@ globalThis.fetch = async (url, opts) => {
   if (u.includes("polymarket")) return json({ events: [{ title: "Demo: Anthropic IPO?", slug: "demo", markets: [{ id: "m1", question: "Demo: Anthropic IPO before 2028?", outcomes: '["Yes","No"]', outcomePrices: '["0.41","0.59"]', volume: "123456", closed: false }] }] });
   if (u.includes("gdeltproject")) return json({ timeline: [{ data: Array.from({ length: 90 }, (_, i) => ({ value: 0.01 + (i > 83 ? 0.02 : 0) + rnd() * 0.005 })) }] });
   // allgemeine Feeds
-  return text(rss(["Demo: Fed signalisiert Zinssenkung", "Demo: SpaceX IPO Gerüchte", "Demo: Cyberangriff auf Konzern"]));
+  return text(rss(["Demo: Fed signalisiert Zinssenkung", "Demo: SpaceX IPO Gerüchte", "Demo: Cyberangriff auf Konzern", "Demo: Neue Zölle belasten Exporteure", "Demo: Ölpreis steigt nach OPEC-Entscheid"]));
 };

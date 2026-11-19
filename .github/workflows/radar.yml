@@ -3,7 +3,7 @@ name: Signal-Radar
 # Sammelt stündlich alle Quellen und veröffentlicht die Seite auf GitHub Pages.
 on:
   schedule:
-    - cron: "7 * * * *"      # jede Stunde (GitHub kann sich um ein paar Minuten verspäten)
+    - cron: "*/15 * * * *"   # alle 15 Minuten (GitHub kann sich um ein paar Minuten verspäten)
   workflow_dispatch:          # „Run workflow“-Knopf für sofortiges Aktualisieren
   push:
     branches: [main]
@@ -38,6 +38,8 @@ jobs:
           PAGES_URL: ${{ steps.pages.outputs.base_url }}/
           # Optional: Repo-Secret ANTHROPIC_API_KEY anlegen → Claude schreibt alle 6 Stunden den Lagebericht.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Höheres Abruf-Limit für die GitHub-Trend-Suche (automatisch vorhanden, nur Leserechte)
+          GITHUB_TOKEN: ${{ github.token }}
           # Die US-Börsenaufsicht verlangt einen Absender. Optional: Secret SEC_USER_AGENT = "Name deine@mail.de"
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || format('SignalRadar dashboard {0}/{1}', github.server_url, github.repository) }}
         run: node collector/collect.mjs

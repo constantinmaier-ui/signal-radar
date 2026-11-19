@@ -6,12 +6,20 @@
   <title>Signal-Radar</title>
   <meta name="description" content="Täglich verstehen, wo der Markt heiß läuft: Blasen-Meter, Hype-Karte, IPO-Radar und Live-Signale aus Dutzenden Quellen. Ohne Login.">
   <meta name="theme-color" content="#0d0d0d">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.coingecko.com https://api.binance.com https://hn.algolia.com https://nominatim.openstreetmap.org https://overpass-api.de; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Radar">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Signal-Radar – Wo läuft der Markt heiß?">
   <meta property="og:description" content="Blasen-Meter, Hype-Karte, Claude/OpenAI-IPO-Radar und Live-Signale. Kostenlos, ohne Login.">
   <meta property="og:image" content="og.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%233987e5' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23e66767'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -26,24 +34,57 @@
         </div>
       </div>
       <div class="top-actions">
-        <span class="live-pill" id="livePill" title="Seite aktualisiert sich selbst"><span class="pulse"></span><span id="liveText">LIVE</span></span>
+        <div class="seg mode-seg" id="modeSeg" role="group" aria-label="Ansicht"><button type="button" data-mode="easy" title="Das Wichtigste, einfach erklärt">Einsteiger</button><button type="button" data-mode="pro" title="Alle Kennzahlen und Tabellen">Profi</button></div>
+        <button class="refresh" id="refreshBtn" type="button" title="Jetzt aktualisieren. Automatisch jede Minute.">
+          <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-bg" cx="18" cy="18" r="15"/><circle class="ring" id="refreshRing" cx="18" cy="18" r="15"/><path class="arrow" d="M23.5 13.5A7 7 0 1 0 25 18m-1.5-4.5V9.8m0 3.7h-3.7"/></svg>
+          <span id="refreshText">Aktualisieren</span>
+        </button>
+        <span class="live-pill" id="livePill" hidden><span class="pulse"></span><span id="liveText">LIVE</span></span>
         <button class="btn btn-wa" id="shareBtn" type="button" aria-label="In WhatsApp teilen">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3a.5.5 0 0 0 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.4.8 3.2.6a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>
           <span>Teilen</span>
         </button>
+        <button class="btn btn-primary" id="installBtn" type="button" hidden title="Signal-Radar wie eine App installieren">App installieren</button>
+        <button class="btn btn-icon" id="prefsBtn" type="button" title="Anpassen: Interessen und Bereiche" aria-label="Anpassen">⚙</button>
+        <a class="btn btn-icon" href="#wissen" title="Lexikon &amp; Erklärungen" aria-label="Lexikon und Erklärungen">?</a>
         <button class="btn btn-icon" id="themeBtn" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
         </button>
       </div>
     </div>
-    <nav class="wrap tabs" aria-label="Bereiche">
-      <a href="#lage">Lage</a><a href="#plan">Mein Plan</a><a href="#anlagen">Anlagen</a><a href="#karte">Hype-Karte</a><a href="#perlen">Perlen</a><a href="#profis">Profis</a><a href="#ipo">IPO-Radar</a><a href="#stimmung">Stimmung</a><a href="#feed">News</a><a href="#lexikon">Lexikon</a>
+    <nav class="views" id="views" aria-label="Bereiche">
+      <a href="#heute" data-nav="heute"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 7v5l3 2"/></svg><span>Heute</span></a>
+      <a href="#plan" data-nav="plan"><svg viewBox="0 0 24 24"><path d="M12 3v9h9A9 9 0 1 1 12 3Zm3-.5A9 9 0 0 1 21.5 9H15Z"/></svg><span>Mein Plan</span></a>
+      <a href="#maerkte" data-nav="maerkte"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-9M15 7h5v5"/></svg><span>Märkte</span></a>
+      <a href="#chancen" data-nav="chancen"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.6 6.5 19.5l1-6.2L3 8.9 9 8Z"/></svg><span>Chancen</span></a>
+      <a href="#profis" data-nav="profis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>Profis</span></a>
+      <a href="#news" data-nav="news"><svg viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2Zm13 4h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></svg><span>News</span></a>
     </nav>
   </header>
 
   <main id="main" class="wrap">
     <div id="banner" class="banner" hidden></div>
-    <section id="ampel" class="ampel" aria-live="polite"></section>
+
+    <div class="view" data-view="heute">
+    <section id="check" class="check" aria-live="polite"></section>
+    <section id="signals" class="card">
+      <div class="card-head">
+        <div><h2>Die wichtigsten Signale</h2><p class="sub">Aus allen Quellen gelesen und übersetzt: Was ist los, was heißt das für dich, was könntest du tun?</p></div>
+        <div class="seg" id="sigFilter"><button type="button" data-k="all" class="on">Alle</button><button type="button" data-k="chance">Chancen</button><button type="button" data-k="warnung">Warnungen</button></div>
+      </div>
+      <div id="sigList" class="sig-list"></div>
+      <button class="btn btn-ghost btn-wide" id="sigMore" type="button" hidden></button>
+    </section>
+
+    <section id="askai" class="card askai">
+      <div><h2>Mit deiner eigenen KI besprechen</h2><p class="sub">Öffnet deine KI mit einer fertigen Zusammenfassung der heutigen Lage. Du brauchst dafür kein Passwort und keinen Schlüssel in dieser App. Die KI läuft in deinem eigenen Konto.</p></div>
+      <div class="askai-btns"><a class="btn btn-primary" id="aiClaude" href="#" target="_blank" rel="noopener">Mit Claude besprechen</a><a class="btn btn-ghost" id="aiChatgpt" href="#" target="_blank" rel="noopener">Mit ChatGPT besprechen</a><button class="btn btn-ghost" id="aiCopy" type="button">Für andere KI kopieren</button></div>
+    </section>
+
+    <section id="newsImpact" class="card">
+      <div class="card-head"><div><h2>Was die Nachrichten gerade bedeuten</h2><p class="sub">Die meistberichteten Ereignis-Arten der letzten 48 Stunden und wie solche Ereignisse typischerweise wirken. Pfeile: ↑ steigt eher, ↓ fällt eher, ↕ gemischt.</p></div><a class="btn btn-ghost" href="#news">Alle Ereignisse →</a></div>
+      <div id="eventsToday" class="events"></div>
+    </section>
 
     <section id="lage" class="grid-hero">
       <article class="card gauge-card">
@@ -57,7 +98,7 @@
         <div id="bubbleInfo" class="pop" hidden>
           Ein Wert aus 7 Bausteinen: Krypto-Gier, Überdehnung von Nasdaq &amp; Nvidia über der 200-Tage-Linie, Spekulationslaune (ARKK), Sorglosigkeit (VIX), IPO-Fieber und Blasen-Berichterstattung. 0 = Angst, 100 = Blasen-Alarm. Kein Timing-Signal, sondern ein Thermometer.
         </div>
-        <ul id="components" class="components"></ul>
+        <ul id="components" class="components pro-only"></ul>
       </article>
 
       <article class="card brief-card">
@@ -75,7 +116,9 @@
     </section>
 
     <section aria-label="Märkte" class="market-strip" id="market"></section>
+    </div>
 
+    <div class="view" data-view="plan" hidden>
     <section id="plan" class="card plan-card">
       <div class="card-head">
         <div>
@@ -109,6 +152,34 @@
       </div>
     </section>
 
+    <section id="hebel" class="card">
+      <div class="card-head"><div><h2>Was nachweislich dein Geld vermehrt</h2><p class="sub">Die größten Hebel sind unspektakulär. Hier mit deinen Zahlen aus dem Plan durchgerechnet.</p></div></div>
+      <div id="leversBody" class="levers"></div>
+    </section>
+
+    <section id="fitness" class="grid-2">
+      <article class="card"><div class="card-head"><div><h2>Dein Finanz-Fitness-Check</h2><p class="sub">Spielerisch, aber mit Absicht: Belohnt werden gute Gewohnheiten, nicht häufiges Handeln. Studien zeigen, dass verspielte Trading-Apps zu mehr riskantem Handeln verleiten (Chapkovski, Khapko &amp; Zoican).</p></div></div><div id="fitBody"></div></article>
+      <article class="card"><div class="card-head"><div><h2>Jeden Tag ein bisschen schlauer</h2></div></div><div id="quizBody" class="quiz"></div></article>
+    </section>
+
+    <section id="howto" class="card">
+      <div class="card-head"><div><h2>So setzt du den Plan um: in 4 Schritten</h2><p class="sub">Das Wie und Wo, ohne Fachchinesisch. Einmal einrichten, danach läuft es von allein.</p></div></div>
+      <ol class="steps">
+        <li><b>Depot eröffnen</b><span>Bei einer Direktbank oder einem Neobroker mit kostenlosen ETF-Sparplänen. Achte auf: Sitz in der EU, Einlagensicherung, Sparplan ab 1 €, keine Depotgebühr. Die Eröffnung dauert online etwa 15 Minuten.</span></li>
+        <li><b>ETF über die ISIN suchen</b><span>Die ISIN ist die eindeutige Nummer eines Fonds, z. B. IE00B4L5Y983 für den MSCI World. Gib sie in die Suche deines Brokers ein. So kaufst du genau das richtige Produkt.</span></li>
+        <li><b>Sparplan anlegen</b><span>Betrag und Tag wählen, z. B. 200 € am 2. des Monats. Ab jetzt kauft das Depot automatisch, egal ob die Kurse oben oder unten sind. Genau das schützt dich vor Hype und Panik.</span></li>
+        <li><b>Einmal im Jahr prüfen</b><span>Stimmt die Aufteilung noch? Wenn ein Baustein stark gewachsen ist, schichtest du zurück. Sonst gilt: nicht ständig reinschauen, nicht nervös werden.</span></li>
+      </ol>
+      <p class="fine">Steuer-Tipp: Mit einem Freistellungsauftrag bei deinem Broker bleiben in Deutschland 1.000 € Kapitalerträge pro Jahr steuerfrei (2.000 € für Paare).</p>
+    </section>
+    </div>
+
+    <div class="view" data-view="maerkte" hidden>
+    <section id="frueh" class="card">
+      <div class="card-head"><div><h2>Konjunktur-Frühwarnsystem</h2><p class="sub">Die drei am besten erforschten Vorboten von Rezessionen, direkt von der US-Notenbank (FRED). Grün = ruhig, Gelb = beobachten, Rot = Warnsignal. Kein Signal ist perfekt, aber zusammen sind sie das Beste, was öffentlich verfügbar ist.</p></div></div>
+      <div id="macro" class="macros"></div>
+    </section>
+
     <section id="anlagen" class="card">
       <div class="card-head">
         <div>
@@ -120,6 +191,96 @@
       <div id="assetGrid" class="asset-grid"></div>
     </section>
 
+    <section id="rohstoffe" class="card">
+      <div class="card-head"><div><h2>Rohstoff-Monitor</h2><p class="sub">18 Rohstoffe von Öl bis Kakao, mit Kursen der Terminbörsen (nächster Liefermonat, bis 15 Minuten verzögert). Der Balken zeigt, wo der Preis zwischen Jahrestief (links) und Jahreshoch (rechts) steht.</p></div><button class="btn btn-wa" id="shareCom" type="button">Rohstoff-Lage teilen</button></div>
+      <div id="commodities"></div>
+      <div class="com-boxes">
+        <div class="com-box">
+          <h3>Für Einkauf &amp; Absicherung</h3>
+          <ul>
+            <li><b>Nahe Jahrestief:</b> Ein guter Moment, Preise für die nächsten Monate über Terminkontrakte oder Lieferverträge festzuschreiben.</li>
+            <li><b>Starker Aufwärtstrend:</b> Prüfen, ob ein Teil des künftigen Bedarfs abgesichert werden sollte, bevor es teurer wird.</li>
+            <li><b>Hohe Schwankung:</b> Lieber in Tranchen absichern (zum Beispiel jeden Monat ein Drittel) statt alles auf einmal.</li>
+            <li><b>Währung beachten:</b> Die meisten Rohstoffe werden in Dollar gehandelt. Ein steigender Euro macht sie für europäische Käufer billiger.</li>
+          </ul>
+          <p class="fine">Offizielle Prognosen und Daten:
+            <a href="https://www.worldbank.org/en/research/commodity-markets" target="_blank" rel="noopener">Weltbank (Commodity Markets Outlook &amp; Pink Sheet)</a> ·
+            <a href="https://www.imf.org/en/Research/commodity-prices" target="_blank" rel="noopener">IWF-Rohstoffpreise</a> ·
+            <a href="https://www.eia.gov/outlooks/steo/" target="_blank" rel="noopener">US-Energiebehörde EIA (Energie-Prognose)</a> ·
+            <a href="https://www.usda.gov/oce/commodity/wasde" target="_blank" rel="noopener">USDA WASDE (Agrar)</a></p>
+        </div>
+        <div class="com-box">
+          <h3>Für Anleger</h3>
+          <ul>
+            <li><b>Breit statt einzeln:</b> Ein Rohstoff-Korb-ETC streut über Energie, Metalle und Agrar. Einzelne Rohstoffe schwanken extrem.</li>
+            <li><b>Gold ist die Ausnahme:</b> Gold kann man gut einzeln halten (z. B. physisch hinterlegtes ETC), als Krisenschutz.</li>
+            <li><b>Alternative Firmen-Aktien:</b> Minen- und Energiekonzerne profitieren von hohen Preisen, zahlen oft Dividende, schwanken aber mit dem Aktienmarkt.</li>
+            <li><b>Erwartung realistisch halten:</b> Langfristig bringen Rohstoffe deutlich weniger als Aktien, schützen aber in Inflationsphasen (Gorton &amp; Rouwenhorst, 2006; Erb &amp; Harvey, 2006).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="weitere" class="card">
+      <div class="card-head"><div><h2>Weitere und neuartige Anlageformen</h2><p class="sub">Was es neben Aktien, Anleihen, Gold, Immobilien und Krypto noch gibt, auch Neues und selten Erwähntes. Ehrlich bewertet: sinnvoll, nur gezielt oder Finger weg.</p></div></div>
+      <div id="instruments" class="instr-grid"></div>
+    </section>
+
+    <section id="immobilien" class="card">
+      <div class="card-head"><div><h2>Immobilien</h2><p class="sub">Bauzinsen, Hauspreise und Immobilien-Aktien aus offiziellen Statistiken (EZB, Eurostat). Dazu ein Rechner: Lohnt sich eine Wohnung als Kapitalanlage oder zum Selbstwohnen?</p></div></div>
+      <div id="reKpis" class="rates re-kpis"></div>
+      <div class="chart pro-only"><h4>Bauzins Deutschland, letzte 3 Jahre</h4><div id="reChart"></div></div>
+      <h3 class="sec-h">Mietspiegel &amp; amtliche Preise für deine Stadt</h3>
+      <p class="sub">Jede Stadt veröffentlicht ihren eigenen Mietspiegel, meist als PDF oder Online-Rechner. Hier findest du die amtlichen Quellen. Den passenden Wert trägst du unten in den Mietspiegel-Check ein.</p>
+      <div class="ms-finder">
+        <label for="msCity">Stadt</label>
+        <input id="msCity" list="msCities" value="München" autocomplete="off">
+        <datalist id="msCities"><option>München</option><option>Berlin</option><option>Hamburg</option><option>Köln</option><option>Frankfurt am Main</option><option>Stuttgart</option><option>Düsseldorf</option><option>Leipzig</option><option>Dortmund</option><option>Essen</option><option>Bremen</option><option>Dresden</option><option>Hannover</option><option>Nürnberg</option><option>Augsburg</option><option>Regensburg</option><option>Freiburg im Breisgau</option><option>Heidelberg</option><option>Münster</option><option>Bonn</option></datalist>
+        <div id="msLinks" class="ms-links"></div>
+      </div>
+      <form id="msForm" class="ms-check" autocomplete="off">
+        <label>Wohnfläche<span class="inp"><input id="msArea" name="area" type="number" inputmode="decimal" min="1" step="1" value="70"><em>m²</em></span></label>
+        <label>Verlangte Kaltmiete pro Monat<span class="inp"><input id="msRent" name="rent" type="number" inputmode="decimal" min="0" step="10" value="1350"><em>€</em></span></label>
+        <label>Ortsübliche Vergleichsmiete laut Mietspiegel<span class="inp"><input id="msRef" name="ref" type="number" inputmode="decimal" min="0" step="0.1" value="15.5"><em>€/m²</em></span></label>
+        <label class="radio"><input type="checkbox" name="brake" checked> Mietpreisbremse gilt in der Gemeinde</label>
+      </form>
+      <div id="msOut"></div>
+
+      <h3 class="sec-h">Rechner: Was taugt diese Wohnung?</h3>
+      <div class="re-grid">
+        <form id="reForm" class="plan-form re-form" autocomplete="off">
+          <label>Kaufpreis<span class="inp"><input id="rePrice" name="price" type="number" inputmode="decimal" min="0" step="1000" value="350000"><em>€</em></span></label>
+          <label>Kaltmiete pro Monat (aktuell oder ortsüblich)<span class="inp"><input id="reRent" name="rent" type="number" inputmode="decimal" min="0" step="10" value="1100"><em>€</em></span></label>
+          <label>Eigenkapital<span class="inp"><input id="reEquity" name="equity" type="number" inputmode="decimal" min="0" step="1000" value="80000"><em>€</em></span></label>
+          <label>Bauzins pro Jahr (vorausgefüllt mit aktuellem Schnitt)<span class="inp"><input id="reRate" name="rate" type="number" inputmode="decimal" min="0" step="0.05" value="3.6"><em>%</em></span></label>
+          <label>Tilgung pro Jahr<span class="inp"><input id="reTilg" name="tilg" type="number" inputmode="decimal" min="0" step="0.5" value="2"><em>%</em></span></label>
+        </form>
+        <div id="reOut"></div>
+      </div>
+    </section>
+
+    <section id="stimmung" class="grid-2">
+      <article class="card">
+        <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
+        <ul id="poly" class="poly"></ul>
+      </article>
+      <article class="card">
+        <div class="card-head"><div><h2>Stimmungs-Barometer: Angst oder Gier?</h2><p class="sub">Stimmungs-Barometer: 0 = Panik, 100 = Gier. Warren Buffett sagt: „Sei ängstlich, wenn andere gierig sind, und gierig, wenn andere ängstlich sind.“</p></div></div>
+        <div id="mood" class="mood"></div>
+        <h3 class="mini-h">Aktien (CNN)</h3>
+        <div id="cnn" class="fng"></div>
+        <h3 class="mini-h">Krypto</h3>
+        <div id="fng" class="fng"></div>
+        <ul id="trending" class="trending"></ul>
+      </article>
+    </section>
+    </div>
+
+    <div class="view" data-view="chancen" hidden>
+    <section id="trends" class="card">
+      <div class="card-head"><div><h2>Trend-Radar: Was gerade abhebt</h2><p class="sub">Was sich gerade ungewöhnlich stark bewegt, über alle Anlageklassen, Rohstoffe und Themen hinweg. „2,0×“ heißt: doppelt so weit wie eine typische Monatsschwankung. Dazu Aufmerksamkeit, die gerade sprunghaft steigt, und KI-Software, die Entwickler massenhaft herunterladen.</p></div></div>
+      <div id="trendsBody" class="trends"></div>
+    </section>
     <section id="karte" class="card">
       <div class="card-head">
         <div>
@@ -133,15 +294,15 @@
       </div>
     </section>
 
-    <section id="themen" class="card">
+    <section id="themen" class="card pro-only">
       <div class="card-head">
         <div>
           <h2>Themen-Ranking</h2>
           <p class="sub">Tippe ein Thema für Details. ☆ = auf deine Merkliste (bleibt auf diesem Gerät).</p>
         </div>
         <div class="seg" role="tablist" id="sortSeg">
-          <button type="button" data-sort="hype" class="on">Hype</button>
-          <button type="button" data-sort="momentum">Momentum</button>
+          <button type="button" data-sort="hype" class="on">Aufmerksamkeit</button>
+          <button type="button" data-sort="momentum">Kurs-Trend</button>
           <button type="button" data-sort="heat">Überhitzung</button>
           <button type="button" data-sort="news7d">News</button>
         </div>
@@ -159,22 +320,6 @@
       <div id="gemGrid" class="gem-grid"></div>
     </section>
 
-    <section id="profis" class="card">
-      <div class="card-head">
-        <div>
-          <h2>Was die Profis machen</h2>
-          <p class="sub">Große Investoren müssen der US-Börsenaufsicht (SEC) jedes Quartal ihre Aktien melden (Formular 13F). Diese Meldungen kommen bis zu 45 Tage nach Quartalsende, du siehst also, was sie <i>getan haben</i>, nicht was sie heute tun.</p>
-        </div>
-      </div>
-      <div id="consensus" class="consensus"></div>
-      <div id="investorGrid" class="investor-grid"></div>
-      <h3 class="sec-h">Analysten-Stimmen live <span class="count" id="voiceCount"></span></h3>
-      <div id="voiceBalance" class="balance"></div>
-      <div id="voices" class="voices"></div>
-      <h3 class="sec-h">Kursziele der Analysten</h3>
-      <p class="sub">Durchschnittliches Kursziel der Banken-Analysten für die nächsten 12 Monate im Vergleich zum aktuellen Kurs. Analysten liegen oft daneben, sind aber ein guter Stimmungsmesser.</p>
-      <div id="targets" class="targets"></div>
-    </section>
 
     <section id="ipo" class="card ipo-card">
       <div class="card-head">
@@ -186,20 +331,37 @@
       <div id="ipoMeter" class="ipo-meter"></div>
       <div id="ipoGrid" class="ipo-grid"></div>
     </section>
+    </div>
 
-    <section id="stimmung" class="grid-2">
-      <article class="card">
-        <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
-        <ul id="poly" class="poly"></ul>
-      </article>
-      <article class="card">
-        <div class="card-head"><div><h2>Angst oder Gier?</h2><p class="sub">Stimmungs-Barometer: 0 = Panik, 100 = Gier. Warren Buffett sagt: „Sei ängstlich, wenn andere gierig sind, und gierig, wenn andere ängstlich sind.“</p></div></div>
-        <h3 class="mini-h">Aktien (CNN)</h3>
-        <div id="cnn" class="fng"></div>
-        <h3 class="mini-h">Krypto</h3>
-        <div id="fng" class="fng"></div>
-        <ul id="trending" class="trending"></ul>
-      </article>
+    <div class="view" data-view="profis" hidden>
+    <section id="profis" class="card">
+      <div class="card-head">
+        <div>
+          <h2>Was die Profis machen</h2>
+          <p class="sub">Große Investoren müssen der US-Börsenaufsicht (SEC) jedes Quartal ihre Aktien melden (Formular 13F). Diese Meldungen kommen bis zu 45 Tage nach Quartalsende, du siehst also, was sie <i>getan haben</i>, nicht was sie heute tun.</p>
+        </div>
+      </div>
+      <div id="consensus" class="consensus"></div>
+      <div id="investorGrid" class="investor-grid"></div>
+      <h3 class="sec-h">Insider kaufen eigene Aktien (letzte 30 Tage)</h3>
+      <p class="sub">Vorstände und Aufsichtsräte müssen Käufe eigener Aktien innerhalb von 2 Tagen bei der US-Börsenaufsicht melden. Gezeigt werden nur echte Käufe mit eigenem Geld, keine Bonus-Aktien und keine Verkäufe. Studien zeigen: Solche Käufe, besonders wenn mehrere Insider gleichzeitig kaufen, gingen im Schnitt besseren Kursen voraus (Lakonishok &amp; Lee 2001; Cohen, Malloy &amp; Pomorski 2012).</p>
+      <div id="insiders" class="insiders"></div>
+      <h3 class="sec-h">Analysten-Stimmen live <span class="count" id="voiceCount"></span></h3>
+      <div id="voiceBalance" class="balance"></div>
+      <div id="voices" class="voices"></div>
+      <div class="pro-only"><h3 class="sec-h">Kursziele der Analysten</h3>
+      <p class="sub">Durchschnittliches Kursziel der Banken-Analysten für die nächsten 12 Monate im Vergleich zum aktuellen Kurs. Analysten liegen oft daneben, sind aber ein guter Stimmungsmesser.</p>
+      <div id="targets" class="targets"></div></div>
+    </section>
+
+
+
+    </div>
+
+    <div class="view" data-view="news" hidden>
+    <section id="eventsSec" class="card">
+      <div class="card-head"><div><h2>Ereignisse und ihre typische Wirkung</h2><p class="sub">Jede Meldung wird einer Ereignis-Art zugeordnet: Zinsen, Zölle, Krieg, Wahlen, Quartalszahlen und mehr. Die Pfeile zeigen historische Muster, keine Garantie. Unter „Was sagt die Forschung?“ steht jeweils die Quelle.</p></div></div>
+      <div id="eventsAll" class="events"></div>
     </section>
 
     <section id="feed" class="card">
@@ -218,6 +380,35 @@
       <button class="btn btn-ghost btn-wide" id="moreBtn" type="button" hidden>Mehr anzeigen</button>
     </section>
 
+    </div>
+
+    <div class="view" data-view="wissen" hidden>
+    <section id="about" class="card about">
+      <h2>Über das Radar</h2>
+      <p>Das Signal-Radar ist ein privates Projekt. Es soll Menschen helfen, ihr Geld vernünftig anzulegen, ohne Fachstudium und ohne jemandem etwas verkaufen zu wollen. Es gibt keine Werbung, keine Provisionen und kein Konto.</p>
+      <p><b>Was es anders macht:</b> Die meisten Finanzportale zeigen Kurse und Nachrichten. Was das für dich bedeutet, musst du dort selbst herausfinden. Das Radar liest rund 40 Quellen, von der US-Börsenaufsicht bis zur Weltbank, und übersetzt sie in einfache Hinweise. Bei jedem Hinweis steht, woher er kommt und wie gut er belegt ist. Wenn etwas nur schwach belegt ist, steht das auch da.</p>
+      <p><b>Was es nicht macht:</b> Es gibt keine Kauftipps und keine Kursprognosen. Kurzfristig kann niemand Kurse verlässlich vorhersagen, auch keine KI. Das Radar zeigt Muster, Wahrscheinlichkeiten und Risiken. Entscheiden musst du selbst.</p>
+      <p><b>Offen und nachprüfbar:</b> Der komplette Code ist öffentlich auf GitHub. Jede Berechnung lässt sich nachlesen, und jede Datenquelle ist frei zugänglich.</p>
+    </section>
+
+    <section id="installieren" class="card">
+      <div class="card-head"><div><h2>Als App installieren</h2><p class="sub">Das Radar lässt sich auf jedem Gerät wie eine App installieren: eigenes Symbol, eigenes Fenster, öffnet auch offline mit den letzten Daten. Kostenlos, ohne App-Store und ohne Konto.</p></div></div>
+      <div class="steps install-steps">
+        <div><b>Windows / Mac (Edge oder Chrome)</b><span>Oben auf „App installieren“ klicken. Oder in der Adresszeile auf das Symbol mit dem Plus bzw. dem Monitor tippen und dann „Installieren“.</span></div>
+        <div><b>Android (Chrome)</b><span>Menü ⋮ → „App installieren“ oder „Zum Startbildschirm hinzufügen“.</span></div>
+        <div><b>iPhone / iPad (Safari)</b><span>Teilen-Symbol (Quadrat mit Pfeil) → „Zum Home-Bildschirm“.</span></div>
+        <div><b>Sicher?</b><span>Ja. Die App läuft im geschützten Bereich deines Browsers, braucht keine Rechte auf deinem Gerät und speichert nichts auf fremden Servern. Details stehen unten unter „Sicherheit“.</span></div>
+      </div>
+    </section>
+
+    <section id="forschung" class="card">
+      <div class="card-head"><div><h2>Was die Forschung sagt</h2><p class="sub">Die am besten belegten Erkenntnisse über Geldanlage und wie das Radar sie umsetzt. Diese Grundregeln ändern sich selten. Neue Studien erscheinen unten automatisch.</p></div></div>
+      <div id="principles" class="principles"></div>
+      <h3 class="sec-h">Neue Studien (automatisch aktualisiert)</h3>
+      <p class="sub">Die neuesten Fachartikel aus den Archiven arXiv und NBER. Mit Claude-Schlüssel werden die Titel ins Deutsche übersetzt.</p>
+      <div id="papers" class="papers"></div>
+    </section>
+
     <section id="lexikon" class="card">
       <div class="card-head"><div><h2>Lexikon: Börse in einfachen Worten</h2><p class="sub">Alle Begriffe vom Radar, ohne Fachchinesisch. Unterstrichene Wörter auf der Seite kannst du antippen.</p></div></div>
       <input id="lexSearch" type="search" placeholder="Begriff suchen …" aria-label="Lexikon durchsuchen">
@@ -225,6 +416,7 @@
     </section>
 
     <section id="methodik" class="card method">
+      <p class="easy-only hint">Tipp: Oben auf „Profi“ umschalten, um alle Kennzahlen, Tabellen und Diagramme zu sehen.</p>
       <h2>Methodik &amp; Quellen</h2>
       <div class="method-grid">
         <div>
@@ -243,15 +435,21 @@
           <h3>Mein Plan</h3>
           <p>Beispiel-Aufteilungen nach dem Kern-Satellit-Prinzip. Die Prognose kommt aus 2.000 Zufalls-Simulationen mit vorsichtigen Langfrist-Annahmen. Die Marktlage verschiebt nur den kleinen Satelliten, nie den Kern.</p>
           <h3>Aktualisierung</h3>
-          <p>Ein Sammler holt alle Quellen jede Stunde. Die Seite lädt alle 5 Minuten neu und holt Bitcoin-Kurs und Tech-Meldungen jede Minute direkt nach.</p>
+          <p>Ein Sammler holt alle Quellen alle 15 Minuten. Die Seite prüft jede Minute auf neue Daten und holt Bitcoin, Ethereum und Tech-Meldungen jede Minute live. Mit „Aktualisieren“ geht es sofort.</p>
         </div>
       </div>
+      <h3>Unsere Quellen und wofür wir sie nutzen</h3>
+      <div id="sourceTable" class="tscroll"></div>
       <details class="sources">
         <summary id="sourceSummary">Quellen-Status</summary>
         <ul id="sourceList"></ul>
       </details>
+      <h3>Sicherheit</h3>
+      <p>Das Radar ist eine reine Webseite ohne Server, ohne Login und ohne Datenbank. Deine Eingaben (Plan, Merkliste, Rechner) bleiben nur in deinem Browser. Eine strenge Sicherheitsrichtlinie (Content-Security-Policy) erlaubt nur Verbindungen zu fest freigegebenen Datenquellen und blockiert fremden Code. Die Verbindung ist immer verschlüsselt (HTTPS).</p>
+      <p class="fine" id="appVersion">Version 2.0</p>
       <p class="disclaimer"><b>Keine Anlageberatung.</b> Das Radar zeigt Aufmerksamkeit und Kursdynamik, keine Empfehlungen. Hype kann lange anhalten, und Blasen können weiter wachsen. Investiere nur, was du verstehst und verlieren kannst.</p>
     </section>
+    </div>
   </main>
 
   <div id="drawer" class="drawer" hidden>
@@ -259,6 +457,14 @@
     <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
       <button class="btn btn-icon drawer-close" type="button" data-close aria-label="Schließen">✕</button>
       <div id="drawerBody"></div>
+    </div>
+  </div>
+  <div id="prefsPanel" class="drawer" hidden>
+    <div class="drawer-backdrop" data-close-prefs></div>
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="prefsTitle">
+      <button class="btn btn-icon drawer-close" type="button" data-close-prefs aria-label="Schließen">✕</button>
+      <h2 id="prefsTitle">Anpassen</h2>
+      <div id="prefsBody" class="prefs"></div>
     </div>
   </div>
   <div id="tooltip" class="tooltip" role="status" hidden></div>

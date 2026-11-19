@@ -285,3 +285,28 @@ export function extractQuote(title) {
   const m = title.match(/[„“"«»‘'](.{12,160}?)[“”"«»’']/);
   return m ? m[1].trim() : null;
 }
+
+// ---------- Insider-Meldungen (SEC Form 4) ----------
+/** Liest eine Form-4-XML: Wer (Name, Funktion) hat wann wie viele Aktien gekauft/verkauft? */
+export function parseForm4(xml) {
+  const get = (b, path) => {
+    let cur = b;
+    for (const tag of path) { const m = cur.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`, "i")); if (!m) return ""; cur = m[1]; }
+    return cleanText(cur.replace(/<\/?value>/gi, ""));
+  };
+  const owner = {
+    name: get(xml, ["reportingOwner", "rptOwnerName"]),
+    director: /^(1|true)$/i.test(get(xml, ["reportingOwnerRelationship", "isDirector"])),
+    officer: /^(1|true)$/i.test(get(xml, ["reportingOwnerRelationship", "isOfficer"])),
+    title: get(xml, ["reportingOwnerRelationship", "officerTitle"]),
+  };
+  const issuer = get(xml, ["issuer", "issuerName"]);
+  const txs = (xml.match(/<nonDerivativeTransaction>[\s\S]*?<\/nonDerivativeTransaction>/gi) || []).map((t) => ({
+    code: get(t, ["transactionCoding", "transactionCode"]),
+    date: get(t, ["transactionDate"]),
+    shares: Number(get(t, ["transactionAmounts", "transactionShares"])) || 0,
+    price: Number(get(t, ["transactionAmounts", "transactionPricePerShare"])) || 0,
+    ad: get(t, ["transactionAmounts", "transactionAcquiredDisposedCode"]),
+  }));
+  return { owner, issuer, txs };
+}

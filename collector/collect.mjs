@@ -10,8 +10,10 @@
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE } from "./config.mjs";
-import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems } from "./extra.mjs";
+import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
+import { buildSignals } from "../site/signals.js";
+import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends } from "./insights.mjs";
+import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
   scale, blend, zoneLabel, mean,
@@ -123,6 +125,8 @@ async function fetchNews() {
   const jobs = [];
   for (const th of THEMES) th.news.forEach((q, i) => jobs.push({ kind: "theme", theme: th.id, url: gnewsUrl(q, i === 0 ? "en" : "de"), label: `Google News: ${th.short} ${i === 0 ? "EN" : "DE"}` }));
   for (const w of IPO_WATCH) jobs.push({ kind: "ipo", ipo: w.id, url: gnewsUrl(w.query, "en"), label: `Google News: ${w.name}` });
+  // Politik, Notenbanken, Konjunktur: eigene Suchen, damit die Ereignis-Analyse genug Meldungen hat
+  for (const ev of EVENTS) ev.q.forEach((q, i) => jobs.push({ kind: "event", url: gnewsUrl(q, i === 0 ? "de" : "en"), label: `Google News: ${ev.name} ${i === 0 ? "DE" : "EN"}` }));
   for (const f of FEEDS) jobs.push({ kind: "feed", feed: f, url: f.url, label: f.name });
 
   const results = await pool(jobs, 8, async (j) => {
@@ -243,6 +247,7 @@ async function claudeBriefing(data, prevData) {
     ipoRadar: data.ipoWatch.map((w) => ({ name: w.name, news7T: w.news7d, aufmerksamkeitTrend: w.attention?.mom })),
     prognosemaerkte: data.polymarket.slice(0, 6).map((p) => [p.question, p.prob]),
     schlagzeilen: data.news.filter((n) => n.signals.length).slice(0, 40).map((n) => `${n.title} (${n.source})`),
+    nachrichtenLage: (data.events || []).slice(0, 5).map((e) => ({ art: e.name, meldungen48h: e.n48h, beispiele: e.top.map((t) => t.title) })),
   };
   try {
     const client = new Anthropic();
@@ -255,7 +260,7 @@ async function claudeBriefing(data, prevData) {
       system:
         "Du schreibst das tägliche Briefing für ein Investment-Signal-Dashboard, gelesen von Privatanlegern in WhatsApp-Gruppen. " +
         "Deutsch, klar, ohne Fachchinesisch, max. 170 Wörter. Format: genau 5 Zeilen, jede beginnt mit einem passenden Emoji und einem fettgedruckten Stichwort (**so**), danach ein Satz. " +
-        "Zeile 1: Gesamtlage/Blasen-Meter. Zeile 2: stärkstes Thema. Zeile 3: unterschätztes Thema (Quadrant 'quiet' = Kurs steigt, wenig Hype). Zeile 4: Warnsignal. Zeile 5: IPO-/Claude-Radar. " +
+        "Zeile 1: Gesamtlage/Blasen-Meter. Zeile 2: stärkstes Thema. Zeile 3: unterschätztes Thema (Quadrant 'quiet' = Kurs steigt, wenig Hype). Zeile 4: Warnsignal (beziehe die nachrichtenLage ein: welche Ereignisse wie Zinsen, Zölle oder Krisen bewegen gerade den Markt und was bedeutet das). Zeile 5: IPO-/Claude-Radar. " +
         "Nur Aussagen, die aus den gelieferten Daten folgen; keine erfundenen Zahlen oder Nachrichten. Keine Kauf- oder Verkaufsempfehlungen – beschreibe Beobachtungen.",
       messages: [{ role: "user", content: `Daten (JSON):\n${JSON.stringify(compact)}` }],
     });
@@ -271,8 +276,8 @@ async function claudeBriefing(data, prevData) {
 }
 
 // Englische Analysten-Schlagzeilen ins Deutsche (optional, nur mit API-Schlüssel; bereits übersetzte werden wiederverwendet)
-async function claudeTranslate(items, prevData) {
-  const cache = new Map((prevData?.voices?.items || []).filter((v) => v.de).map((v) => [v.title, v.de]));
+async function claudeTranslate(items, prevItems = []) {
+  const cache = new Map((prevItems || []).filter((v) => v.de).map((v) => [v.title, v.de]));
   for (const v of items) if (cache.has(v.title)) v.de = cache.get(v.title);
   const todo = items.map((v, i) => ({ v, i })).filter(({ v }) => v.lang === "en" && !v.de).slice(0, 16);
   if (!todo.length || !process.env.ANTHROPIC_API_KEY) return;
@@ -307,9 +312,11 @@ async function main() {
   ]);
   const chatter = await fetchBubbleChatter();
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
+  const [research, realEstate, macro, commodities, tech] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status }), fetchTechTrends({ get, status }, NOW)]);
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
   ]);
+  const insiders = await fetchInsiders(ctx, UNIVERSE.filter((t) => !t.includes(".") && !t.endsWith("-USD")), previous.prevData, NOW);
   const universePrices = Object.fromEntries(UNIVERSE.filter((t) => prices[t]).map((t) => [t, prices[t]]));
   const gems = findGems({ universePrices, consensus, benchmark3m: prices["^GSPC"]?.chg3m });
   const analysts = Object.entries(consensus).map(([sym, c]) => ({ sym, ...c, chg3m: prices[sym]?.chg3m ?? null, riskClass: prices[sym]?.riskClass ?? null }))
@@ -388,7 +395,8 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities, tech,
+    events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),
     news: news.slice(0, 400).map(({ summary, ipoHint, ...n }) => n),
@@ -397,13 +405,21 @@ async function main() {
     keywords: { themes: Object.fromEntries(THEMES.map((t) => [t.id, t.kw])), signals: Object.fromEntries(SIGNAL_WORDS.map((s) => [s.tag, s.kw])) },
   };
   data.aiBriefing = await claudeBriefing(data, previous.prevData);
-  await claudeTranslate(data.voices.items, previous.prevData);
+  await claudeTranslate(data.voices.items, previous.prevData?.voices?.items);
+  await claudeTranslate(data.research, previous.prevData?.research);
   data.sources = status.sort((a, b) => Number(a.ok) - Number(b.ok));
 
   // Historie: ein Eintrag pro Tag (der neueste Lauf des Tages gewinnt), 365 Tage
   const today = new Date(NOW).toISOString().slice(0, 10);
   const hist = previous.history.filter((h) => h.date !== today);
-  hist.push({ date: today, bubble: data.bubble.score, themes: Object.fromEntries(themes.map((t) => [t.id, [t.scores.hype, t.scores.momentum, t.scores.heat]])) });
+  // Für die spätere Trefferquote: welche Signale gab es, und wie standen die Kurse?
+  const px = {};
+  for (const a of data.assets || []) if (!a.missing) px[`a:${a.id}`] = Math.round(a.last * 1e4) / 1e4;
+  for (const c of data.commodities || []) if (!c.missing) px[`c:${c.id}`] = Math.round(c.last * 1e4) / 1e4;
+  for (const t of themes) if (t.price) px[`t:${t.id}`] = Math.round(t.price.last * 1e4) / 1e4;
+  let sig = [];
+  try { sig = buildSignals(data, previous.history).slice(0, 25).map((x) => `${x.kind[0]}:${x.id}`); } catch { /* Auswertung ist optional */ }
+  hist.push({ date: today, bubble: data.bubble.score, themes: Object.fromEntries(themes.map((t) => [t.id, [t.scores.hype, t.scores.momentum, t.scores.heat]])), sig, px });
   const history = hist.slice(-365);
 
   await mkdir(OUT_DIR, { recursive: true });
