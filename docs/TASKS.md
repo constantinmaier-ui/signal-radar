@@ -40,6 +40,9 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] **Investor profile survey at the start** (always editable): risk tolerance (Grable & Lytton 1999), risk capacity, horizon, loss aversion, experience (as MiFID II suitability asks) → sets goal profile
 - [ ] **Optional current portfolio** (local + encrypted, app works without it): ISIN lookup via OpenFIGI, import from Portfolio Performance/Ghostfolio CSV; concentration, costs, fit to goal
 - [ ] **Learning units "How the greats got there"** (Buffett, Munger, Bogle, Lynch, Templeton, Graham, Simons, Dalio): short, gamified (streaks, badges, quiz), with sources; what is luck vs. method
+- [ ] **AI bubble monitor data (free, official where possible)**: hyperscaler capex (Microsoft, Alphabet, Amazon, Meta) from SEC XBRL company facts; AI compute and model data (Epoch AI); MSCI World top-10 concentration from issuer holdings files; Nvidia share of index
+- [ ] **ETF facts**: holdings, costs (TER), concentration from issuer files (iShares, Vanguard, Xtrackers); OpenFIGI for ISIN lookup
+- [ ] **Bitcoin on-chain basics**: mempool.space (fees, hashrate; open source, free)
 - [ ] **More little-known free APIs**: DBnomics (80+ statistics offices in one API), Metaculus (forecasts), bund.dev (German government APIs), OpenFIGI, GLEIF, OECD/IMF SDMX
 - [ ] 👤 Optional: free OpenAlex key as secret `OPENALEX_API_KEY` (more daily budget)
 
