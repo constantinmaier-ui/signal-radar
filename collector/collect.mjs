@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
 import { buildSignals } from "../site/signals.js";
-import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends } from "./insights.mjs";
+import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
@@ -230,7 +230,13 @@ async function loadPrevious() {
     get(`${u}data/history.json?t=${NOW}`, { type: "json" }),
     get(`${u}data/data.json?t=${NOW}`, { type: "json" }),
   ]);
-  return { history: Array.isArray(history) ? history : [], prevData: prevData && !prevData.demo ? prevData : null };
+  let hist = Array.isArray(history) ? history : [];
+  // Ersatz: dauerhaft gesicherter Verlauf aus dem Zweig "data", falls die Live-Seite gerade nichts liefert
+  if (!hist.length && process.env.HISTORY_FALLBACK_URL) {
+    const fb = await get(`${process.env.HISTORY_FALLBACK_URL}?t=${NOW}`, { type: "json" });
+    if (Array.isArray(fb)) hist = fb;
+  }
+  return { history: hist, prevData: prevData && !prevData.demo ? prevData : null };
 }
 
 async function claudeBriefing(data, prevData) {
@@ -312,6 +318,7 @@ async function main() {
   ]);
   const chatter = await fetchBubbleChatter();
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
+  const [adoption, cryptoFlows, power] = await Promise.all([fetchAdoption({ get, pool, status }), fetchCryptoFlows({ get, status }), fetchPower({ get, status })]);
   const [research, realEstate, macro, commodities, tech] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status }), fetchTechTrends({ get, status }, NOW)]);
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
@@ -395,7 +402,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities, tech,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),

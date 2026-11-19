@@ -2,8 +2,9 @@
 
 import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
-import { renderCheck, renderSignals, initSignalControls, showView } from "./heute.js";
-import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness } from "./trust.js";
+import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
+import { hypeInfo } from "./signals.js";
+import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderCommodities, commodityShareText } from "./insights.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
@@ -212,7 +213,7 @@ function renderThemes() {
     const w = state.watch.has(t.id);
     return `<div class="trow" role="listitem" data-open="${t.id}" tabindex="0">
       <button class="star ${w ? "on" : ""}" type="button" data-star="${t.id}" aria-label="${w ? "Von Merkliste entfernen" : "Auf Merkliste"}" aria-pressed="${w}">${w ? "★" : "☆"}</button>
-      <div class="tname">${esc(t.name)}<small><span class="badge ${qd.cls}">${qd.icon} ${qd.label}</span> ${esc(t.etf)} 3 M <span class="${dirCls(t.price?.chg3m)}">${pct(t.price?.chg3m, 0)}</span></small></div>
+      <div class="tname">${esc(t.name)}${hypeInfo(t) ? `<span class="hype" data-tip="${esc(`<b>Warum Hype?</b><br>${esc(hypeInfo(t))}`)}">⚡ Hype</span>` : ""}<small><span class="badge ${qd.cls}">${qd.icon} ${qd.label}</span> ${esc(t.etf)} 3 M <span class="${dirCls(t.price?.chg3m)}">${pct(t.price?.chg3m, 0)}</span></small></div>
       <div class="c-spark">${spark(t.attention?.spark, { label: `Wikipedia-Aufrufe ${t.name}` })}</div>
       ${metricCell(t.scores.hype, "var(--s1)")}
       ${metricCell(t.scores.momentum, "var(--s3)", "c-mom")}
@@ -298,7 +299,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderCommodities, renderTrends, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -497,11 +498,13 @@ $("#gauge").innerHTML = '<div class="skel" style="height:170px"></div>';
 bindEvents();
 initPlan();
 initSignalControls();
+initGoalPicker(() => state.data && [renderCheck, renderSignals].forEach(safe));
 initRealEstateForm();
 initMietspiegel();
 renderMeta();
 applyPrefs();
 renderFitness();
+initBackup();
 $("#prefsBtn").addEventListener("click", () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; });
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));

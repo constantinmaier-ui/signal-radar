@@ -25,8 +25,8 @@ export function buildSignals(d, history = []) {
   for (const t of d.themes || []) {
     const sc = t.scores || {}, pr = t.price || {};
     if (sc.quadrant === "quiet" && ok(sc.momentum) && sc.momentum >= 60) add({ id: `quiet-${t.id}`, kind: "chance", weight: 60 + sc.momentum / 5, view: "chancen", title: `${t.name}: steigt leise`, text: `Der Themen-ETF ${t.etf} liegt in 3 Monaten bei ${ok(pr.chg3m) ? p0(pr.chg3m) : "–"}, aber kaum jemand redet darüber. Das ist oft die interessanteste Phase.`, todo: "Gut für eine kleine Beimischung (wenige Prozent) im Themen-Anteil deines Plans.", source: "Hype-Karte" });
-    if (sc.quadrant === "overheated") add({ id: `hot-${t.id}`, kind: "warnung", weight: 70 + (sc.heat || 0) / 5, view: "chancen", title: `${t.name}: überhitzt`, text: `${ok(pr.ext200) ? p0(pr.ext200) + " über dem Durchschnitt der letzten 200 Tage" : "Weit über dem Durchschnitt"}, dazu viel Aufmerksamkeit. Nach solchen Phasen kommen oft Rücksetzer.`, todo: "Jetzt nicht neu einsteigen. Wer schon drin ist, kann einen Teil des Gewinns sichern.", source: "Hype-Karte" });
-    if (sc.quadrant === "noise" && ok(sc.hype) && sc.hype >= 70) add({ id: `noise-${t.id}`, kind: "warnung", weight: 50 + sc.hype / 10, view: "chancen", title: `${t.name}: viel Lärm, wenig Kurs`, text: "Alle reden darüber, aber der Kurs zieht nicht mit. Typisches Muster bei Hype-Themen.", todo: "Nicht von Schlagzeilen leiten lassen.", source: "Hype-Karte" });
+    if (sc.quadrant === "overheated") add({ id: `hot-${t.id}`, hype: hypeInfo(t), kind: "warnung", weight: 70 + (sc.heat || 0) / 5, view: "chancen", title: `${t.name}: überhitzt`, text: `${ok(pr.ext200) ? p0(pr.ext200) + " über dem Durchschnitt der letzten 200 Tage" : "Weit über dem Durchschnitt"}, dazu viel Aufmerksamkeit. Nach solchen Phasen kommen oft Rücksetzer.`, todo: "Jetzt nicht neu einsteigen. Wer schon drin ist, kann einen Teil des Gewinns sichern.", source: "Hype-Karte" });
+    if (sc.quadrant === "noise" && ok(sc.hype) && sc.hype >= 70) add({ id: `noise-${t.id}`, hype: hypeInfo(t), kind: "warnung", weight: 50 + sc.hype / 10, view: "chancen", title: `${t.name}: viel Lärm, wenig Kurs`, text: "Alle reden darüber, aber der Kurs zieht nicht mit. Typisches Muster bei Hype-Themen.", todo: "Nicht von Schlagzeilen leiten lassen.", source: "Hype-Karte" });
   }
 
   // 3) Krypto-Stimmung
@@ -81,6 +81,12 @@ export function buildSignals(d, history = []) {
     add({ id: `com-${c.id}`, kind: "info", weight: 50 + Math.min(15, Math.abs(c.chg1m) * 50), view: "maerkte", title: `${c.name} ${up ? "steigt" : "fällt"} ${p0(c.chg1m)} in einem Monat`, text: up ? "Starke Preisanstiege bei Rohstoffen landen oft mit Verzögerung bei Herstellern und Verbrauchern." : "Deutlich gefallene Preise entlasten Firmen, die diesen Rohstoff einkaufen.", todo: up ? "Für Einkäufer: Absicherung des künftigen Bedarfs prüfen. Für Anleger: nicht hinterherkaufen." : "Für Einkäufer: Gelegenheit, Preise festzuschreiben. Für Anleger: kein Grund zur Panik.", source: "Rohstoff-Monitor" });
   }
 
+  // 8e) Geldfluss in Krypto & Strompreis
+  const sc = d.cryptoFlows?.stablecoins;
+  if (sc && ok(sc.chg30) && Math.abs(sc.chg30) >= 0.05) add({ id: "stablecoin-flow", kind: "info", weight: 48, view: "chancen", title: sc.chg30 > 0 ? "Frisches Geld fließt in Krypto" : "Geld fließt aus Krypto ab", text: `Die Menge an Stablecoins (digitale Dollar) hat sich in 30 Tagen um ${p0(sc.chg30)} verändert. Das gilt als Hinweis auf Kaufkraft im Kryptomarkt, die Forschung dazu ist aber jung.`, todo: "Nur relevant für den kleinen Krypto-Anteil deines Plans.", source: "DefiLlama" });
+  const pw = d.power;
+  if (pw && ok(pw.avg) && ok(pw.avg30) && pw.avg30 > 0 && pw.avg / pw.avg30 - 1 >= 0.4) add({ id: "power-spike", kind: "info", weight: 46, view: "chancen", title: `Strompreis deutlich über dem Schnitt: ${Math.round(pw.avg)} €/MWh`, text: `Der Börsenstrompreis liegt ${p0(pw.avg / pw.avg30 - 1)} über dem 30-Tage-Schnitt. Das belastet energieintensive Branchen wie Chemie und Stahl.`, todo: "Für Einkäufer: Absicherung prüfen. Für Anleger: kurzfristige Spitzen nicht überbewerten.", source: "Energy-Charts" });
+
   // 9) Nachrichtenlage: Ereignis-Arten, über die gerade auffällig viel berichtet wird
   const TODO = {
     rates: "Zinsänderungen wirken über Monate. Plan nicht hektisch umbauen. Bei Senkungen profitieren Anleihen und Immobilien.",
@@ -107,27 +113,82 @@ export function buildSignals(d, history = []) {
 
 const prettyName = (n) => String(n || "").toLowerCase().replace(/\b(inc|corp|co|ltd|plc|com|new|cl a|cl b)\b\.?/g, "").replace(/\s+/g, " ").trim().replace(/\b\w/g, (c) => c.toUpperCase());
 
-/** Ein Satz zur Lage + „Sinnvoll“ / „Lieber lassen“ für diese Woche. */
-export function dailyVerdict(d) {
+/** Risk profiles. Research: the sensible equity share depends mainly on horizon and risk tolerance
+ *  (Merton 1969, life-cycle models); over the long run risk was rewarded (Dimson, Marsh & Staunton). */
+export const GOALS = {
+  sicherheit: { label: "Sicherheit", short: "Kapital erhalten, wenig Schwankung" },
+  ausgewogen: { label: "Ausgewogen", short: "Mischung aus Wachstum und Sicherheit" },
+  wachstum: { label: "Wachstum", short: "Langfristig Vermögen aufbauen, Schwankungen aushalten" },
+  mutig: { label: "Mutig", short: "Maximale Rendite, große Schwankungen okay" },
+};
+
+/** When is something hype? Lots of attention, but the price isn't following – or far above average plus a flood of attention. */
+export function hypeInfo(t) {
+  const sc = t?.scores || {}, pr = t?.price || {}, at = t?.attention || {};
+  if (sc.quadrant === "overheated" && ok(sc.hype) && sc.hype >= 60) return `Viel Aufmerksamkeit und ${ok(pr.ext200) ? p0(pr.ext200) : "weit"} über dem 200-Tage-Durchschnitt: Begeisterung statt Fundament.`;
+  if (sc.quadrant === "noise" && ok(sc.hype) && sc.hype >= 65) return "Alle reden darüber, aber der Kurs zieht nicht mit. Die Aufmerksamkeit ist größer als die Substanz.";
+  if (ok(at.mom) && at.mom >= 0.6 && ok(pr.chg1m) && pr.chg1m < 0.02) return `Aufmerksamkeit ${p0(at.mom)} in einem Monat, Kurs kaum bewegt: Hype ohne Bestätigung.`;
+  return null;
+}
+
+/** Concrete ideas that fit the chosen goal – each with a reason. Suggestions, not recommendations. */
+export function ideasFor(d, goal = "ausgewogen") {
+  const out = [], themes = d?.themes || [];
+  if (goal === "sicherheit") {
+    const ecb = d?.rates?.ecb;
+    out.push({ title: "Tagesgeld oder Geldmarkt-ETF", why: ok(ecb) ? `Der EZB-Einlagenzins liegt bei ${(ecb * 100).toFixed(2).replace(".", ",")} %. Gute Tagesgeld-Konten und Geldmarkt-ETFs bewegen sich in dieser Nähe, fast ohne Schwankung.` : "Fast ohne Schwankung, täglich verfügbar.", tag: "sicher" });
+    out.push({ title: "Kurzlaufende Staatsanleihen", why: "Planbare Zinsen, geringe Kursschwankung. Gut für Geld, das in 1–3 Jahren gebraucht wird.", tag: "sicher" });
+    out.push({ title: "Kleiner Welt-ETF-Anteil (20–30 %)", why: "Auch vorsichtige Anleger profitieren langfristig von Aktien. Ein kleiner Anteil schlägt meist die Inflation.", tag: "Kern" });
+    return out;
+  }
+  const fit = themes.filter((t) => ["quiet", "hot"].includes(t.scores?.quadrant) && ok(t.scores?.heat) && t.scores.heat < 70 && !hypeInfo(t))
+    .sort((a, b) => (b.scores.momentum || 0) - (a.scores.momentum || 0)).slice(0, goal === "ausgewogen" ? 1 : goal === "wachstum" ? 2 : 3);
+  for (const t of fit) out.push({ title: `${t.name} (z. B. ETF ${t.etf})`, why: t.scores.quadrant === "quiet" ? `Kurs steigt (3 Monate ${ok(t.price?.chg3m) ? p0(t.price.chg3m) : "–"}), aber noch wenig Aufmerksamkeit. Trends halten im Schnitt eine Weile an (Momentum, Jegadeesh & Titman 1993).` : `Kurs-Trend und Aufmerksamkeit steigen, aber noch nicht überhitzt (${Math.round(t.scores.heat)}/100).`, tag: "Trend" });
+  if (goal !== "ausgewogen") {
+    const ins = (d?.insiders?.buys || []).find((b) => b.cluster);
+    if (ins) out.push({ title: `${ins.sym}: mehrere Insider kaufen`, why: `${ins.buyers.length} Vorstände oder Aufsichtsräte haben mit eigenem Geld gekauft. Insider-Käufe gingen im Schnitt besseren Kursen voraus (Cohen, Malloy & Pomorski 2012).`, tag: "Insider" });
+    const g = (d?.gems || [])[0];
+    if (g) out.push({ title: `${g.name} (${g.sym})`, why: `Perlen-Suche: Aufwärtstrend ohne Überhitzung, ${g.analysts} Analysten sehen ${p0(g.upside)} Luft. Kursziele treffen allerdings selten, also selbst prüfen.`, tag: "Einzelwert" });
+  }
+  if (goal === "mutig") {
+    const fng = d?.fearGreed?.value;
+    out.push({ title: "Bitcoin als kleine Beimischung (bis 5–10 %)", why: ok(fng) && fng >= 75 ? `Achtung: Krypto-Stimmung gerade gierig (${fng}/100). Wenn überhaupt, dann in Raten.` : "Hohe Chancen, aber Abstürze von 70 % kommen vor. Nur Geld, das du entbehren kannst.", tag: "riskant" });
+  }
+  return out;
+}
+
+/** One sentence on the situation + "sensible now" / "better avoid", depending on market AND the user's goal. */
+export function dailyVerdict(d, goal = "ausgewogen", years = 15) {
   const lvl = d?.risk?.level || "gelb";
   const b = d?.bubble?.score;
   const themes = d?.themes || [];
   const quiet = themes.filter((t) => t.scores?.quadrant === "quiet").map((t) => t.name);
   const hot = themes.filter((t) => t.scores?.quadrant === "overheated").map((t) => t.name);
+  const longRun = years >= 10, bold = goal === "wachstum" || goal === "mutig";
   const head = {
-    "grün": "Normales Börsenwetter. Ein guter Zeitpunkt, um ganz normal weiter zu investieren.",
-    "gelb": "Gemischte Lage. Weiter sparen, aber keine großen Wetten und keinem Hype hinterherlaufen.",
-    "rot": "Unruhige Zeit. Plan beibehalten, Ruhe bewahren, nichts überstürzen.",
-  }[lvl];
-  const doList = [
-    "Sparplan auf einen breiten Welt-ETF weiterlaufen lassen. Das ist das Wichtigste.",
-    lvl === "grün" ? "Einmalbeträge darfst du direkt anlegen." : "Größere Einmalbeträge auf 6–12 Monate verteilen.",
-    quiet.length ? `Für eine kleine Beimischung anschauen: ${quiet.slice(0, 2).join(", ")}.` : "Notgroschen (3 Monatsgehälter) auf dem Tagesgeld sichern.",
+    sicherheit: { "grün": "Ruhiges Umfeld. Für dich zählt: Kapital erhalten und Zinsen mitnehmen.", "gelb": "Gemischte Lage. Für dich ändert sich wenig: Zinsen sichern, Aktienanteil klein halten.", "rot": "Unruhige Märkte. Gut, dass dein Geld überwiegend sicher liegt. Nichts überstürzen." },
+    ausgewogen: { "grün": "Normales Börsenwetter. Ein guter Zeitpunkt, um ganz normal weiter zu investieren.", "gelb": "Gemischte Lage. Weiter sparen, Mischung halten, keinem Hype hinterherlaufen.", "rot": "Unruhige Zeit. Plan beibehalten, Ruhe bewahren, nichts überstürzen." },
+    wachstum: { "grün": "Rückenwind. Für langfristiges Wachstum heißt das: investiert bleiben und Chancen nutzen.", "gelb": "Gemischte Lage, aber für deinen langen Horizont kein Grund zu zögern. Investieren, Hype meiden.", "rot": "Unruhe drückt die Kurse. Für Langfrist-Anleger sind solche Phasen historisch oft günstige Einstiege." },
+    mutig: { "grün": "Rückenwind für Risiko. Trends nutzen, aber Positionen begrenzen und Hype erkennen.", "gelb": "Gemischte Lage. Gezielt auf Trends setzen, die noch nicht überhitzt sind, Hype meiden.", "rot": "Stress im Markt. Mutige Anleger kaufen in solchen Phasen oft nach, aber nur mit Geld, das liegen bleiben kann." },
+  }[goal]?.[lvl] || "Gemischte Lage.";
+  let doList;
+  if (goal === "sicherheit") doList = [
+    "Notgroschen und kurzfristiges Geld auf Tagesgeld oder Geldmarkt-ETF: Zinsen mitnehmen.",
+    "Einen kleinen Welt-ETF-Sparplan (20–30 %) laufen lassen, damit die Inflation nicht alles auffrisst.",
+    "Anleihen mit kurzer Laufzeit für planbare Erträge.",
+  ];
+  else doList = [
+    "Sparplan auf einen breiten Welt-ETF weiterlaufen lassen. Das ist das Fundament.",
+    // Lump sum: historically better in ~2 of 3 cases (Vanguard). Staggering is insurance against regret.
+    bold && longRun && lvl !== "rot" ? "Einmalbeträge direkt anlegen: Historisch brachte das in etwa 2 von 3 Fällen mehr als das Verteilen (Vanguard). Nur wer nervös wird, verteilt."
+      : lvl === "grün" ? "Einmalbeträge darfst du direkt anlegen." : "Größere Einmalbeträge auf einige Monate verteilen, wenn dich Schwankungen nervös machen. Rein rechnerisch bringt sofort anlegen meist mehr.",
+    bold ? (quiet.length ? `Trend-Anteil (${goal === "mutig" ? "bis 20 %" : "bis 10 %"}) gezielt einsetzen, z. B. ${quiet.slice(0, 2).join(", ")}: steigt, aber noch wenig Hype.` : `Trend-Anteil (${goal === "mutig" ? "bis 20 %" : "bis 10 %"}) nur in Themen, die steigen und nicht überhitzt sind.`)
+      : quiet.length ? `Für eine kleine Beimischung anschauen: ${quiet.slice(0, 2).join(", ")}.` : "Notgroschen (3 Monatsgehälter) auf dem Tagesgeld sichern.",
   ];
   const dontList = [
     hot.length ? `Jetzt nicht neu einsteigen in: ${hot.slice(0, 3).join(", ")} (überhitzt).` : "Keine Aktien kaufen, nur weil gerade alle darüber reden.",
     ok(b) && b >= 65 ? "Keine Kredite und keine Hebel-Produkte. In Euphorie-Phasen ist das besonders gefährlich." : "Keine Kredite, keine Hebel-Produkte, keine Tipps aus Chatgruppen.",
-    "Nicht in Panik verkaufen, wenn es mal 10–20 % runtergeht.",
+    goal === "mutig" ? "Keine Einzelposition über 5–10 % des Depots: Mutig heißt nicht alles auf eine Karte." : "Nicht in Panik verkaufen, wenn es mal 10–20 % runtergeht.",
   ];
-  return { level: lvl, head, doList, dontList };
+  return { level: lvl, head, doList, dontList, goal };
 }

@@ -1,63 +1,43 @@
 # 📡 Signal-Radar
 
-Ein Dashboard, das jeden Tag zeigt, **wo der Markt heiß läuft**. Es ist eine öffentliche Webseite: Der Link funktioniert in WhatsApp für alle, ohne Login, ohne App und ohne Claude.
+A free, open-source investment dashboard for private investors. It reads ~40 public data sources and translates them into plain-language signals: what is going on, what it means, and what you could do next. Every section states its **source** and how strong the **scientific evidence** behind it is.
 
-| Bereich | Was du siehst |
+**The app itself is in German** (target audience: German-speaking retail investors). Code and documentation are in English.
+
+Live: https://constantinmaier-ui.github.io/signal-radar/ – no login, installable as an app (PWA) on Windows, macOS, Android and iOS.
+
+> Not investment advice. The radar shows patterns, probabilities and risks – not buy/sell recommendations.
+
+## What it does
+| Area | Content |
 |---|---|
-| **Blasen-Meter** | 0–100 aus 7 Bausteinen: Krypto-Gier, Nasdaq- und Nvidia-Überdehnung, Spekulation (ARKK), Sorglosigkeit (VIX), IPO-Fieber, Blasen-Berichterstattung. Mit Tagesverlauf. |
-| **Heute in 30 Sekunden** | 5 Kernaussagen des Tages. Mit API-Schlüssel schreibt sie Claude, sonst werden sie automatisch aus den Daten erzeugt. Teilen per WhatsApp-Text oder als fertiges Bild (1080×1350) für Gruppen und Status. |
-| **Hype-Karte** | 13 Themen (KI, Chips, Strom, Uran, Rüstung, Krypto, Gold, Quanten, Robotik, Raumfahrt, Biotech, Cyber, IPOs) nach Aufmerksamkeit × Kurs-Momentum, mit der Bewegung der letzten 7 Tage. |
-| **Themen-Ranking** | Hype, Momentum, Überhitzung, News-Tempo. Merkliste ☆. Detailansicht mit Kursen, Aufmerksamkeit und Schlagzeilen. Jedes Thema hat einen eigenen Teilen-Link. |
-| **IPO-Radar** | Anthropic (Claude), OpenAI, SpaceX, Databricks, xAI, Stripe: Schlagzeilen, Aufmerksamkeit, Wettquoten. Ein Mega-IPO gilt als Spätzyklus-Signal. |
-| **Wetten & Krypto** | Polymarket-Wahrscheinlichkeiten, Fear & Greed, gesuchte Coins. |
-| **Markt-Ampel** | Grün/Gelb/Rot aus Euphorie (Blasen-Meter) und Stress (VIX, Marktbreite, CNN Fear & Greed), mit 3 klaren Verhaltensregeln. |
-| **Mein Plan** | Eingabemaske: Einmalbetrag, Sparrate, Anlagedauer, Notgroschen und 3 Fragen zur Risikobereitschaft. Ergebnis: Beispiel-Aufteilung in € (Kern-Satellit), Risikoklasse, Prognose-Spanne aus 2.000 Simulationen, Crash-Test wie 2008 und Anti-Hype-Regeln, die sich nach der Marktlage richten. Teilbar ohne Beträge. |
-| **Anlageklassen** | Welt-ETF, USA, Europa, DAX, Schwellenländer, Nasdaq, Anleihen, Gold, Silber, Öl, Immobilien, Bitcoin, Ethereum, dazu EZB- und US-Zins. Jeweils mit Erklärung, EU-Risikoklasse 1–7, größtem Verlust und Trend. |
-| **Versteckte Perlen** | Regel-Suche: Aufwärtstrend ohne Überhitzung, stärker als der Markt, ≥ 5 Analysten mit ≥ 12 % Kursziel-Potenzial, vernünftiges KGV. Jede Begründung steht im Klartext dabei. |
-| **Was die Profis machen** | 13F-Meldungen von Buffett, Burry, Ackman, Dalio, Druckenmiller, Tepper, Klarman, Li Lu, Loeb, Einhorn, Cathie Wood und Tiger Global: Top-Positionen, Käufe und Verkäufe, gemeinsame Käufe mehrerer Investoren. Dazu Analysten-Stimmen live (optimistisch/vorsichtig, mit Claude ins Deutsche übersetzt) und Kursziele. |
-| **Lexikon** | 30 Börsenbegriffe in einfachen Worten. Unterstrichene Wörter auf der Seite lassen sich antippen. |
-| **Signal-Feed** | Meldungen aus Google News (DE + EN), tagesschau, Handelsblatt, FAZ, Spiegel, CNBC, MarketWatch, Yahoo, TechCrunch, CoinDesk, Reddit und Hacker News. Dubletten sind entfernt, jede Meldung ist nach Thema und Signal (IPO, Rekord, Blase, Übernahme …) markiert. |
+| **Today** | Market traffic light, one-sentence verdict, "sensible now / better avoid", top signals, news impact, ask-your-own-AI (Claude/ChatGPT) |
+| **My plan** | Input form (amount, savings rate, horizon, risk quiz) → example allocation, Monte Carlo range, 2008-style crash test, anti-hype rules, cost/levers calculator, financial fitness check & daily quiz |
+| **Markets** | Recession early-warning (FRED: yield curve, high-yield spread, Sahm rule), 20 asset classes with EU risk class 1–7, commodity monitor (18 futures), real estate (ECB mortgage rates, Eurostat house prices, official rent indices of the 20 largest German cities, rent-cap check, buy calculator), sentiment barometer |
+| **Opportunities** | Trend radar (unusual moves in multiples of normal volatility), real-usage signals (AI SDK downloads, Hugging Face, GitHub, stablecoins, DeFi TVL, German power price), hype map of 13 themes, rule-based "hidden gems", IPO radar (Anthropic, OpenAI, SpaceX …) |
+| **Pros** | Superinvestor 13F filings, insider purchases (SEC Form 4), analyst voices and price targets |
+| **News** | 11 event types (rates, tariffs, war, elections, earnings …) with typical impact per asset class and research source; aggregated feed |
+| **Knowledge** | Research principles with citations, latest papers (Journal of Finance, JFE, NBER, ECB, BIS, Fed, arXiv), glossary, sources, security |
 
-**Live:** Ein Sammler holt jede Stunde alle Quellen. Die Seite lädt alle 5 Minuten neu und holt Bitcoin-Kurs und Tech-Meldungen jede Minute direkt.
+## How it works
+- `collector/` runs every 15 minutes in GitHub Actions, fetches all sources server-side and writes `site/data/*.json`. History is also archived daily to the `data` branch.
+- `site/` is a static web app (plain HTML/CSS/JS, no dependencies). Bitcoin and tech news refresh live every minute in the browser.
+- Personal data (plan, watchlist, settings) stays on the device; it can be exported as an AES-256-GCM encrypted backup.
 
-> Keine Anlageberatung. Das Radar misst Aufmerksamkeit und Kursdynamik und gibt keine Empfehlungen.
+## Setup (one-time)
+1. Repository → **Settings → Pages → Build and deployment → Source: "GitHub Actions"** (browser only; not available in the GitHub mobile app).
+2. **Actions → Signal-Radar → Run workflow.** The site is live after ~3 minutes.
+3. Optional secrets (Settings → Secrets and variables → Actions):
+   - `ANTHROPIC_API_KEY` – Claude writes the daily briefing and translates analyst quotes/paper titles into German.
+   - `SEC_USER_AGENT` – contact string for SEC EDGAR requests (e.g. `Name mail@example.com`).
 
-## Online stellen (einmalig, ca. 3 Minuten)
-
-1. Auf GitHub: **Settings → Pages → Build and deployment → Source: „GitHub Actions“**.
-2. **Actions → Signal-Radar → Run workflow** starten. Nach ca. 2 Minuten ist die Seite unter `https://<dein-name>.github.io/<repo>/` erreichbar. Diesen Link in WhatsApp teilen.
-3. *(Optional)* **Settings → Secrets and variables → Actions → New repository secret** `ANTHROPIC_API_KEY` anlegen. Dann schreibt Claude alle 6 Stunden das Tagesbriefing und übersetzt englische Analysten-Zitate (Kosten: wenige Cent pro Tag).
-4. *(Optional)* Secret `SEC_USER_AGENT` mit `Dein Name deine@mail.de` anlegen. Die US-Börsenaufsicht verlangt bei automatischen Abfragen einen Absender. Ohne das Secret wird die Repo-Adresse verwendet.
-
-Danach läuft alles von selbst, jede Stunde.
-
-## Lokal ausprobieren
-
+## Develop locally
 ```bash
 npm ci
-npm run demo      # Beispieldaten (deutlich als Demo markiert)
-# oder: npm run collect   # echte Daten, braucht Internet
-npm run serve     # http://localhost:8080
-npm test          # Rechenlogik + Sammler-Lauf mit simuliertem Netz
+npm run demo     # demo data: the real collector against a simulated network (clearly marked as demo)
+npm run serve    # http://localhost:8080
+npm test         # unit tests + full collector run against mocked sources
 ```
 
-## Anpassen
-
-Alle Themen, Schlagwörter, ETFs, Feeds und IPO-Kandidaten stehen in `collector/config.mjs`. Ein neues Thema ist ein neuer Eintrag in der Liste.
-
-## Aufbau
-
-```
-collector/config.mjs   Themen, Quellen, Ticker
-collector/lib.mjs      Parser + Kennzahlen (getestet)
-collector/collect.mjs  holt alles, schreibt site/data/*.json
-collector/extra.mjs    SEC 13F, Analysten, CNN, EZB, Anlageklassen, Perlen-Suche
-collector/demo.mjs     Demo-Daten (Sammler gegen simuliertes Netz)
-site/app.js            Lage, Hype-Karte, Themen, IPO, Feed
-site/plan.js           Eingabemaske, Aufteilung, Simulation, Crash-Test
-site/extras.js         Ampel, Anlageklassen, Perlen, Profis, Lexikon, Bild-Teilen
-site/ui.js             gemeinsame Diagramm- und Format-Bausteine
-.github/workflows/radar.yml   stündlicher Lauf + Veröffentlichung
-```
-
-Die Historie (Blasen-Meter und Themen-Werte pro Tag) übernimmt jeder Lauf von der Live-Seite und schreibt sie fort. Dafür braucht es keine Datenbank und keine Commits.
+## Project files
+`docs/ROADMAP.md` (versions & scope) · `docs/TASKS.md` (prioritised backlog) · `docs/DECISIONS.md` (decision log) · `docs/COMPETITORS.md` · `CHANGELOG.md` · `SECURITY.md`

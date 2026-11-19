@@ -1,42 +1,40 @@
-# Roadmap & Versionen
+# Roadmap & versions
 
-Jede Version hat einen klaren Umfang („Scope“). Was nicht drinsteht, kommt in eine spätere Version.
-Versionsnummern: **Haupt.Neben** (z. B. 2.1). Haupt = großer Schritt, Neben = Verbesserungen.
+Each version has a clear scope. Anything not listed goes into a later version.
+Version numbers: **major.minor** (e.g. 2.1). Major = big step, minor = improvements.
 
-## ✅ Version 1.0 – Erstes Dashboard (19.11.2026)
-- Blasen-Meter, Hype-Karte (13 Themen), Themen-Ranking, IPO-Radar (Anthropic/Claude, OpenAI, SpaceX …)
-- Mein Plan: Eingabemaske, Beispiel-Aufteilung, Prognose-Spanne, Crash-Test
-- Anlageklassen, Superinvestoren (SEC 13F), Analysten, versteckte Perlen
-- Signal-Feed aus ~40 Quellen, WhatsApp-Teilen, öffentliche Seite ohne Login
+## ✅ 1.0 – First dashboard (2026-11-19)
+Bubble meter, hype map (13 themes), theme ranking, IPO radar (Anthropic/Claude, OpenAI, SpaceX …), my plan (allocation, Monte Carlo, crash test), asset classes, superinvestors (SEC 13F), analysts, hidden gems, signal feed from ~40 sources, WhatsApp sharing, public site without login.
 
-## 🔨 Version 2.0 – Einfach, verständlich, installierbar (in Arbeit, Pull Request #1)
-- Startseite „Heute“: Tages-Check, „Sinnvoll jetzt / Lieber lassen“, Signal-Leser
-- 6 Bereiche statt einer langen Seite, App-Leiste am Handy, Einsteiger-/Profi-Modus
-- Aktualisieren-Knopf, Krypto & Tech-News minütlich, Sammler alle 15 Minuten
-- Nachrichten-Wirkung: 11 Ereignis-Arten mit typischer Wirkung + Studie
-- „Was die Forschung sagt“ + neue Studien live (arXiv, NBER)
-- Immobilien: Bauzinsen, Hauspreise, Rechner (mit €/m² und Regionen-Links)
-- **Installierbar als App (PWA)** auf Windows, Mac, Android, iPhone; Offline-Modus
-- Sicherheit: strenge Content-Security-Policy, keine Nutzerdaten auf Servern
-- Weitere Anlageformen (Geldmarkt, Infrastruktur, Faktor-ETFs, Private Credit, inflationsgeschützte Anleihen, Rohstoffe breit) + Erklärkarten für neuartige Instrumente (ELTIF, tokenisierte Fonds …)
-- **Insider-Käufe** (SEC Form 4): Wenn Vorstände selbst kaufen
-- **Konjunktur-Frühwarnsystem** (FRED): Zinskurve, Kredit-Risikoaufschläge, Sahm-Regel
+## 🔨 2.0 – Simple, understandable, installable (PR #1)
+- Today view: daily check, "sensible now / better avoid", signal reader
+- Six sections, mobile tab bar, beginner/pro mode, personalisation (interests, visible sections)
+- Refresh button; crypto & tech news every minute, collector every 15 minutes
+- News impact: 11 event types with typical impact per asset class + research source
+- Research: principles with citations; latest papers (Journal of Finance, JFE, NBER, ECB, BIS, Fed, arXiv)
+- Real estate: ECB mortgage rates, Eurostat house prices, official rent indices of the 20 largest German cities, rent-cap check, buy calculator
+- Installable PWA, offline mode; Content-Security-Policy
+- New asset classes (money market, inflation-linked, quality, small value, infrastructure, private credit, broad commodities) + 12 instrument explainers
+- Insider purchases (SEC Form 4); recession early-warning (FRED); sentiment barometer; commodity monitor (18 futures)
+- Evidence level & source on every section; ask-your-own-AI (Claude/ChatGPT)
+- Trend radar + real-usage signals (AI SDK downloads, Hugging Face, GitHub, stablecoins, DeFi TVL, German power price)
+- Money levers calculator, financial fitness check & daily quiz
+- Encrypted backup (AES-256-GCM); daily history archive in the `data` branch
 
-## 🔜 Version 2.1 – KI-Blase & persönlicher Plan
-- KI-Blasen-Monitor mit Handlungsplan
-- „Mein Depot & Einkommen“ (freiwillig, lokal, verschlüsselt) + Klumpenrisiko-Check
-- Verschlüsselte Sicherung/Sync über Geräte (eigene Cloud oder WebDAV)
-- Neue Signalquellen: Bluesky, Hugging Face, GitHub-Trends, Reddit-Erwähnungen, weitere Investoren
-- Details & Reihenfolge: docs/TASKS.md
+## 🔜 2.1 – AI bubble & personal plan
+- AI bubble monitor with action plan
+- "My portfolio & income" (optional, local, encrypted) + diversification/concentration check
+- Automatic encrypted sync across devices (own cloud / WebDAV)
+- Track record: public hit rate of the radar's own signals (data collected since 2.0)
+- More sources: Bluesky, Reddit mentions, more investors, events calendar, EIA forecasts, futures curves
+- Details & order: docs/TASKS.md
 
-## 🔜 Version 3.0 – Regional & persönlich
-- Immobilien: Lage-Check per Adresse (OpenStreetMap: ÖPNV, Einkaufen, Schulen, Ärzte, Grün im Umkreis)
-- Immobilien je Stadt/Region aus amtlichen Daten (Zensus 2022 / Regionalstatistik via GENESIS-API; braucht kostenlose Registrierung)
-- Eigene Merkliste mit Kurs-Alarmen (Benachrichtigungen auf dem Handy)
-- Echte Desktop-App (Tauri) für Windows/Mac – mit Code-Signing-Zertifikat, damit Windows keine Warnung zeigt (kostet ca. 200–400 €/Jahr)
-- Langfrist-Erwartung aus Bewertung (z. B. Shiller-KGV → erwartete 10-Jahres-Rendite)
+## 🔜 3.0 – Regional & native
+- Real estate location check by address (OpenStreetMap: transit, shops, schools, doctors, parks within 1 km)
+- Official regional real-estate data (Census 2022 / Regionalstatistik via GENESIS API; free registration needed)
+- Watchlist price alerts (push notifications)
+- Native desktop app (Tauri) with code-signing certificate so Windows shows no warning (~€200–400/year)
+- Long-run expected returns from valuation (e.g. CAPE → 10-year expected return)
 
-## 💡 Version 4.0 – Ideen-Speicher (noch nicht eingeplant)
-- Portfolio-Import (CSV vom Broker) und Abgleich mit dem Plan
-- Mehr Länder/Märkte (Asien, Schwellenländer einzeln)
-- Mehrsprachig (Englisch)
+## 💡 4.0 – Idea backlog (not scheduled)
+Portfolio import (broker CSV), more markets/countries, English UI.

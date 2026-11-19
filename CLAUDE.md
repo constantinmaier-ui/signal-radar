@@ -1,21 +1,27 @@
-# Signal-Radar – Hinweise für Claude
+# Signal-Radar – notes for Claude
 
-## Wie du mit dem Besitzer arbeitest (wichtig)
-- **Immer erklären, was du baust, wie und warum**, auf Deutsch und in einfachen Worten. Der Besitzer ist Einsteiger bei Technik und Finanzen.
-- Bei jedem Schritt kurz sagen: *Was* ändere ich, *warum* hilft das, *was* muss der Besitzer selbst tun (mit Klick-Anleitung).
-- Keine Fachbegriffe ohne Erklärung. Lieber ein Beispiel als ein Fremdwort.
+## Working with the owner (important)
+- **Always explain what you build, how and why** – to the owner in **German**, in plain words. The owner is a beginner in tech and finance.
+- For every step say briefly: *what* changes, *why* it helps, *what* the owner has to do themselves (with click-by-click instructions; note when something only works in a desktop browser).
+- No jargon without explanation. Prefer an example over a technical term.
 
-## Was das Projekt ist
-Ein öffentliches Investment-Dashboard (GitHub Pages), das ohne Login per WhatsApp-Link geteilt wird.
-- `collector/` sammelt alle 15 Minuten per GitHub Action Kurse, News, SEC-13F, Analysten usw. und schreibt `site/data/*.json`.
-- `site/` ist die Webseite (reines HTML/CSS/JS, keine Abhängigkeiten). `signals.js` übersetzt Daten in verständliche Hinweise.
-- Tests: `npm test` (Rechenlogik + Sammler gegen simuliertes Netz). Demo-Daten: `npm run demo`.
+## Language rules
+- **App UI and content: German.**
+- **Everything on GitHub: English** – README, docs, code comments in new code, commit messages, PR titles/descriptions, workflow comments.
+- Explanations to the owner in chat: German.
 
-## Projekt-Dateien (immer aktuell halten)
-- `docs/ROADMAP.md`: Versionen und Umfang. `docs/TASKS.md`: Aufgaben mit Status und Priorität. `docs/DECISIONS.md`: Entscheidungen mit Begründung. `CHANGELOG.md`: was sich je Version geändert hat.
-- Neue Ideen des Besitzers immer zuerst in `docs/TASKS.md` aufnehmen (Nutzen, Aufwand, Version), dann umsetzen.
+## What the project is
+A public investment dashboard (GitHub Pages) shared via WhatsApp link, no login.
+- `collector/` gathers prices, news, SEC filings, research etc. every 15 minutes via GitHub Actions and writes `site/data/*.json`.
+- `site/` is the web app (plain HTML/CSS/JS). `signals.js` turns data into plain-language signals.
+- Tests: `npm test`. Demo data: `npm run demo`.
 
-## Regeln für Inhalte
-- Keine Anlageberatung versprechen. Beobachtungen und Regeln, keine Kauftipps. Immer den Hinweis „Keine Anlageberatung“ beibehalten.
-- Nie erfundene Zahlen oder Zitate echten Personen zuschreiben. Demo-Daten immer als „Demo“ kennzeichnen.
-- Einfach halten: lieber weniger, dafür verständlich. Neue Funktionen in den passenden Bereich einsortieren (Heute, Mein Plan, Märkte, Chancen, Profis, News).
+## Project files (keep up to date)
+- `docs/ROADMAP.md` versions & scope · `docs/TASKS.md` tasks with status/priority · `docs/DECISIONS.md` decisions with reasons · `CHANGELOG.md`.
+- Add every new idea from the owner to `docs/TASKS.md` first (value, effort, version), then implement.
+
+## Content rules
+- Never promise investment advice. Observations, rules and suggestions – no buy recommendations. Keep the "Keine Anlageberatung" notice.
+- Never invent numbers or attribute fabricated quotes to real people. Mark demo data as "Demo".
+- Every section shows its source and evidence level. Keep it simple: fewer things, clearly explained.
+- Don't put private persons' names (e.g. friends of the owner) into the public repo.

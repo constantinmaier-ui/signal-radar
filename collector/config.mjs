@@ -324,6 +324,9 @@ export const RESEARCH_FEEDS = [
   { name: "Journal of Finance", url: "https://onlinelibrary.wiley.com/feed/15406261/most-recent", journal: true },
   { name: "Journal of Financial Economics", url: "https://rss.sciencedirect.com/publication/science/0304405X", journal: true },
   { name: "NBER Working Papers", url: "https://back.nber.org/rss/new.xml" },
+  { name: "EZB Working Papers", url: "https://www.ecb.europa.eu/rss/wppub.html" },
+  { name: "BIZ Working Papers", url: "https://www.bis.org/doclist/wppubls.rss" },
+  { name: "US-Notenbank (FEDS)", url: "https://www.federalreserve.gov/feeds/feds.xml" },
   { name: "arXiv Finanzwissenschaft", url: "https://rss.arxiv.org/rss/q-fin" },
 ];
 
@@ -361,4 +364,15 @@ export const COMMODITIES = [
   { id: "coffee", name: "Kaffee", sym: "KC=F", unit: "US-Cent/Pfund", group: "Agrar" },
   { id: "cocoa", name: "Kakao", sym: "CC=F", unit: "$/Tonne", group: "Agrar" },
   { id: "cotton", name: "Baumwolle", sym: "CT=F", unit: "US-Cent/Pfund", group: "Agrar" },
+];
+
+// ---------- Nutzungs-Signale: Wer baut wirklich mit welcher KI? (wöchentliche Downloads) ----------
+// owner = wer dahintersteht; listed = börsennotiert bzw. wichtigster börsennotierter Partner/Investor
+export const ADOPTION = [
+  { id: "openai", name: "OpenAI (ChatGPT)", pypi: "openai", npm: "openai", owner: "OpenAI (privat)", listed: "Partner: MSFT" },
+  { id: "anthropic", name: "Anthropic (Claude)", pypi: "anthropic", npm: "@anthropic-ai/sdk", owner: "Anthropic (privat)", listed: "Investoren: AMZN, GOOGL" },
+  { id: "google", name: "Google Gemini", pypi: "google-genai", npm: "@google/genai", owner: "Alphabet", listed: "GOOGL" },
+  { id: "langchain", name: "LangChain (KI-Agenten)", pypi: "langchain", npm: "langchain", owner: "LangChain (privat)", listed: null },
+  { id: "transformers", name: "Hugging Face Transformers", pypi: "transformers", npm: null, owner: "Hugging Face (privat)", listed: null },
+  { id: "torch", name: "PyTorch (KI-Training)", pypi: "torch", npm: null, owner: "Linux Foundation, von Meta gestartet", listed: "META" },
 ];

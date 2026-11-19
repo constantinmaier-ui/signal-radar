@@ -1,6 +1,7 @@
 // Ansicht „Heute“ (Tages-Check + Signale) und die Bereichs-Navigation.
-import { $, $$, esc, fmt, state } from "./ui.js";
-import { buildSignals, dailyVerdict } from "./signals.js";
+import { $, $$, esc, fmt, state, store } from "./ui.js";
+import { buildSignals, dailyVerdict, ideasFor, GOALS } from "./signals.js";
+import { renderPlan } from "./plan.js";
 import { prefs, renderAskAi } from "./trust.js";
 
 const KIND = {
@@ -11,7 +12,11 @@ const KIND = {
 const VIEW_LABEL = { heute: "Heute", plan: "Mein Plan", maerkte: "Märkte", chancen: "Chancen", profis: "Profis", news: "News", wissen: "Wissen" };
 
 export function renderCheck() {
-  const d = state.data, v = dailyVerdict(d), r = d.risk || {};
+  const d = state.data, r = d.risk || {};
+  const plan = store.get("plan", {});
+  const goal = store.get("goal", plan.profile && GOALS[plan.profile] ? plan.profile : "ausgewogen");
+  const years = plan.years || 15;
+  const v = dailyVerdict(d, goal, years), ideas = ideasFor(d, goal);
   const lv = v.level === "grün" ? "g" : v.level === "rot" ? "r" : "y";
   const word = { g: "Grün", y: "Gelb", r: "Rot" }[lv];
   $("#check").className = `check lvl-${lv}`;
@@ -28,10 +33,16 @@ export function renderCheck() {
         </div>
       </div>
     </div>
+    <div class="goal-pick" role="group" aria-label="Dein Ziel">
+      <span class="eyebrow">Dein Ziel</span>
+      ${Object.entries(GOALS).map(([k, g]) => `<button type="button" class="goal ${k === goal ? "on" : ""}" data-goal="${k}" title="${esc(g.short)}">${esc(g.label)}</button>`).join("")}
+      <span class="fine">${esc(GOALS[goal].short)} · Anlagedauer ${years} Jahre (im Plan änderbar)</span>
+    </div>
     <div class="dodont">
       <div class="do"><h3>✓ Sinnvoll jetzt</h3><ul>${v.doList.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
       <div class="dont"><h3>✕ Lieber lassen</h3><ul>${v.dontList.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
     </div>
+    ${ideas.length ? `<div class="ideas"><h3>💡 Ideen, die zu deinem Ziel passen</h3><div class="idea-list">${ideas.map((i) => `<div class="idea"><span class="chip">${esc(i.tag)}</span><b>${esc(i.title)}</b><span>${esc(i.why)}</span></div>`).join("")}</div></div>` : ""}
     <div class="check-cta"><span class="fine">Vorschläge auf Basis fester Regeln, keine Empfehlung. Du entscheidest.</span><a class="btn btn-primary" href="#plan">Was heißt das für mein Geld? Plan berechnen</a></div>`;
 }
 
@@ -48,7 +59,8 @@ export function renderSignals() {
       <div class="sig-ico" aria-hidden="true">${k.icon}</div>
       <div class="sig-body">
         <div class="sig-meta"><span class="sig-kind">${k.label}</span><span>${esc(s.source)}</span></div>
-        <h3>${esc(s.title)}</h3>
+        <h3>${esc(s.title)}${s.hype ? ' <span class="hype">⚡ Hype</span>' : ""}</h3>
+        ${s.hype ? `<p class="hype-why"><b>Warum Hype:</b> ${esc(s.hype)}</p>` : ""}
         <p>${esc(s.text)}</p>
         <p class="sig-todo"><b>Möglicher nächster Schritt:</b> ${esc(s.todo)}</p>
         ${s.view && s.view !== "heute" ? `<a class="sig-link" href="#${s.view}">Details in „${VIEW_LABEL[s.view]}“ →</a>` : ""}
@@ -86,12 +98,25 @@ export function showView(onShow) {
 // Welchem Interessen-Thema gehört ein Signal an? (für „Anpassen“)
 export function topicOf(id) {
   if (/^(quiet|hot|noise|ipo)-/.test(id)) return "themes";
-  if (/^crypto-|^move-(btc|eth)$/.test(id)) return "crypto";
-  if (/^com-|^move-(gold|silver|oil|commodities)$/.test(id)) return "commodities";
+  if (/^crypto-|^move-(btc|eth)$|^stablecoin-/.test(id)) return "crypto";
+  if (/^com-|^power-|^move-(gold|silver|oil|commodities)$/.test(id)) return "commodities";
   if (/^mortgage-|^move-realestate$/.test(id)) return "realestate";
   if (/^(curve|credit|sahm)/.test(id)) return "macro";
   if (/^event-/.test(id)) return "news";
   if (/^(cons|insider|voices)-/.test(id)) return "pros";
   if (/^(gem|move)-/.test(id)) return "stocks";
   return null; // Gesamtmarkt-Signale werden nie ausgeblendet
+}
+
+// Choosing a goal on "Heute" also updates the plan (same profile everywhere)
+export function initGoalPicker(onChange) {
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-goal]"); if (!b) return;
+    const g = b.dataset.goal;
+    store.set("goal", g);
+    const plan = store.get("plan", {}); plan.profile = g; store.set("plan", plan);
+    const sel = document.querySelector('#planForm select[name="profile"]'); if (sel) sel.value = g;
+    try { renderPlan(); } catch { /* plan view not ready */ }
+    onChange?.();
+  });
 }

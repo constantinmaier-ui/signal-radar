@@ -144,3 +144,54 @@ export async function fetchTechTrends({ get, status }, now = Date.now()) {
   if (!repos.length && !models.length) status.push({ source: "Tech-Trends", ok: false, error: "GitHub und Hugging Face nicht erreichbar" });
   return { repos, models };
 }
+
+// ---------- Nutzungs-Signale (PyPI + npm), Krypto-Liquidität (DefiLlama), Strompreis (Energy-Charts) ----------
+import { ADOPTION } from "./config.mjs";
+export async function fetchAdoption({ get, pool, status }) {
+  const res = await pool(ADOPTION, 3, async (a) => {
+    const [py, npmNow, npmRange] = await Promise.all([
+      a.pypi ? get(`https://pypistats.org/api/packages/${encodeURIComponent(a.pypi)}/recent`, { type: "json" }) : null,
+      a.npm ? get(`https://api.npmjs.org/downloads/point/last-week/${a.npm}`, { type: "json" }) : null,
+      a.npm ? get(`https://api.npmjs.org/downloads/range/last-month/${a.npm}`, { type: "json" }) : null,
+    ]);
+    const week = (py?.data?.last_week || 0) + (npmNow?.downloads || 0);
+    const month = (py?.data?.last_month || 0);
+    // npm-Tagesreihe: letzte 7 Tage gegen die 7 Tage davor → Wachstum
+    const days = (npmRange?.downloads || []).map((d) => d.downloads);
+    const npmGrowth = days.length >= 14 ? days.slice(-7).reduce((x, y) => x + y, 0) / Math.max(1, days.slice(-14, -7).reduce((x, y) => x + y, 0)) - 1 : null;
+    const pyGrowth = py?.data?.last_week && month ? py.data.last_week / (month / 4.3) - 1 : null;
+    return week ? { ...a, week, growth: npmGrowth ?? pyGrowth } : null;
+  });
+  const out = res.filter(Boolean).sort((x, y) => y.week - x.week);
+  status.push({ source: `KI-Nutzung: PyPI + npm (${out.length}/${ADOPTION.length})`, ok: out.length > 0 });
+  return out;
+}
+
+export async function fetchCryptoFlows({ get, status }) {
+  const [stables, tvl] = await Promise.all([
+    get("https://stablecoins.llama.fi/stablecoincharts/all", { type: "json", label: "DefiLlama Stablecoins", timeout: 20000 }),
+    get("https://api.llama.fi/v2/historicalChainTvl", { type: "json", label: "DefiLlama DeFi-Kapital (TVL)", timeout: 20000 }),
+  ]);
+  const series = (arr, f) => (Array.isArray(arr) ? arr.map((x) => ({ t: Number(x.date) * 1000, v: f(x) })).filter((p) => Number.isFinite(p.v) && p.v > 0) : []);
+  const st = series(stables, (x) => x.totalCirculatingUSD?.peggedUSD ?? x.totalCirculating?.peggedUSD);
+  const tv = series(tvl, (x) => Number(x.tvl));
+  const summary = (pts) => {
+    if (pts.length < 40) return null;
+    const last = pts[pts.length - 1], back = (d) => pts.filter((p) => p.t <= last.t - d * 864e5).pop()?.v;
+    return { value: last.v, chg30: back(30) ? last.v / back(30) - 1 : null, chg90: back(90) ? last.v / back(90) - 1 : null, spark: pts.slice(-180).filter((_, i) => i % 3 === 0).map((p) => Math.round(p.v / 1e6)) };
+  };
+  return { stablecoins: summary(st), tvl: summary(tv) };
+}
+
+export async function fetchPower({ get, status }) {
+  const end = new Date(), start = new Date(Date.now() - 45 * 864e5);
+  const d = (x) => x.toISOString().slice(0, 10);
+  const j = await get(`https://api.energy-charts.info/price?bzn=DE-LU&start=${d(start)}&end=${d(end)}`, { type: "json", label: "Energy-Charts Strompreis DE", timeout: 20000 });
+  if (!j?.unix_seconds?.length || !j?.price?.length) return null;
+  const byDay = new Map();
+  j.unix_seconds.forEach((t, i) => { const v = j.price[i]; if (!Number.isFinite(v)) return; const k = new Date(t * 1000).toISOString().slice(0, 10); const a = byDay.get(k) || []; a.push(v); byDay.set(k, a); });
+  const days = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => ({ day: k, avg: v.reduce((x, y) => x + y, 0) / v.length, min: Math.min(...v), max: Math.max(...v) }));
+  if (days.length < 7) return null;
+  const last = days[days.length - 1], avg30 = days.slice(-30).reduce((x, y) => x + y.avg, 0) / Math.min(30, days.length);
+  return { unit: j.unit || "EUR/MWh", day: last.day, avg: last.avg, min: last.min, max: last.max, avg30, series: days.map((x) => Math.round(x.avg * 10) / 10) };
+}
