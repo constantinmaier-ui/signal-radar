@@ -17,6 +17,14 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 - [x] Stimmungs-Barometer (eine Zahl aus 5 Stimmungsquellen + was es bedeutet)
 - [x] Mietspiegel-Finder (amtliche Links je Stadt) + Mietspiegel-Check (Mietpreisbremse, Kappungsgrenze)
 - [x] Rohstoff-Monitor (18 Rohstoffe, Lage in der Jahresspanne, Einkauf/Absicherung, Anleger, Teilen)
+- [x] Beweislage & Quelle an jedem Bereich (stark / mittel / schwach / Fakten)
+- [x] Anpassen: Interessen wählen, Bereiche ausblenden; „Vorschläge“ statt „Empfehlungen“
+- [x] Mit eigener KI besprechen (Claude, ChatGPT, Kopieren für andere)
+- [x] Trend-Radar „Was gerade abhebt“ + KI-Trends (GitHub, Hugging Face) mit börsennotierter Firma
+- [x] „Was nachweislich Geld vermehrt“ mit Kosten-Rechner; Finanz-Fitness-Check & Tages-Quiz
+- [x] Top-Fachzeitschriften (Journal of Finance, Journal of Financial Economics) bei den Studien
+- [x] „Über das Radar“
+- [x] Tägliche Sicherung von Signalen & Kursen für die spätere Trefferquote
 - [ ] 👤 GitHub Pages einschalten: Settings → Pages → Source „GitHub Actions“
 - [ ] 👤 Pull Request #1 zusammenführen („Merge“)
 - [ ] Nach dem ersten echten Lauf: Quellen prüfen, Ausfälle beheben
@@ -39,6 +47,9 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 | 11 | **Rohstoff-Prognosen**: EIA-Energieprognose (STEO) automatisch einlesen | hoch | klein | 👤 kostenloser EIA-Schlüssel nötig |
 | 12 | **Terminkurven** (Contango/Backwardation): Was erwartet der Markt in 3/6/12 Monaten? | hoch | mittel | Für Einkauf sehr nützlich |
 | 13 | **Weltbank Pink Sheet** (monatliche Rohstoffpreise, offizielle Reihe) + Strom/CO₂-Preise Europa | mittel | mittel | |
+| 15 | **Trefferquote des Radars**: Wie oft lagen „überhitzt“, „steigt leise“ usw. nach 1/3 Monaten richtig? Öffentlich anzeigen | sehr hoch | mittel | Daten werden seit V2.0 täglich gesichert; Auswertung sobald ≥ 4 Wochen Daten |
+| 16 | **Muster-Statistik**: „Wenn X passiert, was folgte historisch?“ aus 10 Jahren Kursdaten | hoch | mittel | Ehrliche Basisraten statt Vorhersagen |
+| 17 | **Mehr Stimmungsquellen** (NAAIM, Put/Call, Google Trends) mit Beweislage-Etikett | mittel | mittel | Stimmung ist nur schwach belegt, daher niedrige Priorität |
 | 14 | **AAII-Anlegerumfrage** (wöchentliche Bullen/Bären-Stimmung) ins Stimmungs-Barometer | mittel | klein | Nutzungsbedingungen prüfen |
 
 ## Später (Version 3.0)

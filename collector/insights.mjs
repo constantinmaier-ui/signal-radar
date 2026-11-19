@@ -29,8 +29,9 @@ export async function fetchResearch({ get, pool }, now = Date.now()) {
     return xml ? parseFeed(xml, f.name).map((it) => ({ ...it, source: f.name })) : [];
   });
   return res.flat()
-    .filter((it) => !it.published || it.published > now - 21 * DAY)
-    .map((it) => ({ title: it.title.replace(/\s*\(arXiv:[^)]*\)\s*$/, ""), url: it.url, source: it.source, published: it.published, summary: (it.summary || "").replace(/^arXiv:\S+\s+Announce Type:\s*\w+\s*Abstract:\s*/i, "").slice(0, 400), lang: "en" }))
+    .filter((it) => !it.published || it.published > now - (RESEARCH_FEEDS.find((f) => f.name === it.source)?.journal ? 60 : 21) * DAY)
+    .map((it) => ({ title: it.title.replace(/\s*\(arXiv:[^)]*\)\s*$/, ""), url: it.url, source: it.source, journal: !!RESEARCH_FEEDS.find((f) => f.name === it.source)?.journal, published: it.published, summary: (it.summary || "").replace(/^arXiv:\S+\s+Announce Type:\s*\w+\s*Abstract:\s*/i, "").slice(0, 400), lang: "en" }))
+    .sort((a, b) => Number(b.journal) - Number(a.journal) || (b.published || 0) - (a.published || 0))
     .slice(0, 30);
 }
 
@@ -126,4 +127,20 @@ export async function fetchCommodities({ fetchSeries, priceStats, pool, status }
   const okN = res.filter((c) => !c.missing).length;
   status.push({ source: `Rohstoffe (${okN}/${COMMODITIES.length})`, ok: okN > 0 });
   return res;
+}
+
+// ---------- Tech-Trends: Was explodiert gerade bei KI-Software? ----------
+import { AI_ORGS } from "./config.mjs";
+export async function fetchTechTrends({ get, status }, now = Date.now()) {
+  const since = new Date(now - 30 * DAY).toISOString().slice(0, 10);
+  const gh = await get(`https://api.github.com/search/repositories?q=${encodeURIComponent(`created:>${since}`)}&sort=stars&order=desc&per_page=12`, {
+    type: "json", label: "GitHub: schnellst wachsende Projekte",
+    headers: { Accept: "application/vnd.github+json", ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}) },
+  });
+  const hf = await get("https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=12", { type: "json", label: "Hugging Face: Trend-KI-Modelle" });
+  const owner = (full) => String(full || "").split("/")[0].toLowerCase();
+  const repos = (gh?.items || []).map((r) => ({ name: r.full_name, url: r.html_url, stars: r.stargazers_count, desc: (r.description || "").slice(0, 140), lang: r.language, ticker: AI_ORGS[owner(r.full_name)] || null }));
+  const models = (Array.isArray(hf) ? hf : []).map((m) => ({ name: m.id || m.modelId, url: `https://huggingface.co/${m.id || m.modelId}`, likes: m.likes, downloads: m.downloads, task: m.pipeline_tag || "", ticker: AI_ORGS[owner(m.id || m.modelId)] || null }));
+  if (!repos.length && !models.length) status.push({ source: "Tech-Trends", ok: false, error: "GitHub und Hugging Face nicht erreichbar" });
+  return { repos, models };
 }

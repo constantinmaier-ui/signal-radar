@@ -225,3 +225,18 @@ test("Rohstoffe: Lage in der 52-Wochen-Spanne", () => {
   assert.ok(Math.abs(r.pos52 - 10 / 29) < 1e-9);
   assert.equal(rangeStats([1, 2]), null);
 });
+
+import { topicOf } from "../site/heute.js";
+import { aiPrompt } from "../site/trust.js";
+test("Anpassen: Signale werden Interessen zugeordnet; Gesamtmarkt nie ausgeblendet", () => {
+  assert.equal(topicOf("hot-quantum"), "themes");
+  assert.equal(topicOf("move-btc"), "crypto");
+  assert.equal(topicOf("move-gold"), "commodities");
+  assert.equal(topicOf("move-world"), "stocks");
+  assert.equal(topicOf("sahm"), "macro");
+  assert.equal(topicOf("bubble-high"), null);
+});
+test("KI-Zusammenfassung enthält Lage und Hinweis auf Vorschläge statt Empfehlungen", () => {
+  const t = aiPrompt({ generatedAt: "2026-11-19T08:00:00Z", risk: { level: "gelb" }, bubble: { score: 61 }, events: [] }, [{ title: "Gold steigt leise" }]);
+  assert.ok(t.includes("gelb") && t.includes("61") && t.includes("Gold steigt leise") && t.includes("Vorschläge statt Empfehlungen"));
+});

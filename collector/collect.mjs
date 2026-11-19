@@ -11,7 +11,8 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
-import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities } from "./insights.mjs";
+import { buildSignals } from "../site/signals.js";
+import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
@@ -311,7 +312,7 @@ async function main() {
   ]);
   const chatter = await fetchBubbleChatter();
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
-  const [research, realEstate, macro, commodities] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status })]);
+  const [research, realEstate, macro, commodities, tech] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status }), fetchTechTrends({ get, status }, NOW)]);
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
   ]);
@@ -394,7 +395,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities, tech,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),
@@ -411,7 +412,14 @@ async function main() {
   // Historie: ein Eintrag pro Tag (der neueste Lauf des Tages gewinnt), 365 Tage
   const today = new Date(NOW).toISOString().slice(0, 10);
   const hist = previous.history.filter((h) => h.date !== today);
-  hist.push({ date: today, bubble: data.bubble.score, themes: Object.fromEntries(themes.map((t) => [t.id, [t.scores.hype, t.scores.momentum, t.scores.heat]])) });
+  // Für die spätere Trefferquote: welche Signale gab es, und wie standen die Kurse?
+  const px = {};
+  for (const a of data.assets || []) if (!a.missing) px[`a:${a.id}`] = Math.round(a.last * 1e4) / 1e4;
+  for (const c of data.commodities || []) if (!c.missing) px[`c:${c.id}`] = Math.round(c.last * 1e4) / 1e4;
+  for (const t of themes) if (t.price) px[`t:${t.id}`] = Math.round(t.price.last * 1e4) / 1e4;
+  let sig = [];
+  try { sig = buildSignals(data, previous.history).slice(0, 25).map((x) => `${x.kind[0]}:${x.id}`); } catch { /* Auswertung ist optional */ }
+  hist.push({ date: today, bubble: data.bubble.score, themes: Object.fromEntries(themes.map((t) => [t.id, [t.scores.hype, t.scores.momentum, t.scores.heat]])), sig, px });
   const history = hist.slice(-365);
 
   await mkdir(OUT_DIR, { recursive: true });

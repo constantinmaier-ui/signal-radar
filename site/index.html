@@ -45,6 +45,7 @@
           <span>Teilen</span>
         </button>
         <button class="btn btn-primary" id="installBtn" type="button" hidden title="Signal-Radar wie eine App installieren">App installieren</button>
+        <button class="btn btn-icon" id="prefsBtn" type="button" title="Anpassen: Interessen und Bereiche" aria-label="Anpassen">⚙</button>
         <a class="btn btn-icon" href="#wissen" title="Lexikon &amp; Erklärungen" aria-label="Lexikon und Erklärungen">?</a>
         <button class="btn btn-icon" id="themeBtn" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
@@ -73,6 +74,11 @@
       </div>
       <div id="sigList" class="sig-list"></div>
       <button class="btn btn-ghost btn-wide" id="sigMore" type="button" hidden></button>
+    </section>
+
+    <section id="askai" class="card askai">
+      <div><h2>Mit deiner eigenen KI besprechen</h2><p class="sub">Öffnet deine KI mit einer fertigen Zusammenfassung der heutigen Lage. Du brauchst dafür kein Passwort und keinen Schlüssel in dieser App. Die KI läuft in deinem eigenen Konto.</p></div>
+      <div class="askai-btns"><a class="btn btn-primary" id="aiClaude" href="#" target="_blank" rel="noopener">Mit Claude besprechen</a><a class="btn btn-ghost" id="aiChatgpt" href="#" target="_blank" rel="noopener">Mit ChatGPT besprechen</a><button class="btn btn-ghost" id="aiCopy" type="button">Für andere KI kopieren</button></div>
     </section>
 
     <section id="newsImpact" class="card">
@@ -144,6 +150,16 @@
         </form>
         <div id="planOut" class="plan-out"></div>
       </div>
+    </section>
+
+    <section id="hebel" class="card">
+      <div class="card-head"><div><h2>Was nachweislich dein Geld vermehrt</h2><p class="sub">Die größten Hebel sind unspektakulär. Hier mit deinen Zahlen aus dem Plan durchgerechnet.</p></div></div>
+      <div id="leversBody" class="levers"></div>
+    </section>
+
+    <section id="fitness" class="grid-2">
+      <article class="card"><div class="card-head"><div><h2>Dein Finanz-Fitness-Check</h2><p class="sub">Spielerisch, aber mit Absicht: Belohnt werden gute Gewohnheiten, nicht häufiges Handeln. Studien zeigen, dass verspielte Trading-Apps zu mehr riskantem Handeln verleiten (Chapkovski, Khapko &amp; Zoican).</p></div></div><div id="fitBody"></div></article>
+      <article class="card"><div class="card-head"><div><h2>Jeden Tag ein bisschen schlauer</h2></div></div><div id="quizBody" class="quiz"></div></article>
     </section>
 
     <section id="howto" class="card">
@@ -261,6 +277,10 @@
     </div>
 
     <div class="view" data-view="chancen" hidden>
+    <section id="trends" class="card">
+      <div class="card-head"><div><h2>Trend-Radar: Was gerade abhebt</h2><p class="sub">Was sich gerade ungewöhnlich stark bewegt, über alle Anlageklassen, Rohstoffe und Themen hinweg. „2,0×“ heißt: doppelt so weit wie eine typische Monatsschwankung. Dazu Aufmerksamkeit, die gerade sprunghaft steigt, und KI-Software, die Entwickler massenhaft herunterladen.</p></div></div>
+      <div id="trendsBody" class="trends"></div>
+    </section>
     <section id="karte" class="card">
       <div class="card-head">
         <div>
@@ -363,6 +383,14 @@
     </div>
 
     <div class="view" data-view="wissen" hidden>
+    <section id="about" class="card about">
+      <h2>Über das Radar</h2>
+      <p>Das Signal-Radar ist ein privates Projekt. Es soll Menschen helfen, ihr Geld vernünftig anzulegen, ohne Fachstudium und ohne jemandem etwas verkaufen zu wollen. Es gibt keine Werbung, keine Provisionen und kein Konto.</p>
+      <p><b>Was es anders macht:</b> Die meisten Finanzportale zeigen Kurse und Nachrichten. Was das für dich bedeutet, musst du dort selbst herausfinden. Das Radar liest rund 40 Quellen, von der US-Börsenaufsicht bis zur Weltbank, und übersetzt sie in einfache Hinweise. Bei jedem Hinweis steht, woher er kommt und wie gut er belegt ist. Wenn etwas nur schwach belegt ist, steht das auch da.</p>
+      <p><b>Was es nicht macht:</b> Es gibt keine Kauftipps und keine Kursprognosen. Kurzfristig kann niemand Kurse verlässlich vorhersagen, auch keine KI. Das Radar zeigt Muster, Wahrscheinlichkeiten und Risiken. Entscheiden musst du selbst.</p>
+      <p><b>Offen und nachprüfbar:</b> Der komplette Code ist öffentlich auf GitHub. Jede Berechnung lässt sich nachlesen, und jede Datenquelle ist frei zugänglich.</p>
+    </section>
+
     <section id="installieren" class="card">
       <div class="card-head"><div><h2>Als App installieren</h2><p class="sub">Das Radar lässt sich auf jedem Gerät wie eine App installieren: eigenes Symbol, eigenes Fenster, öffnet auch offline mit den letzten Daten. Kostenlos, ohne App-Store und ohne Konto.</p></div></div>
       <div class="steps install-steps">
@@ -429,6 +457,14 @@
     <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
       <button class="btn btn-icon drawer-close" type="button" data-close aria-label="Schließen">✕</button>
       <div id="drawerBody"></div>
+    </div>
+  </div>
+  <div id="prefsPanel" class="drawer" hidden>
+    <div class="drawer-backdrop" data-close-prefs></div>
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="prefsTitle">
+      <button class="btn btn-icon drawer-close" type="button" data-close-prefs aria-label="Schließen">✕</button>
+      <h2 id="prefsTitle">Anpassen</h2>
+      <div id="prefsBody" class="prefs"></div>
     </div>
   </div>
   <div id="tooltip" class="tooltip" role="status" hidden></div>

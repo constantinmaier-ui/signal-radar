@@ -321,9 +321,17 @@ export const EVENTS = [
 
 // ---------- Neue Forschung (frei zugängliche Studien-Archive) ----------
 export const RESEARCH_FEEDS = [
-  { name: "arXiv Finanzwissenschaft", url: "https://rss.arxiv.org/rss/q-fin" },
+  { name: "Journal of Finance", url: "https://onlinelibrary.wiley.com/feed/15406261/most-recent", journal: true },
+  { name: "Journal of Financial Economics", url: "https://rss.sciencedirect.com/publication/science/0304405X", journal: true },
   { name: "NBER Working Papers", url: "https://back.nber.org/rss/new.xml" },
+  { name: "arXiv Finanzwissenschaft", url: "https://rss.arxiv.org/rss/q-fin" },
 ];
+
+// KI-Organisationen auf Hugging Face/GitHub → börsennotierte Mutter (nur wo eindeutig)
+export const AI_ORGS = {
+  "meta-llama": "META", "facebook": "META", "google": "GOOGL", "google-deepmind": "GOOGL", "microsoft": "MSFT", "nvidia": "NVDA",
+  "qwen": "BABA (Alibaba)", "apple": "AAPL", "ibm-granite": "IBM", "ibm": "IBM", "amazon": "AMZN", "salesforce": "CRM", "tencent": "Tencent (HK)",
+};
 
 // ---------- Immobilien (offizielle Statistik) ----------
 export const REAL_ESTATE = {

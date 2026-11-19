@@ -1,6 +1,7 @@
 // Ansicht „Heute“ (Tages-Check + Signale) und die Bereichs-Navigation.
 import { $, $$, esc, fmt, state } from "./ui.js";
 import { buildSignals, dailyVerdict } from "./signals.js";
+import { prefs, renderAskAi } from "./trust.js";
 
 const KIND = {
   chance: { icon: "↗", label: "Chance", cls: "k-chance" },
@@ -31,12 +32,14 @@ export function renderCheck() {
       <div class="do"><h3>✓ Sinnvoll jetzt</h3><ul>${v.doList.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
       <div class="dont"><h3>✕ Lieber lassen</h3><ul>${v.dontList.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
     </div>
-    <div class="check-cta"><a class="btn btn-primary" href="#plan">Was heißt das für mein Geld? Plan berechnen</a></div>`;
+    <div class="check-cta"><span class="fine">Vorschläge auf Basis fester Regeln, keine Empfehlung. Du entscheidest.</span><a class="btn btn-primary" href="#plan">Was heißt das für mein Geld? Plan berechnen</a></div>`;
 }
 
 let sigFilter = "all", sigAll = false;
 export function renderSignals() {
-  const all = buildSignals(state.data, state.history);
+  const off = prefs().off;
+  const all = buildSignals(state.data, state.history).filter((s) => !off.includes(topicOf(s.id)));
+  renderAskAi(all);
   const list = all.filter((s) => sigFilter === "all" || s.kind === sigFilter);
   const show = sigAll ? list : list.slice(0, 5);
   $("#sigList").innerHTML = show.length ? show.map((s) => {
@@ -47,7 +50,7 @@ export function renderSignals() {
         <div class="sig-meta"><span class="sig-kind">${k.label}</span><span>${esc(s.source)}</span></div>
         <h3>${esc(s.title)}</h3>
         <p>${esc(s.text)}</p>
-        <p class="sig-todo"><b>Was du tun kannst:</b> ${esc(s.todo)}</p>
+        <p class="sig-todo"><b>Möglicher nächster Schritt:</b> ${esc(s.todo)}</p>
         ${s.view && s.view !== "heute" ? `<a class="sig-link" href="#${s.view}">Details in „${VIEW_LABEL[s.view]}“ →</a>` : ""}
       </div></article>`;
   }).join("") : '<div class="empty">Gerade keine auffälligen Signale. Das ist ein gutes Zeichen: einfach beim Plan bleiben.</div>';
@@ -78,4 +81,17 @@ export function showView(onShow) {
   document.title = v === "heute" ? "Signal-Radar" : `${VIEW_LABEL[v]} · Signal-Radar`;
   if (!location.hash.startsWith("#thema=")) window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   onShow?.(v);
+}
+
+// Welchem Interessen-Thema gehört ein Signal an? (für „Anpassen“)
+export function topicOf(id) {
+  if (/^(quiet|hot|noise|ipo)-/.test(id)) return "themes";
+  if (/^crypto-|^move-(btc|eth)$/.test(id)) return "crypto";
+  if (/^com-|^move-(gold|silver|oil|commodities)$/.test(id)) return "commodities";
+  if (/^mortgage-|^move-realestate$/.test(id)) return "realestate";
+  if (/^(curve|credit|sahm)/.test(id)) return "macro";
+  if (/^event-/.test(id)) return "news";
+  if (/^(cons|insider|voices)-/.test(id)) return "pros";
+  if (/^(gem|move)-/.test(id)) return "stocks";
+  return null; // Gesamtmarkt-Signale werden nie ausgeblendet
 }
