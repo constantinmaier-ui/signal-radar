@@ -7,7 +7,7 @@ export const store = {
 };
 
 export const state = {
-  data: null, history: [], sort: "hype", theme: "all", q: "", onlySignals: false, shown: innerWidth < 620 ? 20 : 40,
+  data: null, history: [], sort: "hype", theme: "all", q: "", onlySignals: false, shown: typeof innerWidth !== "undefined" && innerWidth < 620 ? 20 : 40,
   watch: new Set(store.get("watch", [])), live: [], liveKeys: new Set(), liveBtc: null, lastLoad: 0,
 };
 

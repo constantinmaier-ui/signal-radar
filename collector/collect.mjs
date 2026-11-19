@@ -11,7 +11,7 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
-import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro } from "./insights.mjs";
+import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
@@ -311,7 +311,7 @@ async function main() {
   ]);
   const chatter = await fetchBubbleChatter();
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
-  const [research, realEstate, macro] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get })]);
+  const [research, realEstate, macro, commodities] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status })]);
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
   ]);
@@ -394,7 +394,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),

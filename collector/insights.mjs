@@ -107,3 +107,23 @@ export async function fetchMacro({ get }) {
   }
   return out;
 }
+
+// ---------- Rohstoff-Monitor ----------
+import { COMMODITIES } from "./config.mjs";
+export function rangeStats(closes) {
+  const c = closes.filter((x) => Number.isFinite(x)).slice(-252);
+  if (c.length < 20) return null;
+  const lo = Math.min(...c), hi = Math.max(...c), last = c[c.length - 1];
+  return { low52: lo, high52: hi, pos52: hi > lo ? (last - lo) / (hi - lo) : 0.5 };
+}
+export async function fetchCommodities({ fetchSeries, priceStats, pool, status }) {
+  const res = await pool(COMMODITIES, 5, async (c) => {
+    const s = await fetchSeries(c.sym, null);
+    if (!s) return { ...c, missing: true };
+    const st = priceStats(s.closes, s.ts);
+    return st ? { ...c, ...st, ...rangeStats(s.closes) } : { ...c, missing: true };
+  });
+  const okN = res.filter((c) => !c.missing).length;
+  status.push({ source: `Rohstoffe (${okN}/${COMMODITIES.length})`, ok: okN > 0 });
+  return res;
+}

@@ -332,3 +332,25 @@ export const REAL_ESTATE = {
   bund10: "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?lastNObservations=260&format=jsondata",
   stocks: ["VNA.DE", "VNQ"],
 };
+
+// ---------- Rohstoff-Monitor (Terminkontrakte, nächster Liefermonat; Yahoo-Symbole) ----------
+export const COMMODITIES = [
+  { id: "brent", name: "Rohöl Brent", sym: "BZ=F", unit: "$/Barrel", group: "Energie" },
+  { id: "wti", name: "Rohöl WTI", sym: "CL=F", unit: "$/Barrel", group: "Energie" },
+  { id: "ttf", name: "Erdgas Europa (TTF)", sym: "TTF=F", unit: "€/MWh", group: "Energie" },
+  { id: "natgas", name: "Erdgas USA (Henry Hub)", sym: "NG=F", unit: "$/MMBtu", group: "Energie" },
+  { id: "heatoil", name: "Heizöl / Diesel", sym: "HO=F", unit: "$/Gallone", group: "Energie" },
+  { id: "copper", name: "Kupfer", sym: "HG=F", unit: "$/Pfund", group: "Industriemetalle" },
+  { id: "aluminium", name: "Aluminium", sym: "ALI=F", unit: "$/Tonne", group: "Industriemetalle" },
+  { id: "gold", name: "Gold", sym: "GC=F", unit: "$/Unze", group: "Edelmetalle" },
+  { id: "silver", name: "Silber", sym: "SI=F", unit: "$/Unze", group: "Edelmetalle" },
+  { id: "platinum", name: "Platin", sym: "PL=F", unit: "$/Unze", group: "Edelmetalle" },
+  { id: "palladium", name: "Palladium", sym: "PA=F", unit: "$/Unze", group: "Edelmetalle" },
+  { id: "wheat", name: "Weizen", sym: "ZW=F", unit: "US-Cent/Scheffel", group: "Agrar" },
+  { id: "corn", name: "Mais", sym: "ZC=F", unit: "US-Cent/Scheffel", group: "Agrar" },
+  { id: "soy", name: "Sojabohnen", sym: "ZS=F", unit: "US-Cent/Scheffel", group: "Agrar" },
+  { id: "sugar", name: "Zucker", sym: "SB=F", unit: "US-Cent/Pfund", group: "Agrar" },
+  { id: "coffee", name: "Kaffee", sym: "KC=F", unit: "US-Cent/Pfund", group: "Agrar" },
+  { id: "cocoa", name: "Kakao", sym: "CC=F", unit: "$/Tonne", group: "Agrar" },
+  { id: "cotton", name: "Baumwolle", sym: "CT=F", unit: "US-Cent/Pfund", group: "Agrar" },
+];

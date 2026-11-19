@@ -208,3 +208,20 @@ test("FRED-CSV: fehlende Werte (.) werden übersprungen", () => {
   assert.equal(p[1].value, -0.2);
   assert.equal(parseFredCsv("<html>Fehler</html>"), null);
 });
+
+import { moodScore } from "../site/insights.js";
+test("Stimmungs-Barometer: gewichtetes Mittel, fehlende Quellen werden ausgelassen", () => {
+  assert.equal(moodScore({}), null);
+  const m = moodScore({ cnnFearGreed: { value: 80 }, fearGreed: { value: 60 } });
+  assert.equal(m.score, Math.round((80 * 0.3 + 60 * 0.15) / 0.45));
+  assert.equal(m.parts.length, 2);
+});
+
+import { rangeStats } from "../collector/insights.mjs";
+test("Rohstoffe: Lage in der 52-Wochen-Spanne", () => {
+  const r = rangeStats([...Array(30).fill(0).map((_, i) => 100 + i), 110]);
+  assert.equal(r.low52, 100);
+  assert.equal(r.high52, 129);
+  assert.ok(Math.abs(r.pos52 - 10 / 29) < 1e-9);
+  assert.equal(rangeStats([1, 2]), null);
+});

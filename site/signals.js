@@ -75,6 +75,12 @@ export function buildSignals(d, history = []) {
   if (mc.hy && ok(mc.hy.value) && ok(mc.hy.ago3m) && mc.hy.value - mc.hy.ago3m >= 1) add({ id: "credit-stress", kind: "warnung", weight: 78, view: "maerkte", title: "Kreditmärkte werden nervös", text: `Der Risikoaufschlag für riskante Firmenanleihen stieg in 3 Monaten von ${mc.hy.ago3m.toFixed(1).replace(".", ",")} auf ${mc.hy.value.toFixed(1).replace(".", ",")} Prozentpunkte. Profis verlangen mehr Sicherheit. Das ist ein frühes Stresssignal.`, todo: "Keine Hebel, keine riskanten Einzelwetten. Sparplan weiter.", source: "FRED (US-Notenbank)" });
   if (mc.sahm && ok(mc.sahm.value) && mc.sahm.value >= 0.5) add({ id: "sahm", kind: "warnung", weight: 85, view: "maerkte", title: "Rezessions-Signal (Sahm-Regel) ausgelöst", text: `Die US-Arbeitslosigkeit steigt schnell (Sahm-Wert ${mc.sahm.value.toFixed(2).replace(".", ",")}, Schwelle 0,5). Das zeigte bisher jede US-Rezession seit 1970 früh an.`, todo: "Notgroschen sichern, Plan beibehalten. Rezessionen sind für Sparer oft gute Kaufzeiten.", source: "FRED (US-Notenbank)" });
 
+  // 8d) Rohstoffe: starke Monatsbewegungen und Extreme in der Jahresspanne
+  for (const c of (d.commodities || []).filter((x) => !x.missing && ok(x.chg1m) && Math.abs(x.chg1m) >= 0.12).sort((a, b2) => Math.abs(b2.chg1m) - Math.abs(a.chg1m)).slice(0, 2)) {
+    const up = c.chg1m > 0;
+    add({ id: `com-${c.id}`, kind: "info", weight: 50 + Math.min(15, Math.abs(c.chg1m) * 50), view: "maerkte", title: `${c.name} ${up ? "steigt" : "fällt"} ${p0(c.chg1m)} in einem Monat`, text: up ? "Starke Preisanstiege bei Rohstoffen landen oft mit Verzögerung bei Herstellern und Verbrauchern." : "Deutlich gefallene Preise entlasten Firmen, die diesen Rohstoff einkaufen.", todo: up ? "Für Einkäufer: Absicherung des künftigen Bedarfs prüfen. Für Anleger: nicht hinterherkaufen." : "Für Einkäufer: Gelegenheit, Preise festzuschreiben. Für Anleger: kein Grund zur Panik.", source: "Rohstoff-Monitor" });
+  }
+
   // 9) Nachrichtenlage: Ereignis-Arten, über die gerade auffällig viel berichtet wird
   const TODO = {
     rates: "Zinsänderungen wirken über Monate. Plan nicht hektisch umbauen. Bei Senkungen profitieren Anleihen und Immobilien.",

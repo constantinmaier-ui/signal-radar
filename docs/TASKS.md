@@ -14,6 +14,9 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 - [x] Weitere/neuartige Anlageformen (7 neue Bausteine + 12 Erklärkarten)
 - [x] Insider-Käufe (SEC Form 4)
 - [x] Konjunktur-Frühwarnsystem (FRED: Zinskurve, Kredit-Aufschläge, Sahm-Regel)
+- [x] Stimmungs-Barometer (eine Zahl aus 5 Stimmungsquellen + was es bedeutet)
+- [x] Mietspiegel-Finder (amtliche Links je Stadt) + Mietspiegel-Check (Mietpreisbremse, Kappungsgrenze)
+- [x] Rohstoff-Monitor (18 Rohstoffe, Lage in der Jahresspanne, Einkauf/Absicherung, Anleger, Teilen)
 - [ ] 👤 GitHub Pages einschalten: Settings → Pages → Source „GitHub Actions“
 - [ ] 👤 Pull Request #1 zusammenführen („Merge“)
 - [ ] Nach dem ersten echten Lauf: Quellen prüfen, Ausfälle beheben
@@ -33,6 +36,10 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 | 8 | **Termin-Kalender**: Zinsentscheide (Fed/EZB), Quartalszahlen der Top-Firmen diese Woche | mittel | mittel | Für Quartalszahlen braucht es einen kostenlosen Finnhub-Schlüssel (👤) |
 | 9 | **Kalshi** (regulierter US-Prognosemarkt) zusätzlich zu Polymarket | klein | klein | |
 | 10 | **Put/Call-Verhältnis (CBOE)** als Angst-Messer der Profis | klein | klein | |
+| 11 | **Rohstoff-Prognosen**: EIA-Energieprognose (STEO) automatisch einlesen | hoch | klein | 👤 kostenloser EIA-Schlüssel nötig |
+| 12 | **Terminkurven** (Contango/Backwardation): Was erwartet der Markt in 3/6/12 Monaten? | hoch | mittel | Für Einkauf sehr nützlich |
+| 13 | **Weltbank Pink Sheet** (monatliche Rohstoffpreise, offizielle Reihe) + Strom/CO₂-Preise Europa | mittel | mittel | |
+| 14 | **AAII-Anlegerumfrage** (wöchentliche Bullen/Bären-Stimmung) ins Stimmungs-Barometer | mittel | klein | Nutzungsbedingungen prüfen |
 
 ## Später (Version 3.0)
 - [ ] GENESIS-Zugang für Regionaldaten (👤 kostenlose Registrierung bei regionalstatistik.de)

@@ -60,6 +60,7 @@ const SOURCES = [
   ["Wettmärkte", "Polymarket", "Echtgeld-Wahrscheinlichkeiten"],
   ["Zinsen & Immobilien", "Europäische Zentralbank, Eurostat", "Leitzins, Bauzinsen, Hauspreise"],
   ["Konjunktur-Frühwarnung", "FRED (US-Notenbank St. Louis)", "Zinskurve, Kredit-Risikoaufschläge, Sahm-Regel"],
+  ["Rohstoffe", "Terminbörsen (über Yahoo Finance)", "18 Rohstoffe: Preis, Trend, Lage in der Jahresspanne"],
   ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen"],
   ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs minütlich"],
   ["Forschung", "arXiv, NBER", "Neueste Fachstudien"],
@@ -168,4 +169,86 @@ export function renderMacro() {
     tile("sahm", "Sahm-Regel (Arbeitsmarkt)", f2(s2?.value), "", !s2 ? "" : s2.value >= 0.5 ? "bad" : s2.value >= 0.3 ? "warn" : "good", !s2 ? "" : s2.value >= 0.5 ? "Ausgelöst: Rezessionssignal" : s2.value >= 0.3 ? "Steigt: beobachten" : "Ruhig: kein Signal (Schwelle 0,5)"),
   ].join("");
   $$("#macro .mspark").forEach((el) => { const s3 = m[el.dataset.k].series; el.innerHTML = spark(s3, { w: 260, h: 34, color: "var(--s1)", label: "Verlauf 3 Jahre" }); });
+}
+
+// ---------- Mietspiegel-Finder & -Check ----------
+const OFFICIAL = { "münchen": "https://www.mietspiegel-muenchen.de", "berlin": "https://www.stadtentwicklung.berlin.de/wohnen/mietspiegel/", "hamburg": "https://www.hamburg.de/mietspiegel/" };
+const search = (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
+export function renderMietspiegelLinks() {
+  const city = ($("#msCity").value || "").trim();
+  if (!city) { $("#msLinks").innerHTML = ""; return; }
+  const direct = OFFICIAL[city.toLowerCase()];
+  const links = [
+    [direct || search(`Mietspiegel ${city} offiziell Stadt`), "Offizieller Mietspiegel", direct ? "direkt zur Stadt" : "Suche nach der offiziellen Seite"],
+    [search(`Grundstücksmarktbericht Gutachterausschuss ${city}`), "Grundstücksmarktbericht", "amtliche Kaufpreise pro m² (Gutachterausschuss)"],
+    ["https://www.bodenrichtwerte-boris.de", "Bodenrichtwerte (BORIS-D)", "amtlicher Grundstückswert, bundesweites Portal"],
+    [search(`Zensus 2022 Nettokaltmiete ${city}`), "Zensus 2022: Mieten", "amtliche Durchschnittsmieten je Gemeinde"],
+  ];
+  $("#msLinks").innerHTML = links.map(([u, t, d]) => `<a class="ms-link" href="${safeUrl(u)}" target="_blank" rel="noopener"><b>${esc(t)} ↗</b><span>${esc(d)}</span></a>`).join("");
+}
+export function calcMietspiegel() {
+  const f = $("#msForm"); if (!f) return;
+  const area = +f.area.value || 0, rent = +f.rent.value || 0, ref = +f.ref.value || 0, brake = f.brake.checked;
+  if (!area || !ref) { $("#msOut").innerHTML = ""; return; }
+  const perM2 = rent / area, max = ref * (brake ? 1.1 : 1) * area, diff = rent - max;
+  const verdict = diff <= 0 ? ["g", brake ? "Im Rahmen: Die Miete liegt höchstens 10 % über der ortsüblichen Vergleichsmiete." : "Die Miete liegt nicht über der ortsüblichen Vergleichsmiete."]
+    : brake ? ["r", `Wahrscheinlich zu hoch: ${fmt(diff)} € pro Monat über der Grenze der Mietpreisbremse. Ausnahmen gibt es z. B. für Neubau ab Oktober 2014, nach umfassender Modernisierung oder wenn schon die Vormiete höher war.`]
+    : ["y", `Die Miete liegt ${fmt(diff)} € über der ortsüblichen Vergleichsmiete. Ohne Mietpreisbremse ist das erlaubt, aber spätere Erhöhungen sind begrenzt.`];
+  $("#msOut").innerHTML = `<div class="proj-kpis"><div><span>Verlangt pro m²</span><b>${fmt(perM2, 2)} €</b></div><div><span>Mietspiegel pro m²</span><b>${fmt(ref, 2)} €</b></div><div><span>Abweichung</span><b class="${perM2 > ref ? "down" : "up"}">${pct(perM2 / ref - 1, 0)}</b></div><div class="hl"><span>${brake ? "Höchstmiete (Bremse)" : "Vergleichsmiete"}</span><b>${fmt(max)} €</b></div></div>
+    <div class="re-verdict lv-${verdict[0]}">${esc(verdict[1])}</div>
+    <p class="fine">Für Vermieter und Käufer: Mieterhöhungen sind auf 20 % in 3 Jahren begrenzt, in vielen Städten auf 15 % (Kappungsgrenze), und nie über die ortsübliche Vergleichsmiete hinaus. Rechne beim Kauf mit der erlaubten Miete, nicht mit der Wunschmiete. Allgemeine Information, keine Rechtsberatung. Bei Streit hilft der Mieterverein bzw. Haus &amp; Grund.</p>`;
+}
+export function initMietspiegel() {
+  if (!$("#msForm")) return;
+  $("#msCity").addEventListener("input", renderMietspiegelLinks);
+  $("#msForm").addEventListener("input", calcMietspiegel);
+  $("#msForm").addEventListener("submit", (e) => e.preventDefault());
+  renderMietspiegelLinks(); calcMietspiegel();
+}
+
+// ---------- Stimmungs-Barometer (alle Stimmungsquellen in einer Zahl) ----------
+export function moodScore(d) {
+  const parts = [];
+  if (ok(d.cnnFearGreed?.value)) parts.push(["Aktien (CNN Fear & Greed)", d.cnnFearGreed.value, 0.3]);
+  if (ok(d.fearGreed?.value)) parts.push(["Krypto (Fear & Greed)", d.fearGreed.value, 0.15]);
+  const v = d.voices; if (v && v.bull + v.bear >= 5) parts.push(["Ton der Analysten", Math.round((v.bull / (v.bull + v.bear)) * 100), 0.2]);
+  const hy = d.macro?.hy?.value; if (ok(hy)) parts.push(["Kreditmärkte (Risikoaufschlag)", Math.round(Math.max(0, Math.min(100, ((7 - hy) / 4.5) * 100))), 0.2]);
+  const vix = d.risk?.vix; if (ok(vix) && vix < 90) parts.push(["Angstbarometer VIX", Math.round(Math.max(0, Math.min(100, ((35 - vix) / 23) * 100))), 0.15]);
+  const w = parts.reduce((s2, p) => s2 + p[2], 0);
+  return w ? { score: Math.round(parts.reduce((s2, p) => s2 + p[1] * p[2], 0) / w), parts } : null;
+}
+export function renderMood() {
+  const m = moodScore(state.data);
+  if (!m) { $("#mood").innerHTML = ""; return; }
+  const s3 = m.score;
+  const [label, cls, meaning] = s3 < 25 ? ["Extreme Angst", "fear", "Viele verkaufen aus Panik. Historisch oft eine gute Zeit für Sparer, die einfach weitermachen."]
+    : s3 < 45 ? ["Angst", "fear", "Vorsichtige Stimmung. Kein Grund, den Plan zu ändern. Nachkäufe sind oft günstig."]
+    : s3 <= 55 ? ["Neutral", "neutral", "Weder Gier noch Panik: normales Börsenwetter."]
+    : s3 <= 75 ? ["Gier", "greed", "Optimismus überwiegt. Nicht vom Schwung mitreißen lassen, keine Hype-Käufe."]
+    : ["Extreme Gier", "greed", "Fast alle sind euphorisch. Historisch fallen die Renditen danach oft schwächer aus. Jetzt besonders diszipliniert bleiben."];
+  $("#mood").innerHTML = `<div class="mood-head"><div class="mood-num">${s3}</div><div><b class="mood-${cls}">${label}</b><p>${esc(meaning)}</p></div></div>
+    <div class="mood-bar" aria-hidden="true"><i style="left:${s3}%"></i></div><div class="mood-scale"><span>Panik</span><span>Gier</span></div>
+    <ul class="mood-parts pro-only">${m.parts.map(([n, v]) => `<li><span>${esc(n)}</span><b>${v}</b></li>`).join("")}</ul>`;
+}
+
+// ---------- Rohstoff-Monitor ----------
+const posWord = (p) => (!ok(p) ? "" : p < 0.2 ? "nahe Jahrestief" : p > 0.8 ? "nahe Jahreshoch" : p < 0.4 ? "eher unten" : p > 0.6 ? "eher oben" : "Mitte");
+export function renderCommodities() {
+  const list = (state.data.commodities || []).filter((c) => !c.missing);
+  if (!list.length) { $("#commodities").innerHTML = '<div class="empty">Noch keine Rohstoff-Daten.</div>'; return; }
+  const groups = [...new Set(list.map((c) => c.group))];
+  $("#commodities").innerHTML = `<div class="tscroll"><table class="tick-table com-table"><thead><tr><th>Rohstoff</th><th>Preis</th><th>1 Woche</th><th>1 Monat</th><th>1 Jahr</th><th>Lage im 52-Wochen-Bereich</th><th class="pro-only">Schwankung</th></tr></thead><tbody>
+    ${groups.map((g) => `<tr class="grp"><td colspan="7">${esc(g)}</td></tr>` + list.filter((c) => c.group === g).map((c) => `<tr>
+      <td><b>${esc(c.name)}</b><div class="fine">${esc(c.unit)}</div></td>
+      <td>${fmt(c.last, c.last < 20 ? 2 : c.last < 1000 ? 1 : 0)}</td>
+      <td class="${dirCls(c.chg1w)}">${pct(c.chg1w, 1)}</td><td class="${dirCls(c.chg1m)}">${pct(c.chg1m, 0)}</td><td class="${dirCls(c.chg1y)}">${pct(c.chg1y, 0)}</td>
+      <td><div class="range" title="Tief ${fmt(c.low52, 2)} · Hoch ${fmt(c.high52, 2)}"><i style="left:${Math.round((c.pos52 ?? 0.5) * 100)}%"></i></div><span class="fine">${posWord(c.pos52)}</span></td>
+      <td class="pro-only">±${fmt((c.vol || 0) * 100)} %</td></tr>`).join("")).join("")}
+    </tbody></table></div>`;
+}
+export function commodityShareText(d, url) {
+  const list = (d.commodities || []).filter((c) => !c.missing && ok(c.chg1m));
+  const movers = [...list].sort((a, b) => Math.abs(b.chg1m) - Math.abs(a.chg1m)).slice(0, 5);
+  const low = list.filter((c) => c.pos52 < 0.2).map((c) => c.name), high = list.filter((c) => c.pos52 > 0.8).map((c) => c.name);
+  return `🛢️ *Rohstoff-Lage* · ${new Date(d.generatedAt).toLocaleDateString("de-DE")}\n\n*Größte Bewegungen (1 Monat):*\n${movers.map((c) => `• ${c.name}: ${pct(c.chg1m, 0)}`).join("\n")}\n\n${low.length ? `📉 *Nahe Jahrestief:* ${low.join(", ")}\n` : ""}${high.length ? `📈 *Nahe Jahreshoch:* ${high.join(", ")}\n` : ""}\n👉 ${url}#maerkte\n_Keine Anlage- oder Einkaufsberatung._`;
 }
