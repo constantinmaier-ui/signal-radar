@@ -3,7 +3,7 @@
 import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView } from "./heute.js";
-import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness } from "./trust.js";
+import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderCommodities, commodityShareText } from "./insights.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
@@ -298,7 +298,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderCommodities, renderTrends, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -502,6 +502,7 @@ initMietspiegel();
 renderMeta();
 applyPrefs();
 renderFitness();
+initBackup();
 $("#prefsBtn").addEventListener("click", () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; });
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));

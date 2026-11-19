@@ -238,6 +238,9 @@
         <datalist id="msCities"><option>München</option><option>Berlin</option><option>Hamburg</option><option>Köln</option><option>Frankfurt am Main</option><option>Stuttgart</option><option>Düsseldorf</option><option>Leipzig</option><option>Dortmund</option><option>Essen</option><option>Bremen</option><option>Dresden</option><option>Hannover</option><option>Nürnberg</option><option>Augsburg</option><option>Regensburg</option><option>Freiburg im Breisgau</option><option>Heidelberg</option><option>Münster</option><option>Bonn</option></datalist>
         <div id="msLinks" class="ms-links"></div>
       </div>
+      <details class="ms-help"><summary>Das fragen Mietspiegel-Rechner meist ab: am besten vorher bereitlegen</summary>
+        <ul><li><b>Wohnfläche</b> in m² (aus Mietvertrag oder Exposé)</li><li><b>Baujahr</b> des Hauses bzw. Jahr einer umfassenden Sanierung</li><li><b>Wohnlage</b> (die Stadt ordnet Straßen meist selbst ein, die Adresse genügt)</li><li><b>Ausstattung</b>: Bad (Fenster, zweites WC, bodengleiche Dusche), Küche (Einbauküche), Bodenbelag (Parkett), Balkon/Terrasse, Aufzug, Fenster (Isolierglas), Heizung</li><li><b>Energiewert</b> laut Energieausweis (falls abgefragt)</li></ul>
+        <p class="fine">Tipp: Wenn du Claude in Chrome nutzt, kann Claude den Online-Rechner deiner Stadt mit diesen Angaben für dich ausfüllen.</p></details>
       <form id="msForm" class="ms-check" autocomplete="off">
         <label>Wohnfläche<span class="inp"><input id="msArea" name="area" type="number" inputmode="decimal" min="1" step="1" value="70"><em>m²</em></span></label>
         <label>Verlangte Kaltmiete pro Monat<span class="inp"><input id="msRent" name="rent" type="number" inputmode="decimal" min="0" step="10" value="1350"><em>€</em></span></label>
@@ -280,6 +283,9 @@
     <section id="trends" class="card">
       <div class="card-head"><div><h2>Trend-Radar: Was gerade abhebt</h2><p class="sub">Was sich gerade ungewöhnlich stark bewegt, über alle Anlageklassen, Rohstoffe und Themen hinweg. „2,0×“ heißt: doppelt so weit wie eine typische Monatsschwankung. Dazu Aufmerksamkeit, die gerade sprunghaft steigt, und KI-Software, die Entwickler massenhaft herunterladen.</p></div></div>
       <div id="trendsBody" class="trends"></div>
+      <h3 class="sec-h">Echte Nutzung statt Gerede</h3>
+      <p class="sub">Was Menschen und Firmen tatsächlich tun: herunterladen, einbauen, Geld bewegen, Strom verbrauchen. Solche Daten zeigen Trends oft, bevor sie in Schlagzeilen und Geschäftszahlen auftauchen.</p>
+      <div id="usageBody" class="trends"></div>
     </section>
     <section id="karte" class="card">
       <div class="card-head">
@@ -465,6 +471,7 @@
       <button class="btn btn-icon drawer-close" type="button" data-close-prefs aria-label="Schließen">✕</button>
       <h2 id="prefsTitle">Anpassen</h2>
       <div id="prefsBody" class="prefs"></div>
+      <div id="backupBox" class="backup"></div>
     </div>
   </div>
   <div id="tooltip" class="tooltip" role="status" hidden></div>

@@ -81,6 +81,12 @@ export function buildSignals(d, history = []) {
     add({ id: `com-${c.id}`, kind: "info", weight: 50 + Math.min(15, Math.abs(c.chg1m) * 50), view: "maerkte", title: `${c.name} ${up ? "steigt" : "fällt"} ${p0(c.chg1m)} in einem Monat`, text: up ? "Starke Preisanstiege bei Rohstoffen landen oft mit Verzögerung bei Herstellern und Verbrauchern." : "Deutlich gefallene Preise entlasten Firmen, die diesen Rohstoff einkaufen.", todo: up ? "Für Einkäufer: Absicherung des künftigen Bedarfs prüfen. Für Anleger: nicht hinterherkaufen." : "Für Einkäufer: Gelegenheit, Preise festzuschreiben. Für Anleger: kein Grund zur Panik.", source: "Rohstoff-Monitor" });
   }
 
+  // 8e) Geldfluss in Krypto & Strompreis
+  const sc = d.cryptoFlows?.stablecoins;
+  if (sc && ok(sc.chg30) && Math.abs(sc.chg30) >= 0.05) add({ id: "stablecoin-flow", kind: "info", weight: 48, view: "chancen", title: sc.chg30 > 0 ? "Frisches Geld fließt in Krypto" : "Geld fließt aus Krypto ab", text: `Die Menge an Stablecoins (digitale Dollar) hat sich in 30 Tagen um ${p0(sc.chg30)} verändert. Das gilt als Hinweis auf Kaufkraft im Kryptomarkt, die Forschung dazu ist aber jung.`, todo: "Nur relevant für den kleinen Krypto-Anteil deines Plans.", source: "DefiLlama" });
+  const pw = d.power;
+  if (pw && ok(pw.avg) && ok(pw.avg30) && pw.avg30 > 0 && pw.avg / pw.avg30 - 1 >= 0.4) add({ id: "power-spike", kind: "info", weight: 46, view: "chancen", title: `Strompreis deutlich über dem Schnitt: ${Math.round(pw.avg)} €/MWh`, text: `Der Börsenstrompreis liegt ${p0(pw.avg / pw.avg30 - 1)} über dem 30-Tage-Schnitt. Das belastet energieintensive Branchen wie Chemie und Stahl.`, todo: "Für Einkäufer: Absicherung prüfen. Für Anleger: kurzfristige Spitzen nicht überbewerten.", source: "Energy-Charts" });
+
   // 9) Nachrichtenlage: Ereignis-Arten, über die gerade auffällig viel berichtet wird
   const TODO = {
     rates: "Zinsänderungen wirken über Monate. Plan nicht hektisch umbauen. Bei Senkungen profitieren Anleihen und Immobilien.",

@@ -692,3 +692,20 @@ a.btn { text-decoration: none; }
 .check-cta { align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
 @media (max-width: 980px) { .trends, .levers { grid-template-columns: 1fr 1fr; } .askai { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .trends, .levers, .trend-col.wide .trend-list, .pref-grid { grid-template-columns: 1fr; } }
+.backup { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--grid); display: grid; gap: 8px; }
+.bk-label { display: grid; gap: 5px; font-size: 13.5px; font-weight: 600; }
+.bk-label input { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--ring); background: var(--surface-2); color: var(--ink); }
+.bk-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.bk-file { cursor: pointer; }
+.pw { display: grid; gap: 4px; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.pw b { font: 700 22px var(--font-head); }
+.pw svg { width: 100%; height: 40px; display: block; }
+.ms-help { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 13.5px; }
+.ms-help summary { cursor: pointer; font-weight: 600; }
+.ms-help ul { margin: 8px 0; padding-left: 18px; display: grid; gap: 4px; }
+#usageBody .trend-list li { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+#usageBody .trend-list li > span:first-child { display: grid; min-width: 0; }
+#usageBody .trend-list li .chip { white-space: nowrap; }
+#usageBody .trend-col:first-child { grid-column: 1 / -1; }
+#usageBody .trend-col:first-child .trend-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) { #usageBody .trend-col:first-child .trend-list { grid-template-columns: 1fr; } }

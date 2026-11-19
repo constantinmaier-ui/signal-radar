@@ -25,6 +25,13 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 - [x] Top-Fachzeitschriften (Journal of Finance, Journal of Financial Economics) bei den Studien
 - [x] „Über das Radar“
 - [x] Tägliche Sicherung von Signalen & Kursen für die spätere Trefferquote
+- [x] „Echte Nutzung statt Gerede“: KI-Downloads (PyPI/npm), Stablecoins & DeFi-Kapital (DefiLlama), Strom-Börsenpreis (Energy-Charts)
+- [x] Forschung: + EZB, BIZ, US-Notenbank (FEDS)
+- [x] Verschlüsselte Sicherung (AES-256, Passwort) zum Übertragen auf andere Geräte
+- [x] Verlauf dauerhaft im Zweig `data` (täglich), Ersatzquelle für den Sammler
+- [x] Mietspiegel-Assistent (was der Rechner abfragt) + Tipp Claude in Chrome
+- [~] Offizielle Mietspiegel-Links für die 20 größten Städte (Recherche läuft)
+- [x] docs/COMPETITORS.md: Vergleich mit 9 Tool-Gruppen
 - [ ] 👤 GitHub Pages einschalten: Settings → Pages → Source „GitHub Actions“
 - [ ] 👤 Pull Request #1 zusammenführen („Merge“)
 - [ ] Nach dem ersten echten Lauf: Quellen prüfen, Ausfälle beheben
@@ -47,6 +54,9 @@ Status: `[x]` erledigt · `[~]` in Arbeit · `[ ]` offen · 👤 = muss der Besi
 | 11 | **Rohstoff-Prognosen**: EIA-Energieprognose (STEO) automatisch einlesen | hoch | klein | 👤 kostenloser EIA-Schlüssel nötig |
 | 12 | **Terminkurven** (Contango/Backwardation): Was erwartet der Markt in 3/6/12 Monaten? | hoch | mittel | Für Einkauf sehr nützlich |
 | 13 | **Weltbank Pink Sheet** (monatliche Rohstoffpreise, offizielle Reihe) + Strom/CO₂-Preise Europa | mittel | mittel | |
+| 18 | **Automatische Sync über Geräte** (verschlüsselt, eigene Cloud via WebDAV/Nextcloud) | hoch | mittel | Ergänzt die manuelle verschlüsselte Sicherung |
+| 19 | **Weitere Nutzungs-Signale**: Docker-Pulls, App-Ranglisten, Google Trends, Baugenehmigungen (Destatis) | mittel | mittel | Je Quelle Beweislage prüfen |
+| 20 | **Diversifikations-Check** fürs eigene Depot (Länder, Branchen, Einzelwerte, KI-Anteil) | sehr hoch | mittel | Teil von „Mein Depot“ |
 | 15 | **Trefferquote des Radars**: Wie oft lagen „überhitzt“, „steigt leise“ usw. nach 1/3 Monaten richtig? Öffentlich anzeigen | sehr hoch | mittel | Daten werden seit V2.0 täglich gesichert; Auswertung sobald ≥ 4 Wochen Daten |
 | 16 | **Muster-Statistik**: „Wenn X passiert, was folgte historisch?“ aus 10 Jahren Kursdaten | hoch | mittel | Ehrliche Basisraten statt Vorhersagen |
 | 17 | **Mehr Stimmungsquellen** (NAAIM, Put/Call, Google Trends) mit Beweislage-Etikett | mittel | mittel | Stimmung ist nur schwach belegt, daher niedrige Priorität |

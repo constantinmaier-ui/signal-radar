@@ -21,6 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write   # nur für die tägliche Verlaufs-Sicherung im Zweig "data"
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,7 +46,25 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           # Die US-Börsenaufsicht verlangt einen Absender. Optional: Secret SEC_USER_AGENT = "Name deine@mail.de"
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT || format('SignalRadar dashboard {0}/{1}', github.server_url, github.repository) }}
+          HISTORY_FALLBACK_URL: https://raw.githubusercontent.com/${{ github.repository }}/data/history.json
         run: node collector/collect.mjs
+      - name: Verlauf dauerhaft sichern (einmal täglich, Zweig "data")
+        if: github.ref == 'refs/heads/main'
+        run: |
+          now=$(date -u +%H%M)
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] && { [ "$now" \< "2200" ] || [ ! "$now" \< "2215" ]; }; then echo "Nicht 22:00–22:15 UTC, übersprungen"; exit 0; fi
+          git config --global user.name "signal-radar-bot"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          REMOTE="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code origin data >/dev/null 2>&1; then
+            git clone -q --depth 1 --branch data "$REMOTE" /tmp/data-branch
+          else
+            mkdir -p /tmp/data-branch && git -C /tmp/data-branch init -q -b data && git -C /tmp/data-branch remote add origin "$REMOTE"
+          fi
+          cp "$GITHUB_WORKSPACE/site/data/history.json" /tmp/data-branch/history.json
+          cd /tmp/data-branch && git add history.json
+          if git diff --cached --quiet; then echo "Keine Änderung"; exit 0; fi
+          git commit -q -m "Verlauf $(date -u +%F)" && git push -q origin data
       - name: Absolute Vorschaubild-URL für WhatsApp
         run: sed -i "s|content=\"og.png\"|content=\"${{ steps.pages.outputs.base_url }}/og.png\"|" site/index.html
       - uses: actions/upload-pages-artifact@v3

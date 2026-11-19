@@ -63,7 +63,10 @@ const SOURCES = [
   ["Rohstoffe", "Terminbörsen (über Yahoo Finance)", "18 Rohstoffe: Preis, Trend, Lage in der Jahresspanne"],
   ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen"],
   ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs minütlich"],
-  ["Forschung", "arXiv, NBER", "Neueste Fachstudien"],
+  ["Forschung", "Journal of Finance, Journal of Financial Economics, NBER, EZB, BIZ, US-Notenbank, arXiv", "Neueste begutachtete Studien und Arbeitspapiere"],
+  ["KI-Trends", "GitHub, Hugging Face, PyPI, npm", "Was Entwickler gerade nutzen und einbauen"],
+  ["Krypto-Geldfluss", "DefiLlama", "Stablecoins, Kapital in DeFi-Anwendungen"],
+  ["Strompreis", "Energy-Charts (Fraunhofer ISE)", "Börsenstrompreis Deutschland"],
   ["Einordnung (optional)", "Claude (Anthropic)", "Tagesbriefing und Übersetzungen ins Deutsche"],
 ];
 export function renderSourcesTable() {

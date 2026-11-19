@@ -1,6 +1,6 @@
 // Vertrauen & Persönliches: Quellen/Beweislage je Bereich, Anpassen, eigene KI, Trend-Radar,
 // Was nachweislich Geld vermehrt (Kosten-Rechner), Finanz-Fitness-Check & Quiz.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark } from "./ui.js";
 import { LEX } from "./extras.js";
 
 // ---------- Quellen & Beweislage je Bereich ----------
@@ -17,7 +17,7 @@ const META = {
   rohstoffe: [0, "Terminbörsen über Yahoo Finance; Prognosen: Weltbank, IWF, EIA, USDA", "Fakten. Rohstoffpreise sind kurzfristig kaum vorhersagbar."],
   immobilien: [0, "EZB, Eurostat, amtliche Mietspiegel", "Fakten und Faustregeln, keine Bewertung im Einzelfall."],
   stimmung: [1, "CNN Fear & Greed, alternative.me, Analysten-Ton, FRED, VIX, Polymarket", "Stimmung hilft am ehesten bei Extremen und vor allem bei spekulativen Aktien. Der Effekt ist in Studien eher klein (Baker & Wurgler 2006)."],
-  trends: [2, "Kurse, Wikipedia-Aufrufe, GitHub, Hugging Face", "Kurs-Trends über 3–12 Monate sind gut belegt (Momentum). Kurzfristige Ausschläge drehen oft wieder."],
+  trends: [2, "Kurse, Wikipedia-Aufrufe, GitHub, Hugging Face, PyPI, npm, DefiLlama, Energy-Charts", "Kurs-Trends über 3–12 Monate sind gut belegt (Momentum). Kurzfristige Ausschläge drehen oft wieder."],
   karte: [2, "Wikipedia-Aufrufe, Nachrichten, Hacker News, Themen-ETFs", "Momentum ist stark belegt. Viel Aufmerksamkeit geht eher schwächeren Renditen voraus (Barber & Odean 2008)."],
   perlen: [1, "Yahoo-Finance-Analystenkonsens, Kurse", "Analysten-Kursziele treffen selten (Bradshaw, Brown & Huang 2013). Ideen zum Prüfen, mehr nicht."],
   ipo: [2, "Nachrichten, Wikipedia, Polymarket", "Hype-Börsengänge laufen langfristig im Schnitt schwächer (Ritter 1991)."],
@@ -166,4 +166,71 @@ function renderQuiz() {
     if (b.dataset.q === answer) { store.set("quiz", { last: day, streak: st.last === day - 1 ? st.streak + 1 : 1 }); toast("Richtig! 🎉"); renderQuiz(); }
     else { b.classList.add("wrong"); toast("Leider nicht, versuch es nochmal"); }
   };
+}
+
+// ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
+// Passwort → Schlüssel (PBKDF2, 310.000 Runden, SHA-256) → AES-256-GCM. Alles lokal im Browser.
+const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "re"];
+const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function deriveKey(pass, salt) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 310000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+export async function encryptBackup(obj, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt);
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return JSON.stringify({ app: "signal-radar", v: 1, kdf: "PBKDF2-SHA256-310000", cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
+}
+export async function decryptBackup(text, pass) {
+  const f = JSON.parse(text);
+  if (f.app !== "signal-radar") throw new Error("Keine Signal-Radar-Sicherung");
+  const key = await deriveKey(pass, unb64(f.salt));
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(f.iv) }, key, unb64(f.data));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+export function initBackup() {
+  const box = $("#backupBox"); if (!box) return;
+  box.innerHTML = `<h3>Sichern &amp; auf andere Geräte übertragen</h3>
+    <p class="fine">Plan, Merkliste, Interessen und Fitness-Fortschritt werden mit deinem Passwort verschlüsselt (AES-256). Die Datei kannst du in deine Cloud legen (OneDrive, iCloud, Dropbox) oder dir selbst schicken. Ohne Passwort kann sie niemand lesen, auch nicht der Betreiber dieser Seite.</p>
+    <label class="bk-label">Passwort (mind. 10 Zeichen)<input id="bkPass" type="password" autocomplete="new-password" minlength="10"></label>
+    <div class="bk-btns"><button class="btn btn-primary" type="button" id="bkSave">Sicherung erstellen</button><label class="btn btn-ghost bk-file">Sicherung laden<input id="bkFile" type="file" accept=".radar,application/json" hidden></label></div>
+    <p class="fine" id="bkMsg"></p>`;
+  const msg = (t) => ($("#bkMsg").textContent = t);
+  $("#bkSave").onclick = async () => {
+    const pass = $("#bkPass").value; if (pass.length < 10) return msg("Bitte ein Passwort mit mindestens 10 Zeichen wählen.");
+    const obj = Object.fromEntries(KEYS.map((k) => [k, store.get(k, null)]).filter(([, v]) => v !== null));
+    const blob = new Blob([await encryptBackup(obj, pass)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `signal-radar-${new Date().toISOString().slice(0, 10)}.radar`; a.click();
+    msg("Sicherung erstellt. Passwort gut merken: Ohne Passwort ist sie nicht wiederherstellbar.");
+  };
+  $("#bkFile").onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const obj = await decryptBackup(await file.text(), $("#bkPass").value);
+      for (const [k, v] of Object.entries(obj)) if (KEYS.includes(k)) store.set(k, v);
+      msg("Sicherung geladen. Die Seite lädt neu …"); setTimeout(() => location.reload(), 900);
+    } catch { msg("Das hat nicht geklappt: falsches Passwort oder keine gültige Sicherungsdatei."); }
+    e.target.value = "";
+  };
+}
+
+// ---------- Echte Nutzung & Geldflüsse (für das Trend-Radar) ----------
+export function renderUsage() {
+  const d = state.data, ad = d.adoption || [], cf = d.cryptoFlows || {}, pw = d.power;
+  const big = (x) => (x >= 1e6 ? fmt(x / 1e6, 1) + " Mio." : fmt(x / 1e3) + " Tsd.");
+  $("#usageBody").innerHTML = `
+    <div class="trend-col"><h3>🧩 Welche KI bauen Firmen wirklich ein?</h3>
+      <ul class="trend-list">${ad.map((a) => `<li><span><b>${esc(a.name)}</b><span class="fine">${esc(a.owner)}</span></span><span class="fine">${big(a.week)}/Woche</span>${ok(a.growth) ? `<span class="${a.growth >= 0 ? "up" : "down"}">${pct(a.growth, 0)}</span>` : "<span></span>"}${a.listed ? `<span class="chip">${esc(a.listed)}</span>` : ""}</li>`).join("") || '<li class="empty">Gerade keine Daten.</li>'}</ul>
+      <p class="fine">Wöchentliche Downloads der Programmier-Bausteine (PyPI + npm), Veränderung zur Vorwoche. Wer die meisten Entwickler hat, hat oft bald die meisten Kunden. Die Zahlen enthalten auch automatische Downloads, deshalb ist die Entwicklung aussagekräftiger als die absolute Höhe.</p></div>
+    <div class="trend-col"><h3>💧 Geldfluss in Krypto</h3>
+      <ul class="trend-list">
+        ${cf.stablecoins ? `<li><span><b>Stablecoins im Umlauf</b><span class="fine">digitale Dollar, „Trockenpulver“ für Käufe</span></span><span>${fmt(cf.stablecoins.value / 1e9)} Mrd. $</span><span class="${cf.stablecoins.chg30 >= 0 ? "up" : "down"}">${pct(cf.stablecoins.chg30, 1)} / 30 T</span></li>` : ""}
+        ${cf.tvl ? `<li><span><b>Kapital in Krypto-Anwendungen (DeFi)</b><span class="fine">Total Value Locked</span></span><span>${fmt(cf.tvl.value / 1e9)} Mrd. $</span><span class="${cf.tvl.chg30 >= 0 ? "up" : "down"}">${pct(cf.tvl.chg30, 1)} / 30 T</span></li>` : ""}
+      </ul>
+      <p class="fine">Quelle: DefiLlama. Wachsende Stablecoin-Mengen gelten als Zufluss neuen Geldes in den Kryptomarkt. Die Forschung dazu ist jung und die Beweislage schwach.</p></div>
+    ${pw ? `<div class="trend-col"><h3>⚡ Strom-Börsenpreis Deutschland</h3>
+      <div class="pw"><b>${fmt(pw.avg, 1)} €/MWh</b><span class="fine">Tagesdurchschnitt ${esc(pw.day)} · Spanne ${fmt(pw.min)}–${fmt(pw.max)} · 30-Tage-Schnitt ${fmt(pw.avg30, 1)}</span>${spark(pw.series, { w: 280, h: 40, color: "var(--s2)", label: "Strompreis 45 Tage" })}</div>
+      <p class="fine">Quelle: Energy-Charts (Fraunhofer ISE), Day-Ahead-Börse. Wichtig für energieintensive Branchen wie Chemie, Stahl und Rechenzentren.</p></div>` : ""}`;
 }

@@ -240,3 +240,12 @@ test("KI-Zusammenfassung enthält Lage und Hinweis auf Vorschläge statt Empfehl
   const t = aiPrompt({ generatedAt: "2026-11-19T08:00:00Z", risk: { level: "gelb" }, bubble: { score: 61 }, events: [] }, [{ title: "Gold steigt leise" }]);
   assert.ok(t.includes("gelb") && t.includes("61") && t.includes("Gold steigt leise") && t.includes("Vorschläge statt Empfehlungen"));
 });
+
+import { encryptBackup, decryptBackup } from "../site/trust.js";
+test("Verschlüsselte Sicherung: Hin- und Rückweg, falsches Passwort scheitert", async () => {
+  const data = { plan: { once: 5000 }, watch: ["chips"] };
+  const file = await encryptBackup(data, "richtig-langes-passwort");
+  assert.ok(!file.includes("chips"));            // nichts im Klartext
+  assert.deepEqual(await decryptBackup(file, "richtig-langes-passwort"), data);
+  await assert.rejects(decryptBackup(file, "falsches-passwort-xx"));
+});

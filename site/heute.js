@@ -86,8 +86,8 @@ export function showView(onShow) {
 // Welchem Interessen-Thema gehört ein Signal an? (für „Anpassen“)
 export function topicOf(id) {
   if (/^(quiet|hot|noise|ipo)-/.test(id)) return "themes";
-  if (/^crypto-|^move-(btc|eth)$/.test(id)) return "crypto";
-  if (/^com-|^move-(gold|silver|oil|commodities)$/.test(id)) return "commodities";
+  if (/^crypto-|^move-(btc|eth)$|^stablecoin-/.test(id)) return "crypto";
+  if (/^com-|^power-|^move-(gold|silver|oil|commodities)$/.test(id)) return "commodities";
   if (/^mortgage-|^move-realestate$/.test(id)) return "realestate";
   if (/^(curve|credit|sahm)/.test(id)) return "macro";
   if (/^event-/.test(id)) return "news";
