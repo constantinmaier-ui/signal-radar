@@ -147,3 +147,44 @@ test("Signal-Leser: leere oder fehlende Daten werfen nicht", () => {
   assert.ok(Array.isArray(buildSignals({})));
   assert.ok(dailyVerdict({}).head.length > 10);
 });
+
+import { computeEvents, parseJsonStat, parseEcb } from "../collector/insights.mjs";
+
+test("Ereignis-Arten: Zuordnung, Zählung, Beschleunigung", () => {
+  const now = Date.now(), h = 3600e3;
+  const news = [
+    { title: "EZB senkt den Leitzins", published: now - 5 * h },
+    { title: "Fed rate cut expected", published: now - 10 * h },
+    { title: "Neue Zölle auf Autos", published: now - 3 * 86400e3 },
+    { title: "Apple übertrifft Erwartungen bei Quartalszahlen", published: now - h },
+    { title: "Wetter wird schön", published: now - h },
+  ];
+  const ev = computeEvents(news, now);
+  const rates = ev.find((e) => e.id === "rates"), tariffs = ev.find((e) => e.id === "tariffs");
+  assert.equal(rates.n48h, 2);
+  assert.equal(tariffs.n48h, 0);
+  assert.equal(tariffs.n7d, 1);
+  assert.equal(ev[0].id, "rates"); // meistberichtet zuerst
+  assert.ok(rates.impact.aktien && rates.evidence.length > 20);
+});
+
+test("Statistik-Parser: Eurostat JSON-stat und EZB SDMX", () => {
+  const js = parseJsonStat({ label: "x", value: { 0: 1.5, 1: 2.5 }, dimension: { time: { category: { index: { "2026-Q2": 1, "2026-Q1": 0 } } } } });
+  assert.deepEqual(js.points.map((p) => p.period), ["2026-Q1", "2026-Q2"]);
+  const ecb = parseEcb({ structure: { dimensions: { observation: [{ values: [{ id: "2026-01" }, { id: "2026-02" }] }] } }, dataSets: [{ series: { "0": { observations: { 0: [3.5], 1: [3.4] } } } }] });
+  assert.equal(ecb.points[1].value, 3.4);
+  assert.equal(parseEcb({}), null);
+  assert.equal(parseJsonStat({}), null);
+});
+
+test("Signal-Leser: Nachrichtenlage und Bauzinsen", () => {
+  const d = {
+    events: [{ id: "tariffs", name: "Zölle & Handelsstreit", n48h: 12, accel: 2, why: "Zölle verteuern Waren." }],
+    realEstate: { mortgage: { rate: 0.031, yearAgo: 0.039 } },
+  };
+  const s = buildSignals(d);
+  const t = s.find((x) => x.id === "event-tariffs"), m = s.find((x) => x.id === "mortgage-move");
+  assert.equal(t.kind, "warnung");
+  assert.equal(m.kind, "chance");
+  assert.ok(m.title.includes("3,10"));
+});

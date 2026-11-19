@@ -63,6 +63,27 @@ export function buildSignals(d, history = []) {
     if (share <= 0.3) add({ id: "voices-bear", kind: "info", weight: 45, view: "profis", title: "Analysten sind pessimistisch", text: `${v.bear} von ${v.bull + v.bear} Stimmen der letzten Tage sind vorsichtig. Schlechte Stimmung ist oft schon im Kurs.`, todo: "Langfrist-Plan beibehalten.", source: "Analysten-Stimmen" });
   }
 
+  // 9) Nachrichtenlage: Ereignis-Arten, über die gerade auffällig viel berichtet wird
+  const TODO = {
+    rates: "Zinsänderungen wirken über Monate. Plan nicht hektisch umbauen. Bei Senkungen profitieren Anleihen und Immobilien.",
+    tariffs: "Breit gestreute ETFs gleichen das aus. Nicht wegen einzelner Zoll-Schlagzeilen verkaufen.",
+    geopolitics: "Historisch erholten sich Märkte meist schnell. Panikverkäufe vermeiden, Gold-Anteil hilft.",
+    inflation: "Sachwerte wie Aktien und Gold schützen langfristig besser als Bargeld.",
+  };
+  for (const e of (d.events || []).slice(0, 4)) {
+    if (!(e.n48h >= 6 && ok(e.accel) && e.accel >= 1.5)) continue;
+    add({ id: `event-${e.id}`, kind: e.id === "geopolitics" || e.id === "tariffs" ? "warnung" : "info", weight: 58 + Math.min(20, e.n48h / 2), view: "news",
+      title: `${e.name}: ungewöhnlich viele Meldungen`, text: `${e.n48h} Meldungen in 48 Stunden, mehr als sonst. ${e.why}`,
+      todo: TODO[e.id] || "Solche Nachrichten bewegen oft nur kurz die Kurse. Beim Plan bleiben.", source: "Nachrichten-Analyse" });
+  }
+
+  // 10) Immobilien: Bauzinsen deutlich verändert
+  const m = d.realEstate?.mortgage;
+  if (m && ok(m.rate) && ok(m.yearAgo) && Math.abs(m.rate - m.yearAgo) >= 0.005) {
+    const up = m.rate > m.yearAgo;
+    add({ id: "mortgage-move", kind: up ? "warnung" : "chance", weight: 52, view: "maerkte", title: `Bauzinsen ${up ? "gestiegen" : "gesunken"}: ${(m.rate * 100).toFixed(2).replace(".", ",")} %`, text: `Vor einem Jahr lagen sie bei ${(m.yearAgo * 100).toFixed(2).replace(".", ",")} %. ${up ? "Höhere Zinsen verteuern Kredite und bremsen die Hauspreise." : "Günstigere Kredite machen Kaufen wieder attraktiver."}`, todo: "Mit dem Immobilien-Rechner unter „Märkte“ durchrechnen, bevor du dich entscheidest.", source: "EZB-Statistik" });
+  }
+
   return s.sort((a, b2) => b2.weight - a.weight);
 }
 

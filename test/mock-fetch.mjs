@@ -30,6 +30,12 @@ globalThis.fetch = async (url, opts) => {
     return text(`<informationTable xmlns="http://www.sec.gov/edgar/document/thirteenf/informationtable">${pick.map((n, i) => `<infoTable><nameOfIssuer>${n}</nameOfIssuer><titleOfClass>COM</titleOfClass><cusip>C${i}${n.length}</cusip><value>${Math.round(rnd() * 1e9)}</value><shrsOrPrnAmt><sshPrnamt>${Math.round(rnd() * 1e7)}</sshPrnamt><sshPrnamtType>SH</sshPrnamtType></shrsOrPrnAmt></infoTable>`).join("")}</informationTable>`);
   }
   if (u.includes("cnn.io")) return json({ fear_and_greed: { score: 62.4, rating: "greed", previous_1_week: 55, previous_1_month: 48 }, fear_and_greed_historical: { data: Array.from({ length: 120 }, (_, i) => ({ y: 40 + (i % 40) })) } });
+  if (u.includes("eurostat")) return json({ label: "Demo: Hauspreisindex", value: { "0": 5.1, "1": -2.3, "2": 1.4, "3": 3.2 }, dimension: { time: { category: { index: { "2025-Q3": 0, "2025-Q4": 1, "2026-Q1": 2, "2026-Q2": 3 } } } } });
+  if (u.includes("data-api.ecb.europa.eu") && (u.includes("/MIR/") || u.includes("/YC/"))) {
+    const n = 24, base = u.includes("/MIR/") ? 3.6 : 2.7;
+    return json({ structure: { name: "Demo", dimensions: { observation: [{ values: Array.from({ length: n }, (_, i) => ({ id: `${2024 + Math.floor((i + 10) / 12)}-${String(((i + 10) % 12) + 1).padStart(2, "0")}` })) }] } }, dataSets: [{ series: { "0:0": { observations: Object.fromEntries(Array.from({ length: n }, (_, i) => [String(i), [base + Math.sin(i / 4) * 0.3]])) } } }] });
+  }
+  if (u.includes("arxiv.org") || u.includes("nber.org")) return text(`<rss><channel>${["Demo: Do retail investors chase attention?", "Demo: Momentum and crash risk in thematic ETFs"].map((t, i) => `<item><title>${t}</title><link>https://example.com/paper${i}</link><description>Demo-Zusammenfassung.</description><pubDate>${new Date(now - i * 86400000).toUTCString()}</pubDate></item>`).join("")}</channel></rss>`);
   if (u.includes("data-api.ecb.europa.eu")) return json({ dataSets: [{ series: { "0:0:0:0:0:0:0": { observations: { "0": [2.0] } } } }] });
   if (u.includes("finance.yahoo.com/v8")) {
     if (u.includes("HAG.DE")) return new Response("", { status: 404 }); // Ausfall simulieren
@@ -52,5 +58,5 @@ globalThis.fetch = async (url, opts) => {
   if (u.includes("polymarket")) return json({ events: [{ title: "Demo: Anthropic IPO?", slug: "demo", markets: [{ id: "m1", question: "Demo: Anthropic IPO before 2028?", outcomes: '["Yes","No"]', outcomePrices: '["0.41","0.59"]', volume: "123456", closed: false }] }] });
   if (u.includes("gdeltproject")) return json({ timeline: [{ data: Array.from({ length: 90 }, (_, i) => ({ value: 0.01 + (i > 83 ? 0.02 : 0) + rnd() * 0.005 })) }] });
   // allgemeine Feeds
-  return text(rss(["Demo: Fed signalisiert Zinssenkung", "Demo: SpaceX IPO Gerüchte", "Demo: Cyberangriff auf Konzern"]));
+  return text(rss(["Demo: Fed signalisiert Zinssenkung", "Demo: SpaceX IPO Gerüchte", "Demo: Cyberangriff auf Konzern", "Demo: Neue Zölle belasten Exporteure", "Demo: Ölpreis steigt nach OPEC-Entscheid"]));
 };

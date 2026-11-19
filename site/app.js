@@ -3,6 +3,7 @@
 import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView } from "./heute.js";
+import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode } from "./insights.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -296,7 +297,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -495,7 +496,10 @@ $("#gauge").innerHTML = '<div class="skel" style="height:170px"></div>';
 bindEvents();
 initPlan();
 initSignalControls();
-const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "maerkte") [renderFng, renderCnn].forEach(safe); if (v === "heute") safe(renderGauge); };
+initRealEstateForm();
+renderSourcesTable();
+initMode(() => state.data && [renderPlan, renderRealEstate].forEach(safe));
+const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "maerkte") [renderFng, renderCnn, renderRealEstate].forEach(safe); if (v === "heute") safe(renderGauge); };
 addEventListener("hashchange", () => { if (location.hash.startsWith("#thema=")) { showView(); const id = location.hash.slice(7); if (themeById(id)) openTheme(id, false); return; } showView(onShow); });
 showView();
 renderLexikon();

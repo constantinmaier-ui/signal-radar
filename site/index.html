@@ -28,6 +28,7 @@
         </div>
       </div>
       <div class="top-actions">
+        <div class="seg mode-seg" id="modeSeg" role="group" aria-label="Ansicht"><button type="button" data-mode="easy" title="Das Wichtigste, einfach erklärt">Einsteiger</button><button type="button" data-mode="pro" title="Alle Kennzahlen und Tabellen">Profi</button></div>
         <button class="refresh" id="refreshBtn" type="button" title="Jetzt aktualisieren. Automatisch jede Minute.">
           <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="ring-bg" cx="18" cy="18" r="15"/><circle class="ring" id="refreshRing" cx="18" cy="18" r="15"/><path class="arrow" d="M23.5 13.5A7 7 0 1 0 25 18m-1.5-4.5V9.8m0 3.7h-3.7"/></svg>
           <span id="refreshText">Aktualisieren</span>
@@ -67,6 +68,11 @@
       <button class="btn btn-ghost btn-wide" id="sigMore" type="button" hidden></button>
     </section>
 
+    <section id="newsImpact" class="card">
+      <div class="card-head"><div><h2>Was die Nachrichten gerade bedeuten</h2><p class="sub">Die meistberichteten Ereignis-Arten der letzten 48 Stunden und wie solche Ereignisse typischerweise wirken. Pfeile: ↑ steigt eher, ↓ fällt eher, ↕ gemischt.</p></div><a class="btn btn-ghost" href="#news">Alle Ereignisse →</a></div>
+      <div id="eventsToday" class="events"></div>
+    </section>
+
     <section id="lage" class="grid-hero">
       <article class="card gauge-card">
         <div class="card-head">
@@ -79,7 +85,7 @@
         <div id="bubbleInfo" class="pop" hidden>
           Ein Wert aus 7 Bausteinen: Krypto-Gier, Überdehnung von Nasdaq &amp; Nvidia über der 200-Tage-Linie, Spekulationslaune (ARKK), Sorglosigkeit (VIX), IPO-Fieber und Blasen-Berichterstattung. 0 = Angst, 100 = Blasen-Alarm. Kein Timing-Signal, sondern ein Thermometer.
         </div>
-        <ul id="components" class="components"></ul>
+        <ul id="components" class="components pro-only"></ul>
       </article>
 
       <article class="card brief-card">
@@ -157,6 +163,23 @@
       <div id="assetGrid" class="asset-grid"></div>
     </section>
 
+    <section id="immobilien" class="card">
+      <div class="card-head"><div><h2>Immobilien</h2><p class="sub">Bauzinsen, Hauspreise und Immobilien-Aktien aus offiziellen Statistiken (EZB, Eurostat). Dazu ein Rechner: Lohnt sich eine Wohnung als Kapitalanlage oder zum Selbstwohnen?</p></div></div>
+      <div id="reKpis" class="rates re-kpis"></div>
+      <div class="chart pro-only"><h4>Bauzins Deutschland, letzte 3 Jahre</h4><div id="reChart"></div></div>
+      <h3 class="sec-h">Rechner: Was taugt diese Wohnung?</h3>
+      <div class="re-grid">
+        <form id="reForm" class="plan-form re-form" autocomplete="off">
+          <label>Kaufpreis<span class="inp"><input id="rePrice" name="price" type="number" inputmode="decimal" min="0" step="1000" value="350000"><em>€</em></span></label>
+          <label>Kaltmiete pro Monat (aktuell oder ortsüblich)<span class="inp"><input id="reRent" name="rent" type="number" inputmode="decimal" min="0" step="10" value="1100"><em>€</em></span></label>
+          <label>Eigenkapital<span class="inp"><input id="reEquity" name="equity" type="number" inputmode="decimal" min="0" step="1000" value="80000"><em>€</em></span></label>
+          <label>Bauzins pro Jahr (vorausgefüllt mit aktuellem Schnitt)<span class="inp"><input id="reRate" name="rate" type="number" inputmode="decimal" min="0" step="0.05" value="3.6"><em>%</em></span></label>
+          <label>Tilgung pro Jahr<span class="inp"><input id="reTilg" name="tilg" type="number" inputmode="decimal" min="0" step="0.5" value="2"><em>%</em></span></label>
+        </form>
+        <div id="reOut"></div>
+      </div>
+    </section>
+
     <section id="stimmung" class="grid-2">
       <article class="card">
         <div class="card-head"><div><h2>Worauf die Leute wetten</h2><p class="sub">Echtgeld-Prognosemärkte (Polymarket): Wahrscheinlichkeit für „Ja“.</p></div></div>
@@ -187,7 +210,7 @@
       </div>
     </section>
 
-    <section id="themen" class="card">
+    <section id="themen" class="card pro-only">
       <div class="card-head">
         <div>
           <h2>Themen-Ranking</h2>
@@ -239,9 +262,9 @@
       <h3 class="sec-h">Analysten-Stimmen live <span class="count" id="voiceCount"></span></h3>
       <div id="voiceBalance" class="balance"></div>
       <div id="voices" class="voices"></div>
-      <h3 class="sec-h">Kursziele der Analysten</h3>
+      <div class="pro-only"><h3 class="sec-h">Kursziele der Analysten</h3>
       <p class="sub">Durchschnittliches Kursziel der Banken-Analysten für die nächsten 12 Monate im Vergleich zum aktuellen Kurs. Analysten liegen oft daneben, sind aber ein guter Stimmungsmesser.</p>
-      <div id="targets" class="targets"></div>
+      <div id="targets" class="targets"></div></div>
     </section>
 
 
@@ -249,6 +272,11 @@
     </div>
 
     <div class="view" data-view="news" hidden>
+    <section id="eventsSec" class="card">
+      <div class="card-head"><div><h2>Ereignisse und ihre typische Wirkung</h2><p class="sub">Jede Meldung wird einer Ereignis-Art zugeordnet: Zinsen, Zölle, Krieg, Wahlen, Quartalszahlen und mehr. Die Pfeile zeigen historische Muster, keine Garantie. Unter „Was sagt die Forschung?“ steht jeweils die Quelle.</p></div></div>
+      <div id="eventsAll" class="events"></div>
+    </section>
+
     <section id="feed" class="card">
       <div class="card-head">
         <div>
@@ -268,6 +296,14 @@
     </div>
 
     <div class="view" data-view="wissen" hidden>
+    <section id="forschung" class="card">
+      <div class="card-head"><div><h2>Was die Forschung sagt</h2><p class="sub">Die am besten belegten Erkenntnisse über Geldanlage und wie das Radar sie umsetzt. Diese Grundregeln ändern sich selten. Neue Studien erscheinen unten automatisch.</p></div></div>
+      <div id="principles" class="principles"></div>
+      <h3 class="sec-h">Neue Studien (automatisch aktualisiert)</h3>
+      <p class="sub">Die neuesten Fachartikel aus den Archiven arXiv und NBER. Mit Claude-Schlüssel werden die Titel ins Deutsche übersetzt.</p>
+      <div id="papers" class="papers"></div>
+    </section>
+
     <section id="lexikon" class="card">
       <div class="card-head"><div><h2>Lexikon: Börse in einfachen Worten</h2><p class="sub">Alle Begriffe vom Radar, ohne Fachchinesisch. Unterstrichene Wörter auf der Seite kannst du antippen.</p></div></div>
       <input id="lexSearch" type="search" placeholder="Begriff suchen …" aria-label="Lexikon durchsuchen">
@@ -275,6 +311,7 @@
     </section>
 
     <section id="methodik" class="card method">
+      <p class="easy-only hint">Tipp: Oben auf „Profi“ umschalten, um alle Kennzahlen, Tabellen und Diagramme zu sehen.</p>
       <h2>Methodik &amp; Quellen</h2>
       <div class="method-grid">
         <div>
@@ -296,6 +333,8 @@
           <p>Ein Sammler holt alle Quellen alle 15 Minuten. Die Seite prüft jede Minute auf neue Daten und holt Bitcoin, Ethereum und Tech-Meldungen jede Minute live. Mit „Aktualisieren“ geht es sofort.</p>
         </div>
       </div>
+      <h3>Unsere Quellen und wofür wir sie nutzen</h3>
+      <div id="sourceTable" class="tscroll"></div>
       <details class="sources">
         <summary id="sourceSummary">Quellen-Status</summary>
         <ul id="sourceList"></ul>
