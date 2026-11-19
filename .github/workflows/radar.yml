@@ -3,7 +3,8 @@ name: Signal-Radar
 # Collects all sources every 15 minutes and publishes the site to GitHub Pages.
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes (GitHub may start a few minutes late)
+    # every 15 minutes, off the busy :00/:15/:30/:45 marks (GitHub drops scheduled runs there under load)
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:          # "Run workflow" button for an immediate refresh
   push:
     branches: [main]
@@ -55,7 +56,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           now=$(date -u +%H%M)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { [ ! "$now" \< "2200" ] && [ "$now" \< "2215" ]; }; then echo "due=true" >> "$GITHUB_OUTPUT"; else echo "Not 22:00-22:15 UTC, skipped"; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || { [ ! "$now" \< "2200" ] && [ "$now" \< "2230" ]; }; then echo "due=true" >> "$GITHUB_OUTPUT"; else echo "Not 22:00-22:30 UTC, skipped"; fi
       - name: Hand over history.json to the archive job
         if: steps.archive.outputs.due == 'true'
         uses: actions/upload-artifact@v4
