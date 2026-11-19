@@ -5,7 +5,7 @@ import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
-import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderCommodities, commodityShareText } from "./insights.js";
+import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
@@ -525,6 +525,7 @@ $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLever
 $("#shareCom").addEventListener("click", () => state.data && share(commodityShareText(state.data, pageUrl())));
 renderSourcesTable();
 renderInstruments();
+renderKpis();
 initMode(() => state.data && [renderPlan, renderRealEstate].forEach(safe));
 const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "maerkte") [renderFng, renderCnn, renderRealEstate].forEach(safe); if (v === "heute") safe(renderGauge); };
 addEventListener("hashchange", () => { if (location.hash.startsWith("#thema=")) { showView(); const id = location.hash.slice(7); if (themeById(id)) openTheme(id, false); return; } showView(onShow); });

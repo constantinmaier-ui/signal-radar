@@ -130,10 +130,14 @@ export function priceStats(closes, timestamps) {
   return {
     last,
     chg1d: ret(c, 1), chg1w: ret(c, 5), chg1m: ret(c, 21), chg3m: ret(c, 63), chg1y: ret(c, Math.min(251, c.length - 1)),
+    // 12-1 momentum: return from 12 months to 1 month ago (Jegadeesh & Titman 1993)
+    mom12_1: c.length >= 253 ? c[c.length - 22] / c[c.length - 253] - 1 : NaN,
+    // 2-year run-up (Greenwood, Shleifer & You 2019 use > 100 %)
+    chg2y: c.length >= 480 ? last / c[Math.max(0, c.length - 504)] - 1 : NaN,
     ext200: s200 ? last / s200 - 1 : NaN,
     rsi: rsi(c.slice(-120)),
     fromHigh: last / hi - 1,
-    vol: volatility(c), maxDD: maxDrawdown(c.slice(-252)), riskClass: riskClass(volatility(c)),
+    vol: volatility(c.slice(-504)), maxDD: maxDrawdown(c.slice(-252)), riskClass: riskClass(volatility(c.slice(-504))),
     spark: downsample(c.slice(-130), 65),
     sparkEnd: timestamps ? timestamps[timestamps.length - 1] : null,
   };
@@ -162,17 +166,21 @@ export function blend(parts) {
 }
 
 /** Aufmerksamkeit aus täglichen Seitenaufrufen (ältester zuerst). */
+const median = (a) => { if (!a.length) return NaN; const b = [...a].sort((x, y) => x - y), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; };
 export function attentionStats(daily) {
   const d = daily.filter((x) => Number.isFinite(x));
   if (d.length < 21) return null;
   const last7 = mean(d.slice(-7));
   const base = d.slice(0, -7);
   const prev28 = mean(base.slice(-28));
-  const m = mean(base), s = std(base);
+  // Robust z: compare the last 7-day mean with the distribution of earlier 7-day means (median / MAD)
+  const means = []; for (let i = 7; i <= base.length; i++) means.push(mean(base.slice(i - 7, i)));
+  const med = median(means), mad = median(means.map((x) => Math.abs(x - med))) * 1.4826;
+  const sd = mad || std(means);
   return {
     last7: Math.round(last7),
     mom: prev28 ? last7 / prev28 - 1 : NaN,
-    z: s ? (last7 - m) / s : 0,
+    z: sd ? (last7 - med) / sd : 0,
     spark: downsample(d.slice(-60), 60).map((x) => Math.round(x)),
   };
 }
@@ -184,23 +192,21 @@ export function themeScores({ attention, newsAccel, price, hnRatio }) {
     [scale(newsAccel, 0.4, 2.2), 0.25],
     [scale(hnRatio, 0.4, 2.5), 0.15],
   ]);
-  const momentum = blend([
-    [scale(price?.chg3m, -0.2, 0.4), 0.5],
-    [scale(price?.chg1m, -0.1, 0.15), 0.35],
-    [scale(price?.ext200, -0.15, 0.3), 0.15],
-  ]);
-  const heat = blend([
-    [scale(price?.ext200, -0.05, 0.45), 0.4],
-    [scale(price?.rsi, 40, 82), 0.25],
-    [hype, 0.35],
-  ]);
-  return { hype: r1(hype), momentum: r1(momentum), heat: r1(heat), quadrant: quadrant(hype, momentum, heat) };
+  // Momentum: 12-1 month return (Jegadeesh & Titman 1993); industries also show 1-month continuation
+  // (Moskowitz & Grinblatt 1999). Falls back to 3 months while less than a year of data exists.
+  const momentum = Number.isFinite(price?.mom12_1)
+    ? blend([[scale(price.mom12_1, -0.2, 0.5), 0.75], [scale(price?.chg1m, -0.1, 0.15), 0.25]])
+    : blend([[scale(price?.chg3m, -0.2, 0.4), 0.75], [scale(price?.chg1m, -0.1, 0.15), 0.25]]);
+  // Heat: how close to the 2-year doubling that Greenwood, Shleifer & You (2019) use as run-up
+  const heat = blend([[scale(price?.chg2y, 0, 1), 0.7], [scale(price?.ext200, 0, 0.45), 0.3]]);
+  const runUp = Number.isFinite(price?.chg2y) && price.chg2y >= 1;
+  return { hype: r1(hype), momentum: r1(momentum), heat: r1(heat), runUp, quadrant: quadrant(hype, momentum, runUp ? 100 : heat) };
 }
 const r1 = (x) => (Number.isFinite(x) ? Math.round(x * 10) / 10 : null);
 
 export function quadrant(hype, mom, heat) {
   if (!Number.isFinite(hype) || !Number.isFinite(mom)) return "unknown";
-  if (heat >= 75) return "overheated";
+  if (heat >= 100) return "overheated"; // only a 2-year doubling counts (see themeScores)
   if (hype < 50 && mom >= 50) return "quiet";
   if (hype >= 50 && mom >= 50) return "hot";
   if (hype >= 50 && mom < 50) return "noise";
@@ -230,7 +236,8 @@ export function maxDrawdown(closes) {
 /** EU-Risikoklasse 1–7 (SRRI-Logik nach Volatilität). */
 export function riskClass(vol) {
   if (!Number.isFinite(vol)) return null;
-  const lims = [0.005, 0.02, 0.05, 0.10, 0.15, 0.25];
+  // EU PRIIPs market-risk bands (since 2023 in every fund's key information document)
+  const lims = [0.005, 0.05, 0.12, 0.20, 0.30, 0.80];
   const i = lims.findIndex((l) => vol < l);
   return i === -1 ? 7 : i + 1;
 }
@@ -263,7 +270,11 @@ export function diff13F(cur, prev) {
     const o = p.get(h.cusip);
     if (!o) moves.push({ type: "neu", name: h.name, weight: h.weight, change: 1 });
     else if (o.shares > 0) {
-      const ch = h.shares / o.shares - 1;
+      const r = h.shares / o.shares, vr = o.value > 0 ? h.value / o.value : NaN;
+      // Stock split (or reverse split): share count jumps by a whole factor while the position's value barely moves
+      const factor = r >= 1 ? r : 1 / r;
+      if (factor >= 1.9 && Math.abs(factor - Math.round(factor)) / factor < 0.02 && vr > 0.6 && vr < 1.6) continue;
+      const ch = r - 1;
       if (ch > 0.1) moves.push({ type: "aufgestockt", name: h.name, weight: h.weight, change: ch });
       else if (ch < -0.1) moves.push({ type: "reduziert", name: h.name, weight: h.weight, change: ch });
     }
