@@ -47,7 +47,6 @@
         </button>
         <button class="btn btn-primary" id="installBtn" type="button" hidden title="Signal-Radar wie eine App installieren">App installieren</button>
         <button class="btn btn-icon" id="prefsBtn" type="button" title="Anpassen: Interessen und Bereiche" aria-label="Anpassen">⚙</button>
-        <a class="btn btn-icon" href="#wissen" title="Lexikon &amp; Erklärungen" aria-label="Lexikon und Erklärungen">?</a>
         <button class="btn btn-icon" id="themeBtn" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
         </button>
@@ -60,6 +59,7 @@
       <a href="#chancen" data-nav="chancen"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.6 6.5 19.5l1-6.2L3 8.9 9 8Z"/></svg><span>Chancen</span></a>
       <a href="#profis" data-nav="profis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>Profis</span></a>
       <a href="#news" data-nav="news"><svg viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2Zm13 4h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></svg><span>News</span></a>
+      <a href="#wissen" data-nav="wissen"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Zm0 15A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8"/></svg><span>Wissen</span></a>
     </nav>
   </header>
 
@@ -177,7 +177,7 @@
 
     <div class="view" data-view="maerkte" hidden>
     <section id="frueh" class="card">
-      <div class="card-head"><div><h2>Konjunktur-Frühwarnsystem</h2><p class="sub">Die drei am besten erforschten Vorboten von Rezessionen, direkt von der US-Notenbank (FRED). Grün = ruhig, Gelb = beobachten, Rot = Warnsignal. Kein Signal ist perfekt, aber zusammen sind sie das Beste, was öffentlich verfügbar ist.</p></div></div>
+      <div class="card-head"><div><h2>Konjunktur-Warnsystem</h2><p class="sub">Drei gut erforschte Rezessions-Anzeiger aus US-Daten (FRED). Zinskurve und Risikoaufschläge warnen oft Monate vorher, die Sahm-Regel meldet eher den Beginn. Grün = ruhig, Gelb = beobachten, Rot = Warnsignal. Fehlalarme kommen vor, etwa die lange umgekehrte Zinskurve 2022–24.</p></div></div>
       <div id="macro" class="macros"></div>
     </section>
 
@@ -185,7 +185,7 @@
       <div class="card-head">
         <div>
           <h2>Alle Anlageklassen auf einen Blick</h2>
-          <p class="sub">Was es ist, wie es läuft und wie riskant es ist. Die Risikoklasse 1–7 folgt der EU-Regel, nach der auch Fonds eingestuft werden: Sie misst, wie stark der Kurs im letzten Jahr geschwankt hat.</p>
+          <p class="sub">Was es ist, wie es läuft und wie riskant es ist. Die Risikoklasse 1–7 nutzt die Schwankungs-Grenzen der EU-Regel (PRIIPs), nach der seit 2023 jedes Fonds-Basisinformationsblatt eingestuft wird. Vereinfacht: aus den Kursen der letzten zwei Jahre, ohne Kreditrisiko. Ein breiter Welt-ETF landet so wie im offiziellen Blatt meist bei 4.</p>
         </div>
       </div>
       <div id="rates" class="rates"></div>
@@ -325,8 +325,8 @@
     <section id="perlen" class="card">
       <div class="card-head">
         <div>
-          <h2>Versteckte Perlen 💎</h2>
-          <p class="sub">So wird gesucht: Aufwärtstrend, aber nicht überhitzt. Stärker als der Markt. Viele Analysten sehen deutlich Luft nach oben. Die Bewertung ist nicht verrückt. Das sind Kandidaten für deine eigene Recherche, keine Kauftipps.</p>
+          <h2>Aktien-Ideen zum Selbst-Prüfen 🔎</h2>
+          <p class="sub">Bekannte große Firmen, keine Geheimtipps. So wird gesucht: Aufwärtstrend, aber nicht überhitzt. Stärker als der Markt. Viele Analysten sehen Luft nach oben. Ehrlich: Kursziele von Analysten treffen selten, und das Radar bewertet noch keine Gewinnqualität. Kandidaten für deine eigene Recherche, keine Kauftipps.</p>
         </div>
       </div>
       <div id="gemGrid" class="gem-grid"></div>
@@ -427,6 +427,11 @@
       <dl id="lexList" class="lex"></dl>
     </section>
 
+    <section id="kennzahlen" class="card">
+      <div class="card-head"><div><h2>So entstehen die Kennzahlen</h2><p class="sub">Jede Zahl im Radar mit Rechenweg, Forschung dahinter, Beweislage und Grenzen. Wo es eine anerkannte Messgröße gibt, nutzt das Radar sie. Wo es keine gibt, steht das hier ehrlich dabei. Antippen zum Aufklappen.</p></div></div>
+      <div id="kpiList" class="kpi-list"></div>
+    </section>
+
     <section id="methodik" class="card method">
       <p class="easy-only hint">Tipp: Oben auf „Profi“ umschalten, um alle Kennzahlen, Tabellen und Diagramme zu sehen.</p>
       <h2>Methodik &amp; Quellen</h2>
@@ -442,8 +447,8 @@
         <div>
           <h3>Die vier Felder der Hype-Karte</h3>
           <p><b>Stiller Aufstieg</b>: Kurs steigt, kaum jemand redet darüber, oft die interessanteste Phase. <b>Heißes Momentum</b>: alle schauen hin, der Kurs auch, der Einstieg wird teurer. <b>Hype ohne Kurs</b>: viel Lärm, der Kurs folgt nicht. <b>Vergessen</b>: Kurs schwach, kein Interesse – Chance oder Falle.</p>
-          <h3>Profis &amp; Perlen</h3>
-          <p>Superinvestoren aus den 13F-Pflichtmeldungen der SEC (bis zu 45 Tage verzögert). Analysten-Kursziele und -Noten aus dem Yahoo-Finance-Konsens. Analysten-Stimmen aus Schlagzeilen der letzten 3 Tage, automatisch als optimistisch oder vorsichtig eingestuft. Versteckte Perlen: Regel-Suche in rund 55 bekannten Aktien.</p>
+          <h3>Profis &amp; Aktien-Ideen</h3>
+          <p>Superinvestoren aus den 13F-Pflichtmeldungen der SEC: fällig 45 Tage nach Quartalsende, Positionen also bis zu 4,5 Monate alt. Aktiensplits werden herausgerechnet, Index-Fonds nicht als Kauf gezählt. Analysten-Kursziele und -Noten aus dem Yahoo-Finance-Konsens. Analysten-Stimmen aus Schlagzeilen der letzten 3 Tage, automatisch als optimistisch oder vorsichtig eingestuft. Aktien-Ideen: Regel-Suche in rund 55 bekannten Aktien.</p>
           <h3>Mein Plan</h3>
           <p>Beispiel-Aufteilungen nach dem Kern-Satellit-Prinzip. Die Prognose kommt aus 2.000 Zufalls-Simulationen mit vorsichtigen Langfrist-Annahmen. Die Marktlage verschiebt nur den kleinen Satelliten, nie den Kern.</p>
           <h3>Aktualisierung</h3>

@@ -11,7 +11,7 @@ export const LEX = {
   "Diversifikation": "Nicht alle Eier in einen Korb. Wer auf viele Firmen, Länder und Anlageklassen verteilt, übersteht den Absturz einzelner.",
   "Rebalancing": "Einmal im Jahr die Aufteilung zurück auf die Zielwerte bringen: Was stark gestiegen ist, wird teilweise verkauft, was gefallen ist, wird nachgekauft.",
   "Volatilität": "Wie stark ein Kurs schwankt. 15 % heißt: In einem normalen Jahr sind ±15 % üblich. Mehr Schwankung = mehr Risiko.",
-  "Risikoklasse": "EU-Skala von 1 (sehr sicher, z. B. Tagesgeld) bis 7 (sehr riskant, z. B. Bitcoin). Sie richtet sich nach der Schwankung des letzten Jahres.",
+  "Risikoklasse": "EU-Skala von 1 (sehr sicher, z. B. Tagesgeld) bis 7 (sehr riskant). Sie steht in jedem Fonds-Basisinformationsblatt. Das Radar berechnet sie vereinfacht aus der Schwankung der letzten zwei Jahre.",
   "Drawdown": "Der größte Verlust vom letzten Hoch bis zum Tief. −50 % heißt: Aus 10.000 € wurden zeitweise 5.000 €.",
   "200-Tage-Linie": "Der Durchschnittskurs der letzten 200 Handelstage. Darüber gilt ein Trend als intakt. Liegt der Kurs weit darüber (+30 % und mehr), ist er oft überhitzt.",
   "RSI": "Relative Strength Index von 0 bis 100. Über 70 gilt ein Wert als heißgelaufen, unter 30 als überverkauft.",
@@ -46,9 +46,9 @@ export const term = (word, label = word) => (LEX[word] ? `<span class="term" tab
 
 // ---------- Markt-Ampel ----------
 const AMPEL = {
-  "grün": { icon: "🟢", title: "Grün: normales Börsenwetter", todo: ["Sparplan ganz normal weiterlaufen lassen.", "Einmalbeträge darfst du direkt investieren. Historisch schlägt das meist das Abwarten.", "Trotzdem nur breit gestreut, Themen bleiben eine kleine Beimischung."] },
-  "gelb": { icon: "🟡", title: "Gelb: aufmerksam bleiben", todo: ["Sparplan läuft weiter. Gerade jetzt nicht aufhören.", "Größere Einmalbeträge über 6–12 Monate verteilen.", "Keine überhitzten Themen nachkaufen und keine Hype-Aktien jagen."] },
-  "rot": { icon: "🔴", title: "Rot: Vorsicht, Übertreibung oder Stress", todo: ["Sparplan weiter: Wer in Krisen spart, kauft günstig.", "Keine Kredite, keine Hebel, keine Hype-Käufe.", "Einmalbeträge stark staffeln und Notgroschen prüfen."] },
+  "grün": { icon: "🟢", title: "Grün: normales Börsenwetter", todo: ["Sparplan ganz normal weiterlaufen lassen.", "Einmalbeträge: sofort anlegen ist rechnerisch meist besser (Vanguard 2012).", "Trotzdem nur breit gestreut, Themen bleiben eine kleine Beimischung."] },
+  "gelb": { icon: "🟡", title: "Gelb: aufmerksam bleiben", todo: ["Sparplan läuft weiter. Gerade jetzt nicht aufhören.", "Einmalbeträge: Die Ampel ist kein Timing-Signal. Sofort anlegen ist rechnerisch meist besser; verteilen nur, wenn dich Schwankungen sonst zum Verkaufen bringen.", "Keine überhitzten Themen nachkaufen und keine Hype-Aktien jagen."] },
+  "rot": { icon: "🔴", title: "Rot: Vorsicht, Übertreibung oder Stress", todo: ["Sparplan weiter: Wer bei Stress weiterspart, kauft Anteile zu niedrigeren Preisen.", "Keine Kredite, keine Hebel, keine Hype-Käufe.", "Notgroschen prüfen. Bei Euphorie: Anteile von stark gestiegenen Bausteinen beim Rebalancing zurückführen."] },
 };
 export function renderAmpel() {
   const r = state.data.risk;
@@ -85,7 +85,7 @@ export function renderAssets() {
 export function renderGems() {
   const g = state.data.gems || [];
   $("#gemGrid").innerHTML = g.length ? g.map((x, i) => `<article class="gem">
-      <header><div><span class="rank">#${i + 1}</span><h3>${esc(x.name)}</h3><span class="fine">${esc(x.sym)} · Perlen-Score ${fmt(x.score)}/100</span></div>${riskScale(x.riskClass)}</header>
+      <header><div><span class="rank">#${i + 1}</span><h3>${esc(x.name)}</h3><span class="fine">${esc(x.sym)} · Ideen-Score ${fmt(x.score)}/100</span></div>${riskScale(x.riskClass)}</header>
       ${spark(x.spark, { w: 300, h: 38, color: "var(--s1)", label: `${x.name} 6 Monate` })}
       <div class="gem-kpis"><div><span>Kurs</span><b>${fmt(x.price, 2)} ${esc(x.currency)}</b></div><div><span>${term("Kursziel")}</span><b>${fmt(x.target, 2)}</b></div><div><span>Potenzial</span><b class="up">${pct(x.upside, 0)}</b></div></div>
       <ul class="reasons">${x.reasons.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>

@@ -77,7 +77,8 @@ test("Skalierung, Mischung, Zonen, Quadranten", () => {
   assert.equal(quadrant(70, 70, 60), "hot");
   assert.equal(quadrant(70, 30, 50), "noise");
   assert.equal(quadrant(30, 30, 20), "forgotten");
-  assert.equal(quadrant(80, 90, 80), "overheated");
+  assert.equal(quadrant(80, 90, 80), "hot"); // high heat alone is not enough
+  assert.equal(quadrant(80, 90, 100), "overheated"); // only a 2-year doubling
 });
 
 test("themeScores mit fehlenden Daten liefert null statt NaN", () => {
@@ -89,9 +90,11 @@ test("themeScores mit fehlenden Daten liefert null statt NaN", () => {
 import { volatility, maxDrawdown, riskClass, parse13F, diff13F, tone, extractQuote } from "../collector/lib.mjs";
 
 test("Risiko: Volatilität, Drawdown, EU-Risikoklasse", () => {
+  // EU PRIIPs bands: <0.5 % | 5 | 12 | 20 | 30 | 80 %
   assert.equal(riskClass(0.003), 1);
-  assert.equal(riskClass(0.12), 5);
-  assert.equal(riskClass(0.6), 7);
+  assert.equal(riskClass(0.15), 4); // broad world equity ETF, as in its official key information document
+  assert.equal(riskClass(0.6), 6);
+  assert.equal(riskClass(0.9), 7);
   assert.equal(riskClass(NaN), null);
   assert.ok(Math.abs(maxDrawdown([100, 120, 60, 90]) - -0.5) < 1e-9);
   const flat = Array.from({ length: 100 }, () => 100);
@@ -120,7 +123,7 @@ test("Analysten-Ton und Zitate", () => {
   assert.equal(extractQuote("Keine Anführungszeichen hier"), null);
 });
 
-import { buildSignals, dailyVerdict } from "../site/signals.js";
+import { LUMP_SUM_RULE, buildSignals, dailyVerdict } from "../site/signals.js";
 
 test("Signal-Leser: Überhitzung, stiller Aufstieg, Euphorie, Sortierung", () => {
   const d = {
@@ -213,8 +216,11 @@ import { moodScore } from "../site/insights.js";
 test("Stimmungs-Barometer: gewichtetes Mittel, fehlende Quellen werden ausgelassen", () => {
   assert.equal(moodScore({}), null);
   const m = moodScore({ cnnFearGreed: { value: 80 }, fearGreed: { value: 60 } });
-  assert.equal(m.score, Math.round((80 * 0.3 + 60 * 0.15) / 0.45));
+  assert.equal(m.score, Math.round((80 * 0.6 + 60 * 0.2) / 0.8));
   assert.equal(m.parts.length, 2);
+  // VIX is already inside CNN Fear & Greed: only used when CNN is missing
+  assert.equal(moodScore({ cnnFearGreed: { value: 50 }, risk: { vix: 12 } }).parts.length, 1);
+  assert.equal(moodScore({ risk: { vix: 35 } }).score, 0);
 });
 
 import { rangeStats } from "../collector/insights.mjs";
@@ -262,7 +268,13 @@ test("Profile: bold investors get lump-sum advice, cautious ones get interest; h
   const d = { risk: { level: "gelb" }, rates: { ecb: 0.02 }, themes: [
     { id: "q", name: "Quanten", etf: "QTUM", scores: { quadrant: "overheated", hype: 80, heat: 85 }, price: { ext200: 0.6 } },
     { id: "g", name: "Gold", etf: "GLD", scores: { quadrant: "quiet", momentum: 80, heat: 40, hype: 30 }, price: { chg3m: 0.12 } } ] };
-  assert.ok(dailyVerdict(d, "wachstum", 20).doList.some((x) => x.includes("Einmalbeträge direkt anlegen")));
+  // One lump-sum rule for every goal and market level (no market timing)
+  assert.ok(dailyVerdict(d, "wachstum", 20).doList.includes(LUMP_SUM_RULE));
+  assert.ok(dailyVerdict({ ...d, risk: { level: "rot", stress: 80 } }, "ausgewogen", 20).doList.includes(LUMP_SUM_RULE));
+  // Red because of euphoria must not read like a buying opportunity
+  const eu = dailyVerdict({ ...d, risk: { level: "rot", euphoria: 82, stress: 0 } }, "wachstum", 20);
+  assert.equal(eu.cause, "euphorie"); assert.match(eu.head, /Euphorie/); assert.doesNotMatch(eu.head, /günstig/);
+  assert.equal(dailyVerdict({ ...d, risk: { level: "rot", euphoria: 20, stress: 80 } }, "wachstum", 20).cause, "stress");
   assert.ok(dailyVerdict(d, "sicherheit", 20).doList[0].includes("Tagesgeld"));
   assert.ok(dailyVerdict(d, "mutig", 20).dontList.some((x) => x.includes("Einzelposition")));
   assert.ok(hypeInfo(d.themes[0]));
@@ -332,4 +344,15 @@ test("Excess bond premium CSV: columns found by name, bad rows skipped", async (
   const p = parseEbpCsv("date,gz_spread,ebp,est_prob\n2026-08-01,1.9,-0.12,0.10\n2026-09-01,2.0,NA,0.11\n2026-10-01,2.4,0.31,0.22\n");
   assert.equal(p.length, 2); assert.equal(p[1].ebp, 0.31); assert.equal(p[1].prob, 0.22);
   assert.equal(parseEbpCsv("x,y\n1,2"), null);
+});
+
+test("Scores follow the literature: 12-1 momentum, overheated only after a 2-year doubling", () => {
+  const up = Array.from({ length: 504 }, (_, i) => 100 * Math.pow(2.2, i / 503)); // +120 % in 2 years
+  const p = priceStats(up);
+  assert.ok(p.mom12_1 > 0.3 && p.chg2y > 1.1);
+  const s = themeScores({ attention: null, newsAccel: null, price: p, hnRatio: null });
+  assert.equal(s.runUp, true); assert.equal(s.quadrant, "unknown"); // no hype data → quadrant unknown, but run-up flagged
+  const steady = priceStats(Array.from({ length: 504 }, (_, i) => 100 * Math.pow(1.3, i / 503)));
+  const s2 = themeScores({ attention: { z: 0, mom: 0 }, newsAccel: 1, price: steady, hnRatio: 1 });
+  assert.equal(s2.runUp, false); assert.notEqual(s2.quadrant, "overheated");
 });

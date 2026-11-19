@@ -8,6 +8,9 @@ const p0 = (x) => `${x > 0 ? "+" : x < 0 ? "−" : ""}${Math.abs(Math.round(x * 
  * Ein Signal: { id, kind: "chance"|"warnung"|"info", title, text, todo, weight (0–100), view, source }
  * weight = Wichtigkeit für die Sortierung; view = Bereich, in dem es Details gibt.
  */
+/** One lump-sum rule everywhere (Vanguard 2012: investing at once beat staggering in about 2 of 3 historical cases; timing by market mood is not reliable). */
+export const LUMP_SUM_RULE = "Einmalbeträge: Rechnerisch ist sofort anlegen meist besser (in etwa 2 von 3 historischen Fällen, Vanguard 2012). Verteilen über 3–6 Monate ist eine Versicherung gegen Reue: sinnvoll, wenn dich ein Rückgang direkt nach dem Kauf zum Verkaufen bringen würde.";
+
 export function buildSignals(d, history = []) {
   if (!d) return [];
   const s = [];
@@ -16,16 +19,16 @@ export function buildSignals(d, history = []) {
   // 1) Gesamtmarkt: Ampel & Blasen-Meter
   const b = d.bubble?.score, r = d.risk;
   const old = [...history].reverse().find((h) => ok(h.bubble) && Date.parse(h.date) <= Date.now() - 7 * 864e5)?.bubble;
-  if (ok(b) && b >= 75) add({ id: "bubble-high", kind: "warnung", weight: 95, title: "Der Markt ist in Euphorie", text: `Das Blasen-Meter steht bei ${b} von 100. So hohe Werte gab es meist kurz vor größeren Rücksetzern, wann genau, weiß niemand.`, todo: "Sparplan weiterlaufen lassen, große Beträge über mehrere Monate verteilen, keine Hype-Käufe.", source: "Blasen-Meter" });
-  else if (ok(b) && b <= 25) add({ id: "bubble-low", kind: "chance", weight: 85, title: "Angst im Markt, oft eine gute Kaufzeit", text: `Das Blasen-Meter steht nur bei ${b} von 100. Wenn viele Angst haben, waren Aktien historisch oft günstig.`, todo: "Sparplan auf keinen Fall stoppen. Wer Geld übrig hat, kann jetzt breit gestreut nachkaufen.", source: "Blasen-Meter" });
+  if (ok(b) && b >= 75) add({ id: "bubble-high", kind: "warnung", weight: 95, title: "Der Markt ist in Euphorie", text: `Das Blasen-Meter steht bei ${b} von 100: Viele Zeichen von Überschwang treten gleichzeitig auf. Ob und wann ein Rücksetzer folgt, kann niemand vorhersagen. Das Messgerät ist neu und hat noch keine geprüfte Trefferquote.`, todo: "Sparplan weiterlaufen lassen, keine Hype-Käufe, keine Kredite.", source: "Blasen-Meter" });
+  else if (ok(b) && b <= 25) add({ id: "bubble-low", kind: "chance", weight: 85, title: "Angst im Markt", text: `Das Blasen-Meter steht nur bei ${b} von 100. Angst ist für langfristige Sparer kein Grund auszusteigen: Wer in Panikphasen verkauft, verpasst oft die Erholung.`, todo: "Sparplan auf keinen Fall stoppen.", source: "Blasen-Meter" });
   if (ok(b) && ok(old) && Math.abs(b - old) >= 10) add({ id: "bubble-move", kind: b > old ? "warnung" : "info", weight: 70, title: b > old ? "Die Stimmung heizt sich schnell auf" : "Die Euphorie kühlt ab", text: `Das Blasen-Meter ist in einer Woche von ${old} auf ${b} ${b > old ? "gestiegen" : "gefallen"}.`, todo: b > old ? "Nicht von der Begeisterung mitreißen lassen." : "Kein Grund zur Panik: Abkühlung ist gesund.", source: "Blasen-Meter" });
   if (r?.stress >= 65) add({ id: "stress", kind: "warnung", weight: 90, title: "Der Markt ist gestresst", text: `Das Angstbarometer VIX steht bei ${ok(r.vix) ? r.vix.toFixed(0) : "–"}, und nur ${ok(r.breadth) ? Math.round(r.breadth * 100) : "–"} % der großen Aktien liegen im Aufwärtstrend.`, todo: "Ruhe bewahren. Panikverkäufe sind der teuerste Fehler. Notgroschen prüfen.", source: "Markt-Ampel" });
 
   // 2) Themen: Chancen und Warnungen
   for (const t of d.themes || []) {
     const sc = t.scores || {}, pr = t.price || {};
-    if (sc.quadrant === "quiet" && ok(sc.momentum) && sc.momentum >= 60) add({ id: `quiet-${t.id}`, kind: "chance", weight: 60 + sc.momentum / 5, view: "chancen", title: `${t.name}: steigt leise`, text: `Der Themen-ETF ${t.etf} liegt in 3 Monaten bei ${ok(pr.chg3m) ? p0(pr.chg3m) : "–"}, aber kaum jemand redet darüber. Das ist oft die interessanteste Phase.`, todo: "Gut für eine kleine Beimischung (wenige Prozent) im Themen-Anteil deines Plans.", source: "Hype-Karte" });
-    if (sc.quadrant === "overheated") add({ id: `hot-${t.id}`, hype: hypeInfo(t), kind: "warnung", weight: 70 + (sc.heat || 0) / 5, view: "chancen", title: `${t.name}: überhitzt`, text: `${ok(pr.ext200) ? p0(pr.ext200) + " über dem Durchschnitt der letzten 200 Tage" : "Weit über dem Durchschnitt"}, dazu viel Aufmerksamkeit. Nach solchen Phasen kommen oft Rücksetzer.`, todo: "Jetzt nicht neu einsteigen. Wer schon drin ist, kann einen Teil des Gewinns sichern.", source: "Hype-Karte" });
+    if (sc.quadrant === "quiet" && ok(sc.momentum) && sc.momentum >= 60) add({ id: `quiet-${t.id}`, kind: "chance", weight: 60 + sc.momentum / 5, view: "chancen", title: `${t.name}: steigt leise`, text: `Der Themen-ETF ${t.etf} liegt in 3 Monaten bei ${ok(pr.chg3m) ? p0(pr.chg3m) : "–"}, aber kaum jemand redet darüber: ein Trend ohne Rummel. Ob er hält, ist offen.`, todo: "Kandidat für eine kleine Beimischung (wenige Prozent) im Themen-Anteil deines Plans. Trends können jederzeit drehen.", source: "Hype-Karte" });
+    if (sc.quadrant === "overheated") add({ id: `hot-${t.id}`, hype: hypeInfo(t), kind: "warnung", weight: 70 + (sc.heat || 0) / 5, view: "chancen", title: `${t.name}: überhitzt`, text: `${ok(pr.ext200) ? p0(pr.ext200) + " über dem Durchschnitt der letzten 200 Tage" : "Weit über dem Durchschnitt"}, dazu viel Aufmerksamkeit. Nach steilen Anstiegen steigt vor allem das Absturzrisiko; dass danach die Renditen verlässlich schlechter sind, ist nicht belegt (Greenwood, Shleifer & You 2019).`, todo: "Kein neuer Einstieg auf diesem Niveau. Nicht hektisch verkaufen (das kostet Steuern), sondern den Anteil beim jährlichen Rebalancing auf das Plan-Maß zurückführen.", source: "Hype-Karte" });
     if (sc.quadrant === "noise" && ok(sc.hype) && sc.hype >= 70) add({ id: `noise-${t.id}`, hype: hypeInfo(t), kind: "warnung", weight: 50 + sc.hype / 10, view: "chancen", title: `${t.name}: viel Lärm, wenig Kurs`, text: "Alle reden darüber, aber der Kurs zieht nicht mit. Typisches Muster bei Hype-Themen.", todo: "Nicht von Schlagzeilen leiten lassen.", source: "Hype-Karte" });
   }
 
@@ -44,12 +47,12 @@ export function buildSignals(d, history = []) {
   // 5) Superinvestoren: gemeinsame Käufe
   for (const c of (d.superinvestors?.consensusBuys || []).slice(0, 2)) {
     if (c.buy.length < 3) continue;
-    add({ id: `cons-${c.name}`, kind: "info", weight: 50 + c.buy.length * 3, view: "profis", title: `${c.buy.length} Top-Investoren kaufen ${prettyName(c.name)}`, text: `Gemeldet von ${c.buy.slice(0, 4).join(", ")}${c.buy.length > 4 ? " u. a." : ""}. Die Meldungen sind bis zu 45 Tage alt.`, todo: "Eine Idee zum Selbst-Prüfen, kein Kaufsignal.", source: "SEC 13F" });
+    add({ id: `cons-${c.name}`, kind: "info", weight: 50 + c.buy.length * 3, view: "profis", title: `${c.buy.length} Top-Investoren kaufen ${prettyName(c.name)}`, text: `Gemeldet von ${c.buy.slice(0, 4).join(", ")}${c.buy.length > 4 ? " u. a." : ""}. Die Meldungen kommen bis zu 45 Tage nach Quartalsende, die Positionen können also bis zu 4,5 Monate alt sein.`, todo: "Eine Idee zum Selbst-Prüfen, kein Kaufsignal.", source: "SEC 13F" });
   }
 
   // 6) Versteckte Perlen: nur die stärkste
   const g = (d.gems || [])[0];
-  if (g && g.score >= 60) add({ id: `gem-${g.sym}`, kind: "chance", weight: 55, view: "chancen", title: `Perle: ${g.name}`, text: `${g.analysts} Analysten sehen ${p0(g.upside)} bis zum Kursziel. Im Aufwärtstrend, aber nicht überhitzt.`, todo: "Nur als Einzelwert im kleinen Themen-Anteil, nach eigener Recherche.", source: "Perlen-Suche" });
+  if (g && g.score >= 60) add({ id: `gem-${g.sym}`, kind: "chance", weight: 55, view: "chancen", title: `Aktien-Idee: ${g.name}`, text: `${g.analysts} Analysten sehen ${p0(g.upside)} bis zum Kursziel. Im Aufwärtstrend, aber nicht überhitzt.`, todo: "Nur als Einzelwert im kleinen Themen-Anteil, nach eigener Recherche.", source: "Aktien-Ideen" });
 
   // 7) IPO-Fieber / Claude-Börsengang
   const ipo = (d.ipoWatch || []).find((w) => w.id === "anthropic");
@@ -73,7 +76,7 @@ export function buildSignals(d, history = []) {
   if (mc.curve && ok(mc.curve.value) && mc.curve.value < 0) add({ id: "curve-inverted", kind: "warnung", weight: 72, view: "maerkte", title: "Zinskurve ist umgekehrt (invertiert)", text: `Kurzfristige US-Zinsen liegen ${Math.abs(mc.curve.value).toFixed(2).replace(".", ",")} Prozentpunkte über den langfristigen. Das kündigte historisch oft eine Rezession 6–18 Monate später an, aber nicht immer.`, todo: "Kein Grund zum Verkaufen, aber ein guter Moment, Notgroschen und Anleihen-Anteil zu prüfen.", source: "FRED (US-Notenbank)" });
   else if (mc.curve && ok(mc.curve.min1y) && mc.curve.min1y < 0 && mc.curve.value > 0) add({ id: "curve-steepening", kind: "info", weight: 60, view: "maerkte", title: "Zinskurve normalisiert sich wieder", text: "Im letzten Jahr war die Zinskurve umgekehrt und ist jetzt wieder positiv. Historisch begannen Rezessionen oft genau in dieser Phase.", todo: "Plan beibehalten, keine zusätzlichen Risiken eingehen.", source: "FRED (US-Notenbank)" });
   if (mc.hy && ok(mc.hy.value) && ok(mc.hy.ago3m) && mc.hy.value - mc.hy.ago3m >= 1) add({ id: "credit-stress", kind: "warnung", weight: 78, view: "maerkte", title: "Kreditmärkte werden nervös", text: `Der Risikoaufschlag für riskante Firmenanleihen stieg in 3 Monaten von ${mc.hy.ago3m.toFixed(1).replace(".", ",")} auf ${mc.hy.value.toFixed(1).replace(".", ",")} Prozentpunkte. Profis verlangen mehr Sicherheit. Das ist ein frühes Stresssignal.`, todo: "Keine Hebel, keine riskanten Einzelwetten. Sparplan weiter.", source: "FRED (US-Notenbank)" });
-  if (mc.sahm && ok(mc.sahm.value) && mc.sahm.value >= 0.5) add({ id: "sahm", kind: "warnung", weight: 85, view: "maerkte", title: "Rezessions-Signal (Sahm-Regel) ausgelöst", text: `Die US-Arbeitslosigkeit steigt schnell (Sahm-Wert ${mc.sahm.value.toFixed(2).replace(".", ",")}, Schwelle 0,5). Das zeigte bisher jede US-Rezession seit 1970 früh an.`, todo: "Notgroschen sichern, Plan beibehalten. Rezessionen sind für Sparer oft gute Kaufzeiten.", source: "FRED (US-Notenbank)" });
+  if (mc.sahm && ok(mc.sahm.value) && mc.sahm.value >= 0.5) add({ id: "sahm", kind: "warnung", weight: 85, view: "maerkte", title: "Rezessions-Signal (Sahm-Regel) ausgelöst", text: `Die US-Arbeitslosigkeit steigt schnell (Sahm-Wert ${mc.sahm.value.toFixed(2).replace(".", ",")}, Schwelle 0,5). Bisher wurde die Schwelle bei jeder US-Rezession seit 1970 erreicht, meist kurz nach deren Beginn, nicht Monate vorher. Es gab auch Fehlalarme, etwa 2024.`, todo: "Notgroschen sichern, Plan beibehalten, Sparplan weiterlaufen lassen.", source: "FRED (US-Notenbank)" });
 
   // 8d) Rohstoffe: starke Monatsbewegungen und Extreme in der Jahresspanne
   for (const c of (d.commodities || []).filter((x) => !x.missing && ok(x.chg1m) && Math.abs(x.chg1m) >= 0.12).sort((a, b2) => Math.abs(b2.chg1m) - Math.abs(a.chg1m)).slice(0, 2)) {
@@ -146,9 +149,9 @@ export function ideasFor(d, goal = "ausgewogen") {
   for (const t of fit) out.push({ title: `${t.name} (z. B. ETF ${t.etf})`, why: t.scores.quadrant === "quiet" ? `Kurs steigt (3 Monate ${ok(t.price?.chg3m) ? p0(t.price.chg3m) : "–"}), aber noch wenig Aufmerksamkeit. Trends halten im Schnitt eine Weile an (Momentum, Jegadeesh & Titman 1993).` : `Kurs-Trend und Aufmerksamkeit steigen, aber noch nicht überhitzt (${Math.round(t.scores.heat)}/100).`, tag: "Trend" });
   if (goal !== "ausgewogen") {
     const ins = (d?.insiders?.buys || []).find((b) => b.cluster);
-    if (ins) out.push({ title: `${ins.sym}: mehrere Insider kaufen`, why: `${ins.buyers.length} Vorstände oder Aufsichtsräte haben mit eigenem Geld gekauft. Insider-Käufe gingen im Schnitt besseren Kursen voraus (Cohen, Malloy & Pomorski 2012).`, tag: "Insider" });
+    if (ins) out.push({ title: `${ins.sym}: mehrere Insider kaufen`, why: `${ins.buyers.length} Insider (Vorstände, Aufsichtsräte oder Großaktionäre) haben mit eigenem Geld gekauft. Insider-Käufe gingen im Schnitt besseren Kursen voraus, am stärksten bei kleinen Firmen (Lakonishok & Lee 2001).`, tag: "Insider" });
     const g = (d?.gems || [])[0];
-    if (g) out.push({ title: `${g.name} (${g.sym})`, why: `Perlen-Suche: Aufwärtstrend ohne Überhitzung, ${g.analysts} Analysten sehen ${p0(g.upside)} Luft. Kursziele treffen allerdings selten, also selbst prüfen.`, tag: "Einzelwert" });
+    if (g) out.push({ title: `${g.name} (${g.sym})`, why: `Aktien-Ideen: Aufwärtstrend ohne Überhitzung, ${g.analysts} Analysten sehen ${p0(g.upside)} Luft. Kursziele treffen allerdings selten, also selbst prüfen.`, tag: "Einzelwert" });
   }
   if (goal === "mutig") {
     const fng = d?.fearGreed?.value;
@@ -164,13 +167,22 @@ export function dailyVerdict(d, goal = "ausgewogen", years = 15) {
   const themes = d?.themes || [];
   const quiet = themes.filter((t) => t.scores?.quadrant === "quiet").map((t) => t.name);
   const hot = themes.filter((t) => t.scores?.quadrant === "overheated").map((t) => t.name);
-  const longRun = years >= 10, bold = goal === "wachstum" || goal === "mutig";
-  const head = {
+  const bold = goal === "wachstum" || goal === "mutig";
+  // Red can mean euphoria OR stress – the advice differs
+  const euphoriaRed = lvl === "rot" && !((d?.risk?.stress ?? 0) >= 70);
+  const EUPHORIA = {
+    sicherheit: "Euphorie am Markt. Gut, dass dein Geld überwiegend sicher liegt. Jetzt nicht die Aktienquote erhöhen, weil alles steigt.",
+    ausgewogen: "Euphorie am Markt. Plan beibehalten, Mischung halten, nichts nachkaufen, nur weil es stark gestiegen ist.",
+    wachstum: "Euphorie am Markt. Investiert bleiben, aber keinen heiß gelaufenen Themen hinterherlaufen.",
+    mutig: "Euphorie am Markt. Trend-Positionen begrenzen, keine neuen Wetten auf überhitzte Themen.",
+  };
+  const head = euphoriaRed ? EUPHORIA[goal] || EUPHORIA.ausgewogen : {
     sicherheit: { "grün": "Ruhiges Umfeld. Für dich zählt: Kapital erhalten und Zinsen mitnehmen.", "gelb": "Gemischte Lage. Für dich ändert sich wenig: Zinsen sichern, Aktienanteil klein halten.", "rot": "Unruhige Märkte. Gut, dass dein Geld überwiegend sicher liegt. Nichts überstürzen." },
     ausgewogen: { "grün": "Normales Börsenwetter. Ein guter Zeitpunkt, um ganz normal weiter zu investieren.", "gelb": "Gemischte Lage. Weiter sparen, Mischung halten, keinem Hype hinterherlaufen.", "rot": "Unruhige Zeit. Plan beibehalten, Ruhe bewahren, nichts überstürzen." },
     wachstum: { "grün": "Rückenwind. Für langfristiges Wachstum heißt das: investiert bleiben und Chancen nutzen.", "gelb": "Gemischte Lage, aber für deinen langen Horizont kein Grund zu zögern. Investieren, Hype meiden.", "rot": "Unruhe drückt die Kurse. Für Langfrist-Anleger sind solche Phasen historisch oft günstige Einstiege." },
     mutig: { "grün": "Rückenwind für Risiko. Trends nutzen, aber Positionen begrenzen und Hype erkennen.", "gelb": "Gemischte Lage. Gezielt auf Trends setzen, die noch nicht überhitzt sind, Hype meiden.", "rot": "Stress im Markt. Mutige Anleger kaufen in solchen Phasen oft nach, aber nur mit Geld, das liegen bleiben kann." },
   }[goal]?.[lvl] || "Gemischte Lage.";
+  const cause = lvl === "rot" ? (euphoriaRed ? "euphorie" : "stress") : null;
   let doList;
   if (goal === "sicherheit") doList = [
     "Notgroschen und kurzfristiges Geld auf Tagesgeld oder Geldmarkt-ETF: Zinsen mitnehmen.",
@@ -179,9 +191,7 @@ export function dailyVerdict(d, goal = "ausgewogen", years = 15) {
   ];
   else doList = [
     "Sparplan auf einen breiten Welt-ETF weiterlaufen lassen. Das ist das Fundament.",
-    // Lump sum: historically better in ~2 of 3 cases (Vanguard). Staggering is insurance against regret.
-    bold && longRun && lvl !== "rot" ? "Einmalbeträge direkt anlegen: Historisch brachte das in etwa 2 von 3 Fällen mehr als das Verteilen (Vanguard). Nur wer nervös wird, verteilt."
-      : lvl === "grün" ? "Einmalbeträge darfst du direkt anlegen." : "Größere Einmalbeträge auf einige Monate verteilen, wenn dich Schwankungen nervös machen. Rein rechnerisch bringt sofort anlegen meist mehr.",
+    LUMP_SUM_RULE,
     bold ? (quiet.length ? `Trend-Anteil (${goal === "mutig" ? "bis 20 %" : "bis 10 %"}) gezielt einsetzen, z. B. ${quiet.slice(0, 2).join(", ")}: steigt, aber noch wenig Hype.` : `Trend-Anteil (${goal === "mutig" ? "bis 20 %" : "bis 10 %"}) nur in Themen, die steigen und nicht überhitzt sind.`)
       : quiet.length ? `Für eine kleine Beimischung anschauen: ${quiet.slice(0, 2).join(", ")}.` : "Notgroschen (3 Monatsgehälter) auf dem Tagesgeld sichern.",
   ];
@@ -190,5 +200,5 @@ export function dailyVerdict(d, goal = "ausgewogen", years = 15) {
     ok(b) && b >= 65 ? "Keine Kredite und keine Hebel-Produkte. In Euphorie-Phasen ist das besonders gefährlich." : "Keine Kredite, keine Hebel-Produkte, keine Tipps aus Chatgruppen.",
     goal === "mutig" ? "Keine Einzelposition über 5–10 % des Depots: Mutig heißt nicht alles auf eine Karte." : "Nicht in Panik verkaufen, wenn es mal 10–20 % runtergeht.",
   ];
-  return { level: lvl, head, doList, dontList, goal };
+  return { level: lvl, cause, head, doList, dontList, goal };
 }

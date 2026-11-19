@@ -10,7 +10,7 @@ const META = {
   check: [2, "Eigene Regeln, gespeist aus allen Quellen dieser Seite", "Die Regeln folgen belegten Mustern. Eine Prognose sind sie nicht."],
   signals: [2, "Signal-Leser über alle Quellen", "Jedes Signal nennt seine Quelle. Die Beweislage unterscheidet sich je Signal."],
   newsImpact: [2, "Google News + 10 Nachrichtenportale; Wirkung aus Studien je Ereignis-Art", "Die typischen Wirkungen sind historische Durchschnitte, im Einzelfall kann es anders laufen."],
-  lage: [1, "Yahoo Finance, alternative.me, GDELT", "Extreme Werte gingen oft Rücksetzern voraus (Greenwood, Shleifer & You 2019). Den Zeitpunkt sagt das Meter nicht voraus."],
+  lage: [1, "Yahoo Finance, GDELT", "Eigenes Messgerät, kein veröffentlichtes Maß, und noch ohne geprüfte Trefferquote. Verwandte Forschung: Kursverdopplungen in zwei Jahren erhöhen das Absturzrisiko, ohne dass danach die Renditen verlässlich schlechter sind (Greenwood, Shleifer & You 2019)."],
   plan: [3, "Langfristige Durchschnittsrenditen, 2.000 Simulationen", "Breit streuen und niedrige Kosten sind die am besten belegten Regeln der Finanzforschung."],
   hebel: [3, "Morningstar „Mind the Gap“, Zinseszins-Rechnung", "Kosten, Sparrate und Durchhalten sind nachweislich die größten Hebel."],
   frueh: [2, "FRED (US-Notenbank St. Louis)", "Gut erforscht, aber es gab nur wenige Rezessionen. Fehlalarme kommen vor."],
@@ -18,12 +18,12 @@ const META = {
   rohstoffe: [0, "Terminbörsen über Yahoo Finance; Prognosen: Weltbank, IWF, EIA, USDA", "Fakten. Rohstoffpreise sind kurzfristig kaum vorhersagbar."],
   immobilien: [0, "EZB, Eurostat, amtliche Mietspiegel", "Fakten und Faustregeln, keine Bewertung im Einzelfall."],
   offiziell: [2, "EU-Kommission (Eurostat), Universität Michigan (FRED), US-Notenbank", "Amtliche Umfragen mit jahrzehntelanger Historie. Gut belegt für die Konjunktur. Für Aktienrenditen sind die Effekte klein und zeigen sich vor allem bei Extremen (Lemmon & Portniaguina 2006). Das Anleihe-Stressmaß sagt Konjunktur und Rezessionen gut voraus (Gilchrist & Zakrajšek 2012)."],
-  stimmung: [1, "CNN Fear & Greed, alternative.me, Analysten-Ton, FRED, VIX, Polymarket", "Stimmung hilft am ehesten bei Extremen und vor allem bei spekulativen Aktien. Der Effekt ist in Studien eher klein (Baker & Wurgler 2006)."],
+  stimmung: [1, "CNN Fear & Greed, alternative.me, Analysten-Ton, FRED, VIX, Polymarket", "Eigene Mischung, kein wissenschaftliches Maß. Forschung zur Stimmung zeigt vor allem, WELCHE Aktien nach Euphorie schwächer laufen (junge, kleine, spekulative), nicht WANN der Gesamtmarkt dreht (Baker & Wurgler 2006)."],
   trends: [2, "Kurse, Wikipedia-Aufrufe, GitHub, Hugging Face, PyPI, npm, DefiLlama, Energy-Charts", "Kurs-Trends über 3–12 Monate sind gut belegt (Momentum). Kurzfristige Ausschläge drehen oft wieder."],
   karte: [2, "Wikipedia-Aufrufe, Nachrichten, Hacker News, Themen-ETFs", "Momentum ist stark belegt. Viel Aufmerksamkeit geht eher schwächeren Renditen voraus (Barber & Odean 2008)."],
   perlen: [1, "Yahoo-Finance-Analystenkonsens, Kurse", "Analysten-Kursziele treffen selten (Bradshaw, Brown & Huang 2013). Ideen zum Prüfen, mehr nicht."],
   ipo: [2, "Nachrichten, Wikipedia, Polymarket", "Hype-Börsengänge laufen langfristig im Schnitt schwächer (Ritter 1991)."],
-  profis: [2, "US-Börsenaufsicht SEC (13F, Form 4), Yahoo-Konsens, Nachrichten", "Insider-Käufe sind gut belegt (Cohen, Malloy & Pomorski 2012). Das Nachbilden von 13F-Depots zeigt gemischte Ergebnisse."],
+  profis: [2, "US-Börsenaufsicht SEC (13F, Form 4), Yahoo-Konsens, Nachrichten", "Insider-Käufe gingen im Schnitt besseren Kursen voraus, am stärksten bei kleinen Firmen (Lakonishok & Lee 2001). Am aussagekräftigsten sind Käufe außerhalb des üblichen Musters einer Person (Cohen, Malloy & Pomorski 2012); diese Unterscheidung macht das Radar noch nicht. Das Nachbilden von 13F-Depots zeigt gemischte Ergebnisse."],
   feed: [0, "~40 Quellen, siehe „Unsere Quellen“", "Rohe Meldungen. Erst im Signal-Leser werden sie eingeordnet."],
   forschung: [3, "Begutachtete Fachzeitschriften und Arbeitspapiere", "Arbeitspapiere sind noch nicht begutachtet und deshalb gekennzeichnet."],
 };
@@ -41,7 +41,7 @@ export function renderMeta() {
 
 // ---------- Anpassen: Interessen & Bereiche ----------
 export const TOPICS = [["stocks", "Aktien & ETFs"], ["themes", "Trend-Themen"], ["crypto", "Krypto"], ["commodities", "Rohstoffe"], ["realestate", "Immobilien"], ["macro", "Konjunktur & Zinsen"], ["news", "Politik & Nachrichten"], ["pros", "Profis & Insider"]];
-const SECTIONS = [["ipo", "IPO-Radar"], ["rohstoffe", "Rohstoff-Monitor"], ["immobilien", "Immobilien"], ["stimmung", "Stimmung & Wettmärkte"], ["perlen", "Versteckte Perlen"], ["weitere", "Weitere Anlageformen"], ["trends", "Trend-Radar"]];
+const SECTIONS = [["ipo", "IPO-Radar"], ["rohstoffe", "Rohstoff-Monitor"], ["immobilien", "Immobilien"], ["stimmung", "Stimmung & Wettmärkte"], ["perlen", "Aktien-Ideen"], ["weitere", "Weitere Anlageformen"], ["trends", "Trend-Radar"]];
 export const prefs = () => store.get("prefs", { off: [], hide: [] });
 export function applyPrefs() {
   const p = prefs();

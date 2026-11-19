@@ -58,10 +58,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---------------- Kurse ----------------
 async function fetchSeries(sym, stooqSym) {
-  const y = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1y&interval=1d`, { type: "json" });
+  const y = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=2y&interval=1d`, { type: "json" });
   const r = y?.chart?.result?.[0];
   if (r?.indicators?.quote?.[0]?.close) {
-    const closes = r.indicators.quote[0].close;
+    // Prefer dividend-adjusted closes so bonds, REITs and dividend stocks are not understated
+    const adj = r.indicators.adjclose?.[0]?.adjclose;
+    const closes = Array.isArray(adj) && adj.length === r.indicators.quote[0].close.length ? adj : r.indicators.quote[0].close;
     const ts = r.timestamp.map((t) => t * 1000);
     const live = r.meta?.regularMarketPrice;
     if (Number.isFinite(live)) closes[closes.length - 1] = live;
@@ -354,7 +356,7 @@ async function main() {
     const mine = news.filter((n) => n.themes.includes(th.id));
     const n7 = mine.filter((n) => within(n, 7)).length;
     const n2 = mine.filter((n) => within(n, 2)).length;
-    const newsAccel = n7 >= 5 ? (n2 / 2) / (n7 / 7) : null; // Tempo der letzten 48 h vs. Wochenschnitt
+    const newsAccel = n7 >= 5 ? (n2 / 2) / (Math.max(1, n7 - n2) / 5) : null; // last 48 h vs. the 5 days before (no overlap)
     const price = prices[th.etf] || null;
     const scores = themeScores({ attention: att, newsAccel, price, hnRatio: hnRatios[th.id]?.ratio });
     return {
@@ -386,13 +388,11 @@ async function main() {
     [scale(ipoWatch.reduce((s, w) => s + w.ipoNews7d, 0), 3, 60), 0.5],
   ]);
   const components = [
-    { id: "fng", label: "Krypto-Gier", hint: "Crypto Fear & Greed Index (0 = Panik, 100 = Gier)", score: fearGreed?.value ?? NaN, weight: 0.15 },
     { id: "nasdaq", label: "Tech-Überdehnung", hint: "Nasdaq 100 (QQQ) über/unter seiner 200-Tage-Linie", score: scale(prices["QQQ"]?.ext200, -0.05, 0.22), raw: prices["QQQ"]?.ext200, weight: 0.2 },
     { id: "nvda", label: "KI-Leitwert Nvidia", hint: "Abstand Nvidia zur 200-Tage-Linie", score: scale(prices["NVDA"]?.ext200, -0.1, 0.5), raw: prices["NVDA"]?.ext200, weight: 0.15 },
     { id: "spec", label: "Spekulation", hint: "ARK Innovation (ARKK), 3-Monats-Performance – Barometer für Zocker-Laune", score: scale(prices["ARKK"]?.chg3m, -0.2, 0.45), raw: prices["ARKK"]?.chg3m, weight: 0.15 },
     { id: "vix", label: "Sorglosigkeit", hint: "VIX niedrig = Markt erwartet kaum Risiko", score: scale(prices["^VIX"]?.last, 32, 12), raw: prices["^VIX"]?.last, weight: 0.15 },
     { id: "ipo", label: "IPO-Fieber", hint: "IPO-ETF (3M) + Schlagzeilen über Mega-Börsengänge (Anthropic, OpenAI, SpaceX …)", score: ipoHeat, weight: 0.12 },
-    { id: "chatter", label: "Blasen-Gerede", hint: "Anteil der Weltpresse, die über eine Blase schreibt (GDELT) – viel Gerede heißt oft: noch nicht ganz oben", score: scale(chatter?.z, -1, 3), raw: chatter?.ratio, weight: 0.08 },
   ].map((c) => ({ ...c, score: Number.isFinite(c.score) ? Math.round(c.score) : null }));
   const bubbleScore = Math.round(blend(components.map((c) => [c.score ?? NaN, c.weight])));
 

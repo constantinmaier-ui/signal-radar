@@ -1,11 +1,12 @@
 // „Mein Plan“: Beispiel-Aufteilung, Prognose-Spanne (Monte Carlo), Crash-Test, Anti-Hype-Regeln.
 // Bildung, keine Beratung: feste, dokumentierte Annahmen; alles läuft lokal im Browser.
 import { $, esc, fmt, pct, ok, store, state, showTip, hideTip, scaleFn, toast } from "./ui.js";
+import { LUMP_SUM_RULE } from "./signals.js";
 
 // Reihenfolge = Farbreihenfolge der geprüften Kategorien-Palette (Nachbarn bleiben unterscheidbar)
 export const BUCKETS = [
-  { id: "world", label: "Welt-Aktien-ETF", color: "var(--c1)", mu: 0.07, vol: 0.16, crash: -0.45, how: "Breiter ETF auf MSCI World oder FTSE All-World, z. B. iShares Core MSCI World (IE00B4L5Y983) oder Vanguard FTSE All-World (IE00BK5BQT80). Kosten unter 0,25 % pro Jahr." },
-  { id: "em", label: "Schwellenländer-ETF", color: "var(--c2)", mu: 0.075, vol: 0.20, crash: -0.5, how: "MSCI Emerging Markets ETF. Oder du wählst einen FTSE All-World, da sind Schwellenländer schon drin." },
+  { id: "world", label: "Welt-Aktien-ETF", color: "var(--c1)", mu: 0.07, vol: 0.16, crash: -0.5, how: "Breiter ETF auf MSCI World oder FTSE All-World, z. B. iShares Core MSCI World (IE00B4L5Y983) oder Vanguard FTSE All-World (IE00BK5BQT80). Kosten unter 0,25 % pro Jahr." },
+  { id: "em", label: "Schwellenländer-ETF", color: "var(--c2)", mu: 0.075, vol: 0.20, crash: -0.55, how: "MSCI Emerging Markets ETF. Oder du wählst einen FTSE All-World, da sind Schwellenländer schon drin." },
   { id: "bonds", label: "Anleihen", color: "var(--c3)", mu: 0.03, vol: 0.06, crash: 0.03, how: "ETF auf Euro-Staatsanleihen guter Bonität. Puffer, wenn Aktien fallen." },
   { id: "gold", label: "Gold", color: "var(--c4)", mu: 0.04, vol: 0.15, crash: 0.05, how: "Physisch hinterlegtes Gold-ETC, z. B. Xetra-Gold (DE000A0S9GB0). Nach 1 Jahr Haltedauer in Deutschland steuerfrei." },
   { id: "btc", label: "Bitcoin", color: "var(--c5)", mu: 0.08, vol: 0.65, crash: -0.75, how: "Nur Spielgeld. Über einen Bitcoin-ETP an der Börse oder eine regulierte Krypto-Börse kaufen und keine Coins auf unbekannten Plattformen lagern." },
@@ -56,9 +57,9 @@ export function buildPlan(inp, d) {
   const bubble = d?.bubble?.score, level = d?.risk?.level;
   let stagger = false;
   if ((ok(bubble) && bubble >= 70) || level === "rot") {
-    const cut = Math.round(w.themes / 2); w.themes -= cut; w.world += cut; stagger = true;
+    const cut = Math.round(w.themes / 2); w.themes -= cut; w.world += cut;
     if (cut) notes.push(`Blasen-Meter ${fmt(bubble)}: Themen-Anteil halbiert (−${cut} %), das Geld geht in den Welt-ETF.`);
-  } else if (level === "gelb" && inp.once > 0) stagger = true;
+  }
   const fng = d?.fearGreed?.value, cryptoHot = d?.themes?.find((t) => t.id === "crypto")?.scores?.quadrant === "overheated";
   if (w.btc > 0 && ((ok(fng) && fng >= 80) || cryptoHot)) { const cut = Math.ceil(w.btc / 2); w.btc -= cut; w.gold += cut; notes.push(`Krypto ist gerade gierig (Fear & Greed ${fmt(fng)}): Bitcoin-Anteil halbiert, Rest in Gold.`); }
   if (ok(d?.rates?.ecb)) B.cash.mu = d.rates.ecb;
@@ -144,7 +145,7 @@ function fanChart(el, sim) {
   svg.addEventListener("pointerleave", () => { xh.setAttribute("visibility", "hidden"); hideTip(); });
 }
 
-const riskClassOf = (vol) => { const l = [0.005, 0.02, 0.05, 0.10, 0.15, 0.25]; const i = l.findIndex((x) => vol < x); return i === -1 ? 7 : i + 1; };
+const riskClassOf = (vol) => { const l = [0.005, 0.05, 0.12, 0.20, 0.30, 0.80]; /* EU PRIIPs market-risk bands */ const i = l.findIndex((x) => vol < x); return i === -1 ? 7 : i + 1; };
 export const riskScale = (rc) => `<span class="rscale" title="Risikoklasse ${rc} von 7" aria-label="Risikoklasse ${rc} von 7">${[1, 2, 3, 4, 5, 6, 7].map((i) => `<i class="${i === rc ? "on r" + i : ""}">${i}</i>`).join("")}</span>`;
 
 let lastPlan = null;
@@ -154,11 +155,17 @@ export function renderPlan() {
   store.set("plan", inp);
   $("#yearsOut").textContent = `${inp.years} Jahr${inp.years === 1 ? "" : "e"}`;
   const plan = buildPlan(inp, d);
-  const sim = simulate({ ...inp, mu: plan.mu, sigma: plan.sigma });
+  // After running costs (typical ETF TER ~0.2 % p. a.)
+  const TER = 0.002;
+  const sim = simulate({ ...inp, mu: plan.mu - TER, sigma: plan.sigma });
   const end = sim[sim.length - 1];
+  // Rough German tax on selling at the end: 26.375 % (Abgeltungsteuer + Soli), 30 % partial exemption on equity ETFs
+  const eqShare = (plan.weights.world + plan.weights.em + plan.weights.themes) / 100;
+  const taxRate = 0.26375 * (1 - 0.3 * eqShare);
+  const afterTax = end.p50 - Math.max(0, end.p50 - end.paid) * taxRate;
+  const crashed = end.p50 * (1 + plan.crash);
   const realF = Math.pow(1.02, inp.years);
   const rc = riskClassOf(plan.sigma);
-  const crashLoss = inp.once * plan.crash;
   lastPlan = { inp, plan };
   const rows = BUCKETS.filter((b) => plan.weights[b.id] > 0).map((b) => {
     const share = plan.weights[b.id] / 100;
@@ -170,7 +177,7 @@ export function renderPlan() {
     `<b>Kern zuerst:</b> ${plan.weights.world + plan.weights.em + plan.weights.bonds + plan.weights.cash} % stecken in breit gestreuten, langweiligen Bausteinen. Genau das macht reich, nicht der Hype.`,
     `<b>Hype-Deckel:</b> Themen + Krypto zusammen höchstens ${plan.weights.themes + plan.weights.btc} %. Auch wenn alle von einer Aktie schwärmen, wird das nicht mehr.`,
     plan.overheated.length ? `<b>Gerade nicht einsteigen:</b> ${esc(plan.overheated.join(", "))}. Überhitzt laut Radar, Rücksetzer werden wahrscheinlicher.` : "<b>Nie in Überhitztes einsteigen:</b> Steht ein Thema auf „Überhitzt“, wartest du.",
-    plan.stagger && inp.once > 0 ? `<b>Einmalbetrag staffeln:</b> Die Markt-Ampel steht auf ${esc(d?.risk?.level || "gelb")}. Verteile ${eur(inp.once)} über 6–12 Monate, also etwa ${eur(inp.once / 8)} pro Monat über 8 Monate.` : "<b>Sparplan statt Timing:</b> Den perfekten Einstieg kennt niemand. Monatlich automatisch investieren schlägt fast jeden Bauchgefühl-Anleger.",
+    inp.once > 0 ? `<b>Einmalbetrag:</b> ${esc(LUMP_SUM_RULE.replace(/^Einmalbeträge: /, ""))} Verteilt wären das z. B. ${eur(inp.once / 4)} pro Monat über 4 Monate.` : "<b>Sparplan statt Timing:</b> Den perfekten Einstieg kennt niemand. Monatlich automatisch investieren schlägt fast jeden Bauchgefühl-Anleger.",
     "<b>Einmal im Jahr aufräumen:</b> Ist ein Baustein stark gewachsen, verkaufst du etwas davon und füllst die anderen auf (Rebalancing). So verkaufst du automatisch teuer und kaufst günstig.",
     "<b>Finger weg:</b> keine Kredite, keine Hebelprodukte, keine „Geheimtipps“ aus Chatgruppen und keine Plattformen ohne EU-Regulierung.",
   ];
@@ -193,12 +200,14 @@ export function renderPlan() {
     <div class="proj-kpis">
       <div><span>Eingezahlt</span><b>${eur(end.paid)}</b></div>
       <div><span>Schlecht gelaufen</span><b>${eur(end.p10)}</b></div>
-      <div class="hl"><span>Mittel</span><b>${eur(end.p50)}</b></div>
+      <div class="hl"><span>Mittleres Szenario</span><b>${eur(end.p50)}</b></div>
       <div><span>Gut gelaufen</span><b>${eur(end.p90)}</b></div>
     </div>
     <div id="fan" class="fan"></div>
-    <p class="fine">2.000 simulierte Zukünfte mit den Annahmen unten. In 8 von 10 Fällen landet das Ergebnis im blauen Band, die Linie ist der Mittelwert, gestrichelt ist das Eingezahlte. In heutiger Kaufkraft (2 % Inflation) entspricht das Mittel etwa ${eur(end.p50 / realF)}.</p>
-    <div class="crash">💥 <b>Crash-Test wie 2008:</b> Aktien −45 %, Bitcoin −75 %, Themen −65 %, Gold und Anleihen leicht im Plus. Dein Einmalbetrag läge zeitweise bei <b>${eur(inp.once + crashLoss)}</b> (${pct(plan.crash, 0)}). ${plan.crash < -0.3 ? "Kannst du das aushalten, ohne zu verkaufen? Wenn nicht: einen Typ vorsichtiger wählen." : "Das ist gut aushaltbar."}</div>
+    <p class="fine">2.000 simulierte Zukünfte mit den Annahmen unten. Bereits nach laufenden Kosten von rund 0,2 % pro Jahr. In 8 von 10 Fällen landet das Ergebnis im blauen Band. Die Linie ist das mittlere Szenario (Median: die Hälfte der Fälle liegt darüber, die Hälfte darunter), gestrichelt ist das Eingezahlte.</p>
+    <div class="proj-net"><div><span>Nach Steuern bei Verkauf am Ende (grob)</span><b>${eur(afterTax)}</b></div><div><span>In heutiger Kaufkraft (2 % Inflation)</span><b>${eur(afterTax / realF)}</b></div></div>
+    <p class="fine">Steuer grob geschätzt: 26,4 % Abgeltungsteuer mit Soli auf den Gewinn, bei Aktien-ETFs 30 % davon steuerfrei (Teilfreistellung). Ohne Kirchensteuer, Sparerpauschbetrag und Vorabpauschale.</p>
+    <div class="crash">💥 <b>Crash-Test wie 2008/09:</b> Welt-Aktien fielen damals zeitweise um rund die Hälfte. Angenommen: Aktien −50 %, Schwellenländer −55 %, Themen −65 %, Bitcoin −75 %, Gold und Anleihen leicht im Plus. Dein Depot verlöre dann zeitweise <b>${pct(plan.crash, 0)}</b>. Käme so ein Crash kurz vor deinem Ziel, läge das mittlere Szenario zeitweise bei <b>${eur(crashed)}</b> statt ${eur(end.p50)}. ${plan.crash < -0.2 ? "Kannst du das aushalten, ohne zu verkaufen? Wenn nicht: einen Typ vorsichtiger wählen. Und in den letzten Jahren vor dem Ziel Schritt für Schritt in sichere Bausteine umschichten." : "Das ist überschaubar."}</div>
     <h3>Deine Anti-Hype-Regeln</h3>
     <ol class="rules">${rules.map((r) => `<li>${r}</li>`).join("")}</ol>
     <div class="share-plan">

@@ -1,6 +1,9 @@
 # Changelog
 
-## 2.1 (in progress – PR #2)
+## 2.2 (in progress)
+Independent KPI review applied: KPI catalog with method, research, evidence and limits; corrected advice and citations; one lump-sum rule; honest plan (costs, rough tax, realistic crash test, median); 12-1 momentum, "overheated" only after a 2-year doubling, EU PRIIPs risk classes, robust attention measure, no double counting; 13F split adjustment; dividend-adjusted prices; official sentiment measures; shareable plan link.
+
+## 2.1
 App-wide search (key `/`), "show all" and ranks instead of fixed cut-offs, detail view with key points and sources for every trend item, peer-reviewed research from 12 top journals via OpenAlex (most cited and newest, DOI, citations, free versions), 30 instead of 12 AI projects and models.
 
 ## 2.0 (in progress – PR #1)

@@ -47,7 +47,10 @@ export async function fetchSuperinvestors({ get, sleep, status }) {
 
   // Konsens: Was kaufen/verkaufen mehrere Große gleichzeitig?
   const tally = new Map();
+  // Index funds held by managers are not stock picks
+  const isFund = (n) => /\b(ETF|TRUST|SPDR|ISHARES|INDEX|VANGUARD|FUND|INVESCO QQQ|SELECT SECTOR)\b/i.test(n);
   for (const inv of out) for (const m of inv.moves) {
+    if (isFund(m.name)) continue;
     const k = m.name.toUpperCase().replace(/[^A-Z0-9 ]/g, "").replace(/\b(INC|CORP|CORPORATION|CO|LTD|PLC|HLDGS|HOLDINGS|GROUP|CL A|CL B|COM|NEW)\b/g, "").replace(/\s+/g, " ").trim();
     const t = tally.get(k) || { name: m.name, buy: [], sell: [] };
     const side = m.type === "neu" || m.type === "aufgestockt" ? t.buy : t.sell;
@@ -185,10 +188,11 @@ export function findGems({ universePrices, consensus, benchmark3m }) {
     reasons.push(`${n} Analysten sehen im Schnitt ${Math.round(up * 100)} % Luft bis zum Kursziel. Ihre Note: ${c.rating.toFixed(1).replace(".", ",")} (1 = stark kaufen, 5 = verkaufen).`);
     const rs = Number.isFinite(benchmark3m) && Number.isFinite(p.chg3m) ? p.chg3m - benchmark3m : null;
     if (Number.isFinite(rs)) { score.push([scale(rs, -0.1, 0.25), 0.25]); if (rs > 0.03) reasons.push(`Stärker als der Gesamtmarkt: ${Math.round(p.chg3m * 100)} % in 3 Monaten (Markt ${Math.round(benchmark3m * 100)} %).`); }
-    score.push([100 - Math.abs(p.ext200 - 0.08) * 400, 0.2]);
+    score.push([Math.max(0, 100 - Math.abs(p.ext200 - 0.08) * 400), 0.2]);
     reasons.push(p.ext200 >= 0 ? `Im Aufwärtstrend, aber nicht überhitzt (${Math.round(p.ext200 * 100)} % über der 200-Tage-Linie).` : "Knapp unter der 200-Tage-Linie: Trend noch nicht bestätigt.");
-    const pe = c.fpe ?? c.pe;
-    if (Number.isFinite(pe) && pe > 0) { score.push([scale(pe, 45, 12), 0.2]); reasons.push(`Bewertung: KGV ${Math.round(pe)} ${pe < 18 ? "(günstig)" : pe < 30 ? "(normal)" : "(teuer)"}.`); }
+    // Forward P/E only, so all stocks are compared on the same basis
+    const pe = c.fpe;
+    if (Number.isFinite(pe) && pe > 0) { score.push([scale(pe, 45, 12), 0.2]); reasons.push(`Bewertung: erwartetes KGV ${Math.round(pe)} ${pe < 18 ? "(günstig)" : pe < 30 ? "(normal)" : "(teuer)"}.`); }
     const s = blend(score);
     out.push({ sym, name: c.name, score: Math.round(s), price: c.price, currency: c.currency, target: c.target, upside: up, analysts: n, rating: c.rating, pe, chg3m: p.chg3m, ext200: p.ext200, riskClass: p.riskClass, vol: p.vol, maxDD: p.maxDD, spark: p.spark, reasons });
   }
@@ -216,7 +220,7 @@ export async function fetchInsiders({ get, sleep, status }, symbols, prev, NOW) 
     await sleep(120);
     const r = sub?.filings?.recent;
     if (!r) continue;
-    const idx = r.form.map((f, i) => (f === "4" && Date.parse(r.filingDate[i]) > NOW - 30 * 86400000 ? i : -1)).filter((i) => i >= 0).slice(0, 4);
+    const idx = r.form.map((f, i) => (f === "4" && Date.parse(r.filingDate[i]) > NOW - 30 * 86400000 ? i : -1)).filter((i) => i >= 0).slice(0, 10); // large caps file many grant/sale Form 4s, look further back
     const buys = [];
     for (const i of idx) {
       const doc = String(r.primaryDocument[i]).replace(/^xsl[^/]+\//, "");
