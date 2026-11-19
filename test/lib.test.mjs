@@ -1,6 +1,5 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { parseFeed, makeMatcher, dedupe, rsi, priceStats, attentionStats, themeScores, quadrant, scale, blend, zoneLabel, cleanText } from "../collector/lib.mjs";
 
 test("RSS (Google News) – Titel ohne Quellen-Suffix, Datum, Quelle", () => {
@@ -307,9 +306,16 @@ test("Search: umlauts folded, all words required, title hits first", async () =>
 
 test("Search index covers themes, assets, glossary, rent indices and studies", async () => {
   const { buildIndex } = await import("../site/search.js");
-  const d = JSON.parse(readFileSync(new URL("../site/data/data.json", import.meta.url)));
+  // Small inline fixture: site/data/ is generated at build time and not in the repository
+  const d = {
+    themes: [{ id: "ai", name: "Künstliche Intelligenz", etf: "BOTZ", short: "KI", tickers: [{ sym: "NVDA" }] }],
+    assets: [{ id: "world", name: "Welt-Aktien", group: "Aktien", sym: "EUNL.DE", chg1m: 0.01 }],
+    commodities: [{ id: "gold", name: "Gold", sym: "GC=F", chg1m: 0.02 }],
+    news: [{ title: "Gold auf Rekordhoch", url: "https://example.com/n", source: "Test", published: Date.now() }],
+    papers: { top: [{ title: "Momentum", journal: "Journal of Finance", date: "2026-01-01" }], recent: [] },
+  };
   const idx = buildIndex(d, null), groups = new Set(idx.map((x) => x.g));
-  for (const g of ["lex", "theme", "price", "city", "news"]) assert.ok(groups.has(g), g);
+  for (const g of ["lex", "theme", "price", "city", "news", "paper"]) assert.ok(groups.has(g), g);
   assert.ok(idx.every((x) => x.go && typeof x.hay === "string"));
 });
 
@@ -319,4 +325,11 @@ test("Show more: list limited until expanded", async () => {
   assert.equal(limitList("t", l, 2).length, 2); assert.match(moreBtn("t", 5, 2, "Studien"), /Alle 5 Studien/);
   toggleMore("t"); assert.equal(limitList("t", l, 2).length, 5); assert.match(moreBtn("t", 5, 2), /Weniger/);
   assert.equal(moreBtn("u", 2, 5), "");
+});
+
+test("Excess bond premium CSV: columns found by name, bad rows skipped", async () => {
+  const { parseEbpCsv } = await import("../collector/insights.mjs");
+  const p = parseEbpCsv("date,gz_spread,ebp,est_prob\n2026-08-01,1.9,-0.12,0.10\n2026-09-01,2.0,NA,0.11\n2026-10-01,2.4,0.31,0.22\n");
+  assert.equal(p.length, 2); assert.equal(p[1].ebp, 0.31); assert.equal(p[1].prob, 0.22);
+  assert.equal(parseEbpCsv("x,y\n1,2"), null);
 });

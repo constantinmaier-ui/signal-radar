@@ -156,6 +156,43 @@ export async function fetchMacro({ get }) {
   return out;
 }
 
+// ---------- Official sentiment measures ----------
+// EU Economic Sentiment Indicator (European Commission surveys; long-run mean 100, sd 10),
+// University of Michigan consumer sentiment (FRED UMCSENT), Gilchrist–Zakrajšek excess bond premium (Fed).
+const ESI = (geo, indic = "BS-ESI-I") => `https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ei_bssi_m_r2?format=JSON&lang=DE&geo=${geo}&indic=${indic}&s_adj=SA&sinceTimePeriod=${new Date(Date.now() - 3 * 365 * 86400000).toISOString().slice(0, 7)}`;
+export const SENTIMENT_SOURCES = {
+  esiDE: ESI("DE"), esiEA: ESI("EA20"), consDE: ESI("DE", "BS-CSMCI"),
+  umich: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=UMCSENT",
+  ebp: "https://www.federalreserve.gov/econres/notes/feds-notes/ebp_csv.csv",
+};
+/** Fed CSV with columns date, gz_spread, ebp, est_prob (column order may change). */
+export function parseEbpCsv(csv) {
+  if (!csv) return null;
+  const [head, ...rows] = csv.trim().split(/\r?\n/);
+  const cols = head.toLowerCase().split(",").map((c) => c.trim().replace(/"/g, ""));
+  const iD = cols.indexOf("date"), iE = cols.indexOf("ebp"), iP = cols.indexOf("est_prob"), iG = cols.indexOf("gz_spread");
+  if (iD < 0 || iE < 0) return null;
+  const pts = rows.map((r) => r.split(",")).map((c) => ({ date: c[iD]?.replace(/"/g, ""), ebp: Number(c[iE]), prob: iP >= 0 ? Number(c[iP]) : null, gz: iG >= 0 ? Number(c[iG]) : null })).filter((p) => p.date && Number.isFinite(p.ebp));
+  return pts.length ? pts : null;
+}
+const pctRank = (vals, v) => Math.round((vals.filter((x) => x < v).length / vals.length) * 100);
+export async function fetchSentimentOfficial({ get }) {
+  const [deJ, eaJ, consJ, umCsv, ebpCsv] = await Promise.all([
+    get(SENTIMENT_SOURCES.esiDE, { type: "json", label: "EU-Kommission: Wirtschaftsstimmung DE (Eurostat)", timeout: 20000 }),
+    get(SENTIMENT_SOURCES.esiEA, { type: "json", label: "EU-Kommission: Wirtschaftsstimmung Euroraum (Eurostat)", timeout: 20000 }),
+    get(SENTIMENT_SOURCES.consDE, { type: "json", label: "EU-Kommission: Verbrauchervertrauen DE (Eurostat)", timeout: 20000 }),
+    get(SENTIMENT_SOURCES.umich, { label: "FRED UMCSENT (Uni Michigan)", timeout: 20000 }),
+    get(SENTIMENT_SOURCES.ebp, { label: "US-Notenbank: Excess Bond Premium", timeout: 20000 }),
+  ]);
+  const js = (j) => { const r = parseJsonStat(j); if (!r) return null; const p = r.points, last = p[p.length - 1]; return { value: last.value, period: last.period, ago1y: p[p.length - 13]?.value ?? null, series: p.map((x) => x.value) }; };
+  const out = { esiDE: js(deJ), esiEA: js(eaJ), consDE: js(consJ) };
+  const um = parseFredCsv(umCsv);
+  if (um) { const last = um[um.length - 1]; out.umich = { value: last.value, date: last.date, pct: pctRank(um.map((p) => p.value), last.value), since: um[0].date.slice(0, 4), series: um.slice(-36).map((p) => p.value) }; }
+  const ebp = parseEbpCsv(ebpCsv);
+  if (ebp) { const last = ebp[ebp.length - 1]; out.ebp = { value: last.ebp, prob: last.prob, gz: last.gz, date: last.date, ago1y: ebp[ebp.length - 13]?.ebp ?? null, series: ebp.slice(-36).map((p) => p.ebp) }; }
+  return Object.values(out).some(Boolean) ? out : null;
+}
+
 // ---------- Rohstoff-Monitor ----------
 import { COMMODITIES } from "./config.mjs";
 export function rangeStats(closes) {

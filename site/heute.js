@@ -84,6 +84,7 @@ const VIEWS = ["heute", "plan", "maerkte", "chancen", "profis", "news", "wissen"
 export function currentView() {
   const h = location.hash.replace("#", "");
   if (h.startsWith("thema=")) return "chancen";
+  if (h.startsWith("plan=")) return "plan";
   return VIEWS.includes(h) ? h : "heute";
 }
 export function showView(onShow) {

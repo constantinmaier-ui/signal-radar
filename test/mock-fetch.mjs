@@ -53,9 +53,15 @@ globalThis.fetch = async (url, opts) => {
   }
   if (u.includes("onlinelibrary.wiley.com") || u.includes("sciencedirect.com")) return text(`<rss><channel><item><title>Demo: Journal-Artikel über Faktorprämien</title><link>https://example.com/j1</link><pubDate>${new Date(now - 10 * 86400000).toUTCString()}</pubDate></item></channel></rss>`);
   if (u.includes("fred.stlouisfed.org")) {
-    const id = u.match(/id=([A-Z0-9]+)/)[1], base = { T10Y3M: -0.3, BAMLH0A0HYM2: 3.1, SAHMREALTIME: 0.3 }[id];
+    const id = u.match(/id=([A-Z0-9]+)/)[1], base = { T10Y3M: -0.3, BAMLH0A0HYM2: 3.1, SAHMREALTIME: 0.3, UMCSENT: 64 }[id];
     return text("observation_date," + id + "\n" + Array.from({ length: 400 }, (_, i) => `${new Date(now - (400 - i) * 86400000).toISOString().slice(0, 10)},${i % 50 === 7 ? "." : (base + Math.sin(i / 40) * 0.4).toFixed(2)}`).join("\n"));
   }
+  if (u.includes("ei_bssi_m_r2")) {
+    const base = u.includes("BS-CSMCI") ? -18 : u.includes("EA20") ? 95 : 92, idx = {}, value = {};
+    for (let i = 0; i < 24; i++) { const d = new Date(now - (24 - i) * 30 * DAY); idx[d.toISOString().slice(0, 7)] = i; value[i] = +(base + Math.sin(i / 4) * 3).toFixed(1); }
+    return json({ label: "Demo: Stimmung", value, dimension: { time: { category: { index: idx } } } });
+  }
+  if (u.includes("ebp_csv")) return text("date,gz_spread,ebp,est_prob\n" + Array.from({ length: 40 }, (_, i) => `${new Date(now - (40 - i) * 30 * DAY).toISOString().slice(0, 7)}-01,${(1.8 + Math.sin(i / 5) * 0.4).toFixed(2)},${(-0.1 + Math.sin(i / 6) * 0.25).toFixed(3)},${(0.12 + Math.sin(i / 6) * 0.08).toFixed(3)}`).join("\n"));
   if (u.includes("eurostat")) return json({ label: "Demo: Hauspreisindex", value: { "0": 5.1, "1": -2.3, "2": 1.4, "3": 3.2 }, dimension: { time: { category: { index: { "2025-Q3": 0, "2025-Q4": 1, "2026-Q1": 2, "2026-Q2": 3 } } } } });
   if (u.includes("data-api.ecb.europa.eu") && (u.includes("/MIR/") || u.includes("/YC/"))) {
     const n = 24, base = u.includes("/MIR/") ? 3.6 : 2.7;
