@@ -59,6 +59,8 @@ const SOURCES = [
   ["Stimmung", "CNN Fear & Greed, alternative.me (Krypto)", "Angst oder Gier"],
   ["Wettmärkte", "Polymarket", "Echtgeld-Wahrscheinlichkeiten"],
   ["Zinsen & Immobilien", "Europäische Zentralbank, Eurostat", "Leitzins, Bauzinsen, Hauspreise"],
+  ["Konjunktur-Frühwarnung", "FRED (US-Notenbank St. Louis)", "Zinskurve, Kredit-Risikoaufschläge, Sahm-Regel"],
+  ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen"],
   ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs minütlich"],
   ["Forschung", "arXiv, NBER", "Neueste Fachstudien"],
   ["Einordnung (optional)", "Claude (Anthropic)", "Tagesbriefing und Übersetzungen ins Deutsche"],
@@ -118,4 +120,52 @@ export function initMode(onChange) {
     const b = e.target.closest("button[data-mode]"); if (!b) return;
     store.set("mode", b.dataset.mode); apply(b.dataset.mode); onChange?.();
   });
+}
+
+// ---------- Weitere & neuartige Anlageformen (Erklärkarten) ----------
+const INSTRUMENTS = [
+  { name: "Festgeld & Bundeswertpapiere", tag: "Sicher", verdict: ["g", "Sinnvoll"], what: "Fester Zins für feste Laufzeit, bei Banken mit Einlagensicherung oder direkt beim Bund.", chance: "Planbarer Zins, kein Kursrisiko.", risk: "Geld ist gebunden; nach Inflation bleibt oft wenig übrig.", who: "Für Geld, das du in 1–3 Jahren brauchst." },
+  { name: "Geldmarkt-ETFs", tag: "Sicher", verdict: ["g", "Sinnvoll"], what: "Börsengehandelte Alternative zum Tagesgeld, verzinst mit dem Tageszins der Banken.", chance: "Täglich verkaufbar, kein Lockzins-Wechsel nötig.", risk: "Fällt der Leitzins, sinkt auch der Ertrag.", who: "Als Parkplatz für Geld im Depot." },
+  { name: "Faktor-ETFs (Value, Qualität, Small Cap)", tag: "Wissenschaftlich", verdict: ["g", "Als Beimischung"], what: "ETFs, die gezielt auf belegte Rendite-Treiber setzen: günstige, profitable oder kleine Firmen.", chance: "Langfristig belegte Zusatzrendite (Fama & French; Novy-Marx).", risk: "Kann 5–10 Jahre schlechter laufen als der Gesamtmarkt.", who: "Fortgeschrittene mit langem Atem, 10–30 % des Aktienanteils." },
+  { name: "ELTIF (europäische Langfrist-Fonds)", tag: "Neu seit 2024", verdict: ["y", "Nur gezielt"], what: "Seit der EU-Reform 2024 (ELTIF 2.0) können Privatanleger in Private Equity, Infrastruktur und Firmenkredite investieren, oft schon ab kleinen Beträgen.", chance: "Zugang zu Märkten, die früher Großanlegern vorbehalten waren.", risk: "Oft hohe Gebühren, eingeschränkt verkaufbar, Bewertung schwer durchschaubar.", who: "Nur mit langem Horizont und kleinem Anteil; Kosten genau prüfen." },
+  { name: "Tokenisierte Wertpapiere", tag: "Neuartig", verdict: ["y", "Beobachten"], what: "Klassische Anlagen wie Anleihen oder Geldmarktfonds als digitales Token auf einer Blockchain. In Deutschland seit dem eWpG (2021) möglich; große Fondshäuser bieten erste Produkte an.", chance: "Schneller, rund um die Uhr, günstiger in der Abwicklung.", risk: "Junger Markt, Verwahrung und Rechtslage teils noch unklar.", who: "Spannend zum Beobachten, für Einsteiger noch nicht nötig." },
+  { name: "Infrastruktur", tag: "Sachwert", verdict: ["g", "Als Beimischung"], what: "Netze, Häfen, Pipelines, Rechenzentren. Stabile, oft an die Inflation gekoppelte Einnahmen.", chance: "Profitiert vom Ausbau für KI und Energiewende.", risk: "Zinsempfindlich, teils politisch reguliert.", who: "Als kleiner Baustein neben dem Welt-ETF." },
+  { name: "Private Credit", tag: "Im Trend", verdict: ["y", "Vorsicht"], what: "Kredite an Firmen außerhalb der Banken, verpackt in Fonds.", chance: "Hohe laufende Zinsen.", risk: "Wenig erprobt in schweren Krisen; Ausfälle können sich häufen.", who: "Höchstens kleiner Anteil für Erfahrene." },
+  { name: "P2P- und Crowd-Kredite", tag: "Riskant", verdict: ["r", "Eher lassen"], what: "Du leihst Privatleuten oder kleinen Firmen über eine Plattform Geld, auch für Immobilienprojekte.", chance: "Hohe versprochene Zinsen.", risk: "Häufige Ausfälle; mehrere Plattformen sind pleitegegangen.", who: "Nur Spielgeld, das du komplett verlieren kannst." },
+  { name: "Hebelprodukte & CFDs", tag: "Finger weg", verdict: ["r", "Finger weg"], what: "Wetten mit Hebel auf Kurse (Optionsscheine, Knock-outs, CFDs).", chance: "Schnelle große Gewinne möglich.", risk: "Laut EU-Pflichthinweis verlieren die meisten Privatkunden (rund 3 von 4) mit CFDs Geld.", who: "Für Vermögensaufbau ungeeignet." },
+  { name: "Covered-Call-ETFs („Dividenden-Maschinen“)", tag: "Marketing-Falle", verdict: ["r", "Eher lassen"], what: "ETFs, die durch Optionsverkäufe hohe Ausschüttungen erzeugen.", chance: "Hohe laufende Auszahlungen.", risk: "Gewinne nach oben sind gedeckelt. Langfristig meist schwächer als ein normaler ETF.", who: "Für Vermögensaufbau meist ungeeignet." },
+  { name: "Kunst, Uhren, Oldtimer, Wein", tag: "Liebhaberei", verdict: ["y", "Nur aus Leidenschaft"], what: "Sachwerte zum Anfassen.", chance: "Einzelstücke können stark steigen.", risk: "Hohe Kosten (Händler, Lagerung, Versicherung), schwer verkäuflich, Fälschungen.", who: "Wenn es Freude macht, nicht als Hauptanlage." },
+  { name: "Prognosemärkte (z. B. Polymarket)", tag: "Info-Quelle", verdict: ["y", "Nur zum Lesen"], what: "Echtgeld-Wetten auf Ereignisse. Die Quoten zeigen, was die Masse erwartet.", chance: "Oft gute Frühindikatoren für Wahrscheinlichkeiten.", risk: "In der EU meist nicht reguliert; als Anlage ungeeignet.", who: "Das Radar nutzt sie nur als Informationsquelle." },
+];
+export function renderInstruments() {
+  $("#instruments").innerHTML = INSTRUMENTS.map((x) => `<article class="instr">
+    <header><h3>${esc(x.name)}</h3><span class="chip">${esc(x.tag)}</span></header>
+    <p>${esc(x.what)}</p>
+    <dl><dt>Chance</dt><dd>${esc(x.chance)}</dd><dt>Risiko</dt><dd>${esc(x.risk)}</dd><dt>Für wen</dt><dd>${esc(x.who)}</dd></dl>
+    <div class="re-verdict lv-${x.verdict[0]}">${esc(x.verdict[1])}</div></article>`).join("");
+}
+
+// ---------- Insider-Käufe ----------
+export function renderInsiders() {
+  const ins = state.data.insiders?.buys || [];
+  const usd = (x) => (x >= 1e6 ? fmt(x / 1e6, 1) + " Mio. $" : fmt(x / 1e3) + " Tsd. $");
+  $("#insiders").innerHTML = ins.length ? ins.slice(0, 8).map((b) => `<article class="ins ${b.cluster ? "cluster" : ""}">
+      <header><b>${esc(b.sym)}</b><span>${esc(b.name)}</span>${b.cluster ? '<span class="chip">mehrere Insider</span>' : ""}</header>
+      <div class="ins-sum">${usd(b.total)} gekauft · zuletzt ${esc(b.last || "")}</div>
+      <div class="fine">${b.buyers.slice(0, 3).map((x) => `${esc(x.who)} (${esc(x.role)})`).join(", ")}</div></article>`).join("")
+    : '<div class="empty">In den letzten 30 Tagen keine Insider-Käufe in den beobachteten Aktien. Insider kaufen selten. Wenn sie es tun, ist es umso bemerkenswerter.</div>';
+}
+
+// ---------- Konjunktur-Frühwarnsystem ----------
+export function renderMacro() {
+  const m = state.data.macro || {};
+  const f2 = (x) => (ok(x) ? x.toFixed(2).replace(".", ",") : "–");
+  const tile = (k, title, val, unit, state2, expl) => `<div class="macro ${state2}"><span>${title}</span><b>${val}${unit}</b><em>${expl}</em>${m[k]?.series ? `<div class="mspark" data-k="${k}"></div>` : ""}<small>Stand ${esc(m[k]?.date || "–")} · FRED ${esc(m[k]?.id || "")}</small></div>`;
+  const c = m.curve, h = m.hy, s2 = m.sahm;
+  $("#macro").innerHTML = [
+    tile("curve", "Zinskurve (10 J. minus 3 Mon.)", f2(c?.value), " Pp.", !c ? "" : c.value < 0 ? "bad" : c.min1y < 0 ? "warn" : "good", !c ? "" : c.value < 0 ? "Umgekehrt: historisches Rezessions-Warnsignal" : c.min1y < 0 ? "Wieder positiv nach Umkehr: aufmerksam bleiben" : "Normal: kein Warnsignal"),
+    tile("hy", "Risikoaufschlag riskante Firmenanleihen", f2(h?.value), " Pp.", !h ? "" : h.value >= 5 || (ok(h.ago3m) && h.value - h.ago3m >= 1) ? "bad" : h.value < 3 ? "warn" : "good", !h ? "" : h.value >= 5 ? "Hoch: Kreditmärkte unter Stress" : ok(h.ago3m) && h.value - h.ago3m >= 1 ? "Steigt schnell: Profis werden nervös" : h.value < 3 ? "Sehr niedrig: viel Sorglosigkeit" : "Normal"),
+    tile("sahm", "Sahm-Regel (Arbeitsmarkt)", f2(s2?.value), "", !s2 ? "" : s2.value >= 0.5 ? "bad" : s2.value >= 0.3 ? "warn" : "good", !s2 ? "" : s2.value >= 0.5 ? "Ausgelöst: Rezessionssignal" : s2.value >= 0.3 ? "Steigt: beobachten" : "Ruhig: kein Signal (Schwelle 0,5)"),
+  ].join("");
+  $$("#macro .mspark").forEach((el) => { const s3 = m[el.dataset.k].series; el.innerHTML = spark(s3, { w: 260, h: 34, color: "var(--s1)", label: "Verlauf 3 Jahre" }); });
 }

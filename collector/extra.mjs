@@ -196,3 +196,42 @@ export function findGems({ universePrices, consensus, benchmark3m }) {
 }
 
 export { UNIVERSE, ASSETS };
+
+// ---------------- Insider-Käufe (SEC Form 4) ----------------
+// Nur echte Käufe am offenen Markt (Code „P“). Läuft höchstens stündlich; dazwischen werden die letzten Werte übernommen.
+import { parseForm4 } from "./lib.mjs";
+export async function fetchInsiders({ get, sleep, status }, symbols, prev, NOW) {
+  if (prev?.insiders?.checkedAt && NOW - Date.parse(prev.insiders.checkedAt) < 55 * 60e3) return prev.insiders;
+  const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard (open source; github.com)";
+  const sec = (url, type = "json") => get(url, { type, headers: { "User-Agent": UA }, timeout: 20000 });
+  const map = await sec("https://www.sec.gov/files/company_tickers.json");
+  if (!map) { status.push({ source: "SEC Insider-Meldungen", ok: false, error: "Ticker-Liste nicht abrufbar" }); return prev?.insiders || null; }
+  const cikOf = new Map(Object.values(map).map((r) => [String(r.ticker).toUpperCase(), r.cik_str]));
+  const out = [];
+  let filings = 0;
+  for (const sym of symbols) {
+    const cik = cikOf.get(sym.toUpperCase());
+    if (!cik) continue;
+    const sub = await sec(`https://data.sec.gov/submissions/CIK${String(cik).padStart(10, "0")}.json`);
+    await sleep(120);
+    const r = sub?.filings?.recent;
+    if (!r) continue;
+    const idx = r.form.map((f, i) => (f === "4" && Date.parse(r.filingDate[i]) > NOW - 30 * 86400000 ? i : -1)).filter((i) => i >= 0).slice(0, 4);
+    const buys = [];
+    for (const i of idx) {
+      const doc = String(r.primaryDocument[i]).replace(/^xsl[^/]+\//, "");
+      const xml = await sec(`https://www.sec.gov/Archives/edgar/data/${cik}/${r.accessionNumber[i].replace(/-/g, "")}/${doc}`, "text");
+      await sleep(120);
+      filings++;
+      if (!xml) continue;
+      const f = parseForm4(xml);
+      for (const t of f.txs) if (t.code === "P" && t.ad !== "D" && t.shares > 0) buys.push({ who: f.owner.name, role: f.owner.officer ? (f.owner.title || "Vorstand") : f.owner.director ? "Aufsichtsrat/Direktor" : "Großaktionär", value: t.shares * t.price, date: t.date });
+    }
+    if (buys.length) {
+      const people = [...new Map(buys.map((b) => [b.who, b])).values()];
+      out.push({ sym, name: sub.name, total: buys.reduce((s, b) => s + b.value, 0), buyers: people.map((b) => ({ who: b.who, role: b.role })), cluster: people.length >= 2, last: buys.map((b) => b.date).sort().pop() });
+    }
+  }
+  status.push({ source: `SEC Insider-Meldungen (${filings} Form-4 geprüft)`, ok: true });
+  return { checkedAt: new Date(NOW).toISOString(), buys: out.sort((a, b) => Number(b.cluster) - Number(a.cluster) || b.total - a.total).slice(0, 15) };
+}

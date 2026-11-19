@@ -63,6 +63,18 @@ export function buildSignals(d, history = []) {
     if (share <= 0.3) add({ id: "voices-bear", kind: "info", weight: 45, view: "profis", title: "Analysten sind pessimistisch", text: `${v.bear} von ${v.bull + v.bear} Stimmen der letzten Tage sind vorsichtig. Schlechte Stimmung ist oft schon im Kurs.`, todo: "Langfrist-Plan beibehalten.", source: "Analysten-Stimmen" });
   }
 
+  // 8b) Insider-Käufe: mehrere Vorstände kaufen gleichzeitig
+  for (const b of (d.insiders?.buys || []).filter((x) => x.cluster).slice(0, 2)) {
+    add({ id: `insider-${b.sym}`, kind: "chance", weight: 62, view: "profis", title: `Mehrere Insider kaufen ${b.sym}`, text: `${b.buyers.length} Vorstände oder Aufsichtsräte von ${b.name} haben in den letzten 30 Tagen mit eigenem Geld gekauft. Gemeinsame Insider-Käufe gelten als eines der stärksten öffentlichen Signale.`, todo: "Eine Idee zum Selbst-Prüfen, kein Kaufsignal: Warum kaufen sie? Wie ist die Bewertung?", source: "SEC Form 4" });
+  }
+
+  // 8c) Konjunktur-Frühwarnsystem (FRED)
+  const mc = d.macro || {};
+  if (mc.curve && ok(mc.curve.value) && mc.curve.value < 0) add({ id: "curve-inverted", kind: "warnung", weight: 72, view: "maerkte", title: "Zinskurve ist umgekehrt (invertiert)", text: `Kurzfristige US-Zinsen liegen ${Math.abs(mc.curve.value).toFixed(2).replace(".", ",")} Prozentpunkte über den langfristigen. Das kündigte historisch oft eine Rezession 6–18 Monate später an, aber nicht immer.`, todo: "Kein Grund zum Verkaufen, aber ein guter Moment, Notgroschen und Anleihen-Anteil zu prüfen.", source: "FRED (US-Notenbank)" });
+  else if (mc.curve && ok(mc.curve.min1y) && mc.curve.min1y < 0 && mc.curve.value > 0) add({ id: "curve-steepening", kind: "info", weight: 60, view: "maerkte", title: "Zinskurve normalisiert sich wieder", text: "Im letzten Jahr war die Zinskurve umgekehrt und ist jetzt wieder positiv. Historisch begannen Rezessionen oft genau in dieser Phase.", todo: "Plan beibehalten, keine zusätzlichen Risiken eingehen.", source: "FRED (US-Notenbank)" });
+  if (mc.hy && ok(mc.hy.value) && ok(mc.hy.ago3m) && mc.hy.value - mc.hy.ago3m >= 1) add({ id: "credit-stress", kind: "warnung", weight: 78, view: "maerkte", title: "Kreditmärkte werden nervös", text: `Der Risikoaufschlag für riskante Firmenanleihen stieg in 3 Monaten von ${mc.hy.ago3m.toFixed(1).replace(".", ",")} auf ${mc.hy.value.toFixed(1).replace(".", ",")} Prozentpunkte. Profis verlangen mehr Sicherheit. Das ist ein frühes Stresssignal.`, todo: "Keine Hebel, keine riskanten Einzelwetten. Sparplan weiter.", source: "FRED (US-Notenbank)" });
+  if (mc.sahm && ok(mc.sahm.value) && mc.sahm.value >= 0.5) add({ id: "sahm", kind: "warnung", weight: 85, view: "maerkte", title: "Rezessions-Signal (Sahm-Regel) ausgelöst", text: `Die US-Arbeitslosigkeit steigt schnell (Sahm-Wert ${mc.sahm.value.toFixed(2).replace(".", ",")}, Schwelle 0,5). Das zeigte bisher jede US-Rezession seit 1970 früh an.`, todo: "Notgroschen sichern, Plan beibehalten. Rezessionen sind für Sparer oft gute Kaufzeiten.", source: "FRED (US-Notenbank)" });
+
   // 9) Nachrichtenlage: Ereignis-Arten, über die gerade auffällig viel berichtet wird
   const TODO = {
     rates: "Zinsänderungen wirken über Monate. Plan nicht hektisch umbauen. Bei Senkungen profitieren Anleihen und Immobilien.",

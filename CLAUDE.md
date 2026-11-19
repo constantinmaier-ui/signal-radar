@@ -11,6 +11,10 @@ Ein öffentliches Investment-Dashboard (GitHub Pages), das ohne Login per WhatsA
 - `site/` ist die Webseite (reines HTML/CSS/JS, keine Abhängigkeiten). `signals.js` übersetzt Daten in verständliche Hinweise.
 - Tests: `npm test` (Rechenlogik + Sammler gegen simuliertes Netz). Demo-Daten: `npm run demo`.
 
+## Projekt-Dateien (immer aktuell halten)
+- `docs/ROADMAP.md`: Versionen und Umfang. `docs/TASKS.md`: Aufgaben mit Status und Priorität. `docs/DECISIONS.md`: Entscheidungen mit Begründung. `CHANGELOG.md`: was sich je Version geändert hat.
+- Neue Ideen des Besitzers immer zuerst in `docs/TASKS.md` aufnehmen (Nutzen, Aufwand, Version), dann umsetzen.
+
 ## Regeln für Inhalte
 - Keine Anlageberatung versprechen. Beobachtungen und Regeln, keine Kauftipps. Immer den Hinweis „Keine Anlageberatung“ beibehalten.
 - Nie erfundene Zahlen oder Zitate echten Personen zuschreiben. Demo-Daten immer als „Demo“ kennzeichnen.

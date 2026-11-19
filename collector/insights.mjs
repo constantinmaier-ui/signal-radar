@@ -83,3 +83,27 @@ export async function fetchRealEstate({ get, fetchSeries, priceStats, status }) 
   status.push({ source: `Immobilien-Daten (${["hpi", "mortgage", "bund10"].filter((k) => out[k]).length}/3)`, ok: !!(out.hpi || out.mortgage) });
   return out;
 }
+
+// ---------- Konjunktur-Frühwarnsystem (FRED, US-Notenbank St. Louis; frei, ohne Schlüssel) ----------
+export const FRED_SERIES = {
+  curve: "T10Y3M",        // Zinskurve: 10 Jahre minus 3 Monate (Prozentpunkte)
+  hy: "BAMLH0A0HYM2",     // Risikoaufschlag Hochzinsanleihen (Prozentpunkte)
+  sahm: "SAHMREALTIME",   // Sahm-Regel (Prozentpunkte)
+};
+export function parseFredCsv(csv) {
+  if (!csv || !/^\s*(observation_date|DATE)/i.test(csv)) return null;
+  const pts = csv.trim().split(/\r?\n/).slice(1).map((l) => l.split(",")).map(([d, v]) => ({ date: d, value: Number(v) })).filter((p) => p.date && Number.isFinite(p.value));
+  return pts.length ? pts : null;
+}
+export async function fetchMacro({ get }) {
+  const start = new Date(Date.now() - 3 * 365 * 86400000).toISOString().slice(0, 10);
+  const out = {};
+  for (const [k, id] of Object.entries(FRED_SERIES)) {
+    const pts = parseFredCsv(await get(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, { label: `FRED ${id}`, timeout: 20000 }));
+    if (!pts) continue;
+    const last = pts[pts.length - 1];
+    const back = (days) => { const t = Date.parse(last.date) - days * 86400000; return [...pts].reverse().find((p) => Date.parse(p.date) <= t)?.value ?? null; };
+    out[k] = { id, value: last.value, date: last.date, ago3m: back(91), ago1y: back(365), min1y: Math.min(...pts.filter((p) => Date.parse(p.date) > Date.parse(last.date) - 365 * 86400000).map((p) => p.value)), series: pts.filter((_, i) => i % Math.max(1, Math.floor(pts.length / 120)) === 0).map((p) => p.value) };
+  }
+  return out;
+}

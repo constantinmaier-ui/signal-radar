@@ -11,8 +11,8 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
-import { computeEvents, fetchResearch, fetchRealEstate } from "./insights.mjs";
-import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems } from "./extra.mjs";
+import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro } from "./insights.mjs";
+import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
   scale, blend, zoneLabel, mean,
@@ -311,10 +311,11 @@ async function main() {
   ]);
   const chatter = await fetchBubbleChatter();
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
-  const [research, realEstate] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status })]);
+  const [research, realEstate, macro] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get })]);
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
   ]);
+  const insiders = await fetchInsiders(ctx, UNIVERSE.filter((t) => !t.includes(".") && !t.endsWith("-USD")), previous.prevData, NOW);
   const universePrices = Object.fromEntries(UNIVERSE.filter((t) => prices[t]).map((t) => [t, prices[t]]));
   const gems = findGems({ universePrices, consensus, benchmark3m: prices["^GSPC"]?.chg3m });
   const analysts = Object.entries(consensus).map(([sym, c]) => ({ sym, ...c, chg3m: prices[sym]?.chg3m ?? null, riskClass: prices[sym]?.riskClass ?? null }))
@@ -393,7 +394,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),

@@ -188,3 +188,23 @@ test("Signal-Leser: Nachrichtenlage und Bauzinsen", () => {
   assert.equal(m.kind, "chance");
   assert.ok(m.title.includes("3,10"));
 });
+
+import { parseForm4 } from "../collector/lib.mjs";
+test("Form 4: Käufer, Funktion und Kauf-Transaktion erkennen", () => {
+  const f = parseForm4(`<ownershipDocument><reportingOwner><rptOwnerName>Jane Doe</rptOwnerName><reportingOwnerRelationship><isDirector>true</isDirector><isOfficer>1</isOfficer><officerTitle>CEO</officerTitle></reportingOwnerRelationship></reportingOwner>
+    <nonDerivativeTransaction><transactionDate><value>2026-11-10</value></transactionDate><transactionCoding><transactionCode>P</transactionCode></transactionCoding><transactionAmounts><transactionShares><value>500</value></transactionShares><transactionPricePerShare><value>20.5</value></transactionPricePerShare><transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode></transactionAmounts></nonDerivativeTransaction>
+    <nonDerivativeTransaction><transactionCoding><transactionCode>S</transactionCode></transactionCoding><transactionAmounts><transactionShares><value>100</value></transactionShares></transactionAmounts></nonDerivativeTransaction></ownershipDocument>`);
+  assert.equal(f.owner.name, "Jane Doe");
+  assert.ok(f.owner.officer && f.owner.director);
+  assert.equal(f.txs.length, 2);
+  assert.equal(f.txs[0].code, "P");
+  assert.equal(f.txs[0].shares * f.txs[0].price, 10250);
+});
+
+import { parseFredCsv } from "../collector/insights.mjs";
+test("FRED-CSV: fehlende Werte (.) werden übersprungen", () => {
+  const p = parseFredCsv("observation_date,T10Y3M\n2026-11-01,0.5\n2026-11-02,.\n2026-11-03,-0.2\n");
+  assert.equal(p.length, 2);
+  assert.equal(p[1].value, -0.2);
+  assert.equal(parseFredCsv("<html>Fehler</html>"), null);
+});
