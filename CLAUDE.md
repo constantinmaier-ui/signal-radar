@@ -2,6 +2,9 @@
 
 ## Working with the owner (important)
 - **Always explain what you build, how and why** – to the owner in **German**, in plain words. The owner is a beginner in tech and finance.
+- **Coach the owner**: the owner wants to become an expert in Claude and AI. At the end of each answer give 1–2 concrete tips: how their last prompt could have been clearer, what to do better when building apps, and notable new Claude/AI features (check the web, don't rely on memory).
+- **Every owner request becomes a task**: add it to `docs/TASKS.md`, ordered by priority (value ÷ effort), and work through it in that order.
+- **Everything the user enters can be changed later** (profile, goal, portfolio, preferences). The app must work without optional inputs.
 - For every step say briefly: *what* changes, *why* it helps, *what* the owner has to do themselves (with click-by-click instructions; note when something only works in a desktop browser).
 - No jargon without explanation. Prefer an example over a technical term.
 

@@ -1,6 +1,6 @@
 // Vertrauen & Persönliches: Quellen/Beweislage je Bereich, Anpassen, eigene KI, Trend-Radar,
 // Was nachweislich Geld vermehrt (Kosten-Rechner), Finanz-Fitness-Check & Quiz.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark, compact, limitList, moreBtn } from "./ui.js";
 import { LEX } from "./extras.js";
 import { hypeInfo } from "./signals.js";
 
@@ -83,27 +83,37 @@ export function renderAskAi(signals) {
 }
 
 // ---------- Trend-Radar: Was gerade abhebt ----------
+let techKind = "all";
+export const setTechKind = (k) => { techKind = k; };
 export function renderTrends() {
   const d = state.data, rows = [];
   // Kursbewegungen relativ zur eigenen Schwankung: „wie ungewöhnlich ist das?“
   const norm = (x) => (ok(x.chg1m) && ok(x.vol) && x.vol > 0 ? x.chg1m / (x.vol / Math.sqrt(12)) : null);
-  for (const a of d.assets || []) if (!a.missing) rows.push({ name: a.name, kind: "Anlageklasse", chg: a.chg1m, z: norm(a), view: "maerkte" });
-  for (const c of d.commodities || []) if (!c.missing) rows.push({ name: c.name, kind: "Rohstoff", chg: c.chg1m, z: norm(c), view: "maerkte" });
-  for (const t of d.themes || []) if (t.price) rows.push({ name: t.name, kind: "Thema", chg: t.price.chg1m, z: norm({ chg1m: t.price.chg1m, vol: t.price.vol }), view: "chancen" });
-  const up = rows.filter((r) => ok(r.z) && r.z >= 1).sort((a, b) => b.z - a.z).slice(0, 6);
-  const down = rows.filter((r) => ok(r.z) && r.z <= -1).sort((a, b) => a.z - b.z).slice(0, 4);
-  const attn = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom, hype: hypeInfo(t) })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom }))]
-    .filter((x) => ok(x.mom) && x.mom > 0.25).sort((a, b) => b.mom - a.mom).slice(0, 5);
-  const row = (r) => `<li><a href="#${r.view}"><b>${esc(r.name)}</b><span class="fine">${esc(r.kind)}</span></a><span class="${r.chg >= 0 ? "up" : "down"}">${pct(r.chg, 0)}</span><span class="zbadge" title="So viele typische Monats-Schwankungen weit">${fmt(Math.abs(r.z), 1)}×</span></li>`;
+  for (const a of d.assets || []) if (!a.missing) rows.push({ name: a.name, kind: "Anlageklasse", chg: a.chg1m, z: norm(a), detail: `asset:${a.id}` });
+  for (const c of d.commodities || []) if (!c.missing) rows.push({ name: c.name, kind: "Rohstoff", chg: c.chg1m, z: norm(c), detail: `com:${c.id}` });
+  for (const t of d.themes || []) if (t.price) rows.push({ name: t.name, kind: "Thema", chg: t.price.chg1m, z: norm({ chg1m: t.price.chg1m, vol: t.price.vol }), theme: t.id });
+  const upAll = rows.filter((r) => ok(r.z) && r.z >= 1).sort((a, b) => b.z - a.z);
+  const downAll = rows.filter((r) => ok(r.z) && r.z <= -1).sort((a, b) => a.z - b.z);
+  const attnAll = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom, hype: hypeInfo(t), theme: t.id })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom }))]
+    .filter((x) => ok(x.mom) && x.mom > 0.25).sort((a, b) => b.mom - a.mom);
+  const attr = (r) => (r.theme ? `data-open="${esc(r.theme)}"` : r.detail ? `data-detail="${esc(r.detail)}"` : "");
+  const row = (r, i) => `<li><button type="button" class="rowbtn" ${attr(r)}><span class="rank">${i + 1}</span><b>${esc(r.name)}</b><span class="fine">${esc(r.kind)}</span></button><span class="${r.chg >= 0 ? "up" : "down"}">${pct(r.chg, 0)}</span><span class="zbadge" title="So viele typische Monats-Schwankungen weit">${fmt(Math.abs(r.z), 1)}×</span></li>`;
   const t = d.tech || {};
+  const tech = [
+    ...(techKind !== "repo" ? (t.models || []).map((m, i) => ({ ...m, key: `model:${i}`, kind: `KI-Modell · ${m.task || ""}`, metric: `${compact(m.downloads)} Downloads` })) : []),
+    ...(techKind !== "model" ? (t.repos || []).map((r, i) => ({ ...r, key: `repo:${i}`, kind: `GitHub-Projekt · ${r.lang || ""}`, metric: `${compact(r.stars)} ★ in 30 Tagen` })) : []),
+  ];
+  // Mix both lists by rank so neither dominates
+  if (techKind === "all") tech.sort((a, b) => +a.key.split(":")[1] - +b.key.split(":")[1]);
   $("#trendsBody").innerHTML = `
-    <div class="trend-col"><h3>🚀 Hebt ab (1 Monat)</h3><ul class="trend-list">${up.map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul></div>
-    <div class="trend-col"><h3>🪂 Stürzt ab (1 Monat)</h3><ul class="trend-list">${down.map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul></div>
-    <div class="trend-col"><h3>👀 Aufmerksamkeit explodiert</h3><ul class="trend-list">${attn.map((x) => `<li><b>${esc(x.name)}${x.hype ? ` <span class="hype" data-tip="${esc(`<b>Warum Hype?</b><br>${esc(x.hype)}`)}">⚡ Hype</span>` : ""}</b><span class="up">${pct(x.mom, 0)}</span><span class="fine">Aufrufe vs. Vormonat</span></li>`).join("") || '<li class="empty">Ruhig.</li>'}</ul></div>
-    <div class="trend-col wide"><h3>🧠 KI-Software, die gerade explodiert</h3>
-      <ul class="trend-list">${[...(t.models || []).slice(0, 4).map((m) => ({ ...m, kind: `KI-Modell · ${m.task || ""}`, metric: `${fmt(m.downloads)} Downloads` })), ...(t.repos || []).slice(0, 4).map((r) => ({ ...r, kind: `GitHub-Projekt · ${r.lang || ""}`, metric: `${fmt(r.stars)} ★ in 30 Tagen` }))]
-        .map((x) => `<li><a href="${safeUrl(x.url)}" target="_blank" rel="noopener"><b>${esc(x.name)}</b><span class="fine">${esc(x.kind)}</span></a><span class="fine">${esc(x.metric)}</span>${x.ticker ? `<span class="chip" title="Börsennotierte Firma dahinter">${esc(x.ticker)}</span>` : ""}</li>`).join("") || '<li class="empty">Gerade keine Daten.</li>'}</ul>
-      <p class="fine">Warum das spannend ist: Welche KI-Werkzeuge Entwickler gerade massenhaft nutzen, zeigt sich hier Wochen bevor es in Geschäftszahlen auftaucht. Ein Kürzel zeigt die börsennotierte Firma dahinter, wo es eine gibt.</p></div>`;
+    <div class="trend-col"><h3>🚀 Hebt ab (1 Monat)</h3><ul class="trend-list">${limitList("trend:up", upAll, 6).map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul>${moreBtn("trend:up", upAll.length, 6)}</div>
+    <div class="trend-col"><h3>🪂 Stürzt ab (1 Monat)</h3><ul class="trend-list">${limitList("trend:down", downAll, 4).map(row).join("") || '<li class="empty">Nichts Außergewöhnliches.</li>'}</ul>${moreBtn("trend:down", downAll.length, 4)}</div>
+    <div class="trend-col"><h3>👀 Aufmerksamkeit explodiert</h3><ul class="trend-list">${limitList("trend:attn", attnAll, 5).map((x, i) => `<li><button type="button" class="rowbtn" ${attr(x)}><span class="rank">${i + 1}</span><b>${esc(x.name)}${x.hype ? ` <span class="hype" data-tip="${esc(`<b>Warum Hype?</b><br>${esc(x.hype)}`)}">⚡ Hype</span>` : ""}</b></button><span class="up">${pct(x.mom, 0)}</span><span class="fine">Aufrufe vs. Vormonat</span></li>`).join("") || '<li class="empty">Ruhig.</li>'}</ul>${moreBtn("trend:attn", attnAll.length, 5)}</div>
+    <div class="trend-col wide"><div class="card-head"><h3>🧠 KI-Software, die gerade explodiert</h3>
+      <div class="seg" id="techSeg"><button type="button" data-tech="all" class="${techKind === "all" ? "on" : ""}">Alle</button><button type="button" data-tech="model" class="${techKind === "model" ? "on" : ""}">KI-Modelle</button><button type="button" data-tech="repo" class="${techKind === "repo" ? "on" : ""}">GitHub-Projekte</button></div></div>
+      <ul class="trend-list">${limitList("trend:tech", tech, 8).map((x) => `<li><button type="button" class="rowbtn" data-detail="${x.key}"><span class="rank">${+x.key.split(":")[1] + 1}</span><b>${esc(x.name)}</b><span class="fine">${esc(x.kind)}</span></button><span class="fine">${esc(x.metric)}</span>${x.ticker ? `<span class="chip" title="Börsennotierte Firma dahinter">${esc(x.ticker)}</span>` : ""}</li>`).join("") || '<li class="empty">Gerade keine Daten.</li>'}</ul>
+      ${moreBtn("trend:tech", tech.length, 8)}
+      <p class="fine">Rang = Platz in der jeweiligen Liste (GitHub: meiste neue Sterne der letzten 30 Tage; Hugging Face: aktuell im Trend). Antippen für Details, Quellen und Nachrichten. Welche KI-Werkzeuge Entwickler massenhaft nutzen, zeigt sich hier Wochen bevor es in Geschäftszahlen auftaucht.</p></div>`;
 }
 
 // ---------- Was nachweislich Geld vermehrt + Kosten-Rechner ----------

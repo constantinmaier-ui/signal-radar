@@ -20,14 +20,26 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] Goal/risk profile on the daily check (safety, balanced, growth, bold) drives verdict, suggestions and plan; lump-sum advice follows research (Vanguard) instead of always staggering
 - [x] "Ideas that fit your goal" (themes, insiders, gems, crypto share for bold) with reasons
 - [x] Explicit "⚡ Hype" badge with reason on themes, signals and trend radar
-- [ ] 👤 Enable GitHub Pages: Settings → Pages → Source "GitHub Actions" (desktop browser)
-- [ ] Merge PR #1 (owner's approval needed)
-- [ ] After the first real run: check sources, fix failures
+- [x] 👤 Enable GitHub Pages; PR #1 merged; first real run: 95/116 sources ok
+- [ ] Merge PR #2 (rest of 2.0 + 2.1 start; owner's approval needed)
+- [ ] Fix the 21 failing sources (👤 screenshot of Wissen → Methodik → Quellen, or I read data.json once the network allows it)
 - [ ] Tag version 2.0 as `v2.0`
 - [ ] Translate code comments in older files to English
 - [ ] 👤 Optional: secret `ANTHROPIC_API_KEY` for Claude briefing & translations
 
-## Next (version 2.1) – prioritised by value ÷ effort
+## Now (version 2.1) – owner requests of 2026-11-19, in priority order
+- [x] **App-wide search** (key `/` or Ctrl+K): sections, glossary, themes, prices, signals, rent indices, investors, insiders, AI software, studies, news
+- [x] **"Show all" + ranks** instead of fixed cut-offs (trend radar, AI software with filter, studies, insiders, consensus, voices, prediction markets)
+- [x] **Detail view for every trend item**: key points in plain language, chart, sources, further reading (assets, commodities, AI models/projects, studies)
+- [x] **Peer-reviewed research, always current**: OpenAlex (12 top journals): most cited of 24 months + newest; DOI link, citations, field-weighted impact, free version; refreshed every 6 h
+- [ ] **Germany focus + world**: DAX 40 movers, MDAX/SDAX/TecDAX, Euro Stoxx 50, Nikkei, emerging markets; tagesschau API; Bundesbank & Destatis data
+- [ ] **Investor profile survey at the start** (always editable): risk tolerance (Grable & Lytton 1999), risk capacity, horizon, loss aversion, experience (as MiFID II suitability asks) → sets goal profile
+- [ ] **Optional current portfolio** (local + encrypted, app works without it): ISIN lookup via OpenFIGI, import from Portfolio Performance/Ghostfolio CSV; concentration, costs, fit to goal
+- [ ] **Learning units "How the greats got there"** (Buffett, Munger, Bogle, Lynch, Templeton, Graham, Simons, Dalio): short, gamified (streaks, badges, quiz), with sources; what is luck vs. method
+- [ ] **More little-known free APIs**: DBnomics (80+ statistics offices in one API), Metaculus (forecasts), bund.dev (German government APIs), OpenFIGI, GLEIF, OECD/IMF SDMX
+- [ ] 👤 Optional: free OpenAlex key as secret `OPENALEX_API_KEY` (more daily budget)
+
+## Next (version 2.2) – prioritised by value ÷ effort
 | # | Task | Value | Effort | Note |
 |---|---|---|---|---|
 | 1 | **AI bubble monitor** with action plan (equal-weight ETF, "picks & shovels", rebalancing) | very high | medium | Nvidia overextension, top-10 concentration, AI attention, valuations |
@@ -56,4 +68,5 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - **X/Twitter**: paid API, scraping prohibited → Bluesky, Reddit, Hacker News instead.
 - **AI price predictions**: short-term price forecasts are not scientifically reliable → probabilities, patterns and risks instead.
 - **Rents/prices per address from listing portals**: no free API, scraping prohibited → OpenStreetMap location check + official data (3.0).
+- **Reuters as a source**: no free API (Reuters/LSEG data is paid, public RSS feeds were discontinued in 2020) → Reuters headlines arrive via Google News; tagesschau, Handelsblatt, FAZ, CNBC cover the same events.
 - **DuckDB**: useful once years of history are stored (3.0/4.0); JSON is enough for now.

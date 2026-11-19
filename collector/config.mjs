@@ -330,6 +330,22 @@ export const RESEARCH_FEEDS = [
   { name: "arXiv Finanzwissenschaft", url: "https://rss.arxiv.org/rss/q-fin" },
 ];
 
+// Peer-reviewed top journals (queried via OpenAlex: citations, DOI, open-access copy)
+export const TOP_JOURNALS = [
+  { name: "Journal of Finance", issn: "0022-1082" },
+  { name: "Journal of Financial Economics", issn: "0304-405X" },
+  { name: "Review of Financial Studies", issn: "0893-9454" },
+  { name: "Journal of Financial and Quantitative Analysis", issn: "0022-1090" },
+  { name: "Review of Finance", issn: "1572-3097" },
+  { name: "American Economic Review", issn: "0002-8282" },
+  { name: "Quarterly Journal of Economics", issn: "0033-5533" },
+  { name: "Econometrica", issn: "0012-9682" },
+  { name: "Journal of Political Economy", issn: "0022-3808" },
+  { name: "Review of Economic Studies", issn: "0034-6527" },
+  { name: "Management Science", issn: "0025-1909" },
+  { name: "Journal of Monetary Economics", issn: "0304-3932" },
+];
+
 // KI-Organisationen auf Hugging Face/GitHub → börsennotierte Mutter (nur wo eindeutig)
 export const AI_ORGS = {
   "meta-llama": "META", "facebook": "META", "google": "GOOGL", "google-deepmind": "GOOGL", "microsoft": "MSFT", "nvidia": "NVDA",

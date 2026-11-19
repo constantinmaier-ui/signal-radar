@@ -10,9 +10,9 @@
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS } from "./config.mjs";
+import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS, TOP_JOURNALS } from "./config.mjs";
 import { buildSignals } from "../site/signals.js";
-import { computeEvents, fetchResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower } from "./insights.mjs";
+import { computeEvents, fetchResearch, fetchJournalResearch, fetchRealEstate, fetchMacro, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
@@ -282,7 +282,7 @@ async function claudeBriefing(data, prevData) {
 }
 
 // Englische Analysten-Schlagzeilen ins Deutsche (optional, nur mit API-Schlüssel; bereits übersetzte werden wiederverwendet)
-async function claudeTranslate(items, prevItems = []) {
+async function claudeTranslate(items, prevItems = [], label = "Analysten-Stimmen") {
   const cache = new Map((prevItems || []).filter((v) => v.de).map((v) => [v.title, v.de]));
   for (const v of items) if (cache.has(v.title)) v.de = cache.get(v.title);
   const todo = items.map((v, i) => ({ v, i })).filter(({ v }) => v.lang === "en" && !v.de).slice(0, 16);
@@ -305,9 +305,9 @@ async function claudeTranslate(items, prevItems = []) {
     if (res.stop_reason === "refusal") throw new Error("abgelehnt");
     const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
     for (const { i, de } of JSON.parse(text).items || []) if (items[i] && typeof de === "string" && de.length < 400) items[i].de = de;
-    status.push({ source: "Claude-Übersetzung Analysten-Stimmen", ok: true });
+    status.push({ source: `Claude-Übersetzung ${label}`, ok: true });
   } catch (e) {
-    status.push({ source: "Claude-Übersetzung Analysten-Stimmen", ok: false, error: String(e.message || e).slice(0, 80) });
+    status.push({ source: `Claude-Übersetzung ${label}`, ok: false, error: String(e.message || e).slice(0, 80) });
   }
 }
 
@@ -323,6 +323,7 @@ async function main() {
   const [superinvestors, consensus, voices, cnnFearGreed, ecbRate, assets] = await Promise.all([
     fetchSuperinvestors(ctx), fetchConsensus(ctx, UNIVERSE), fetchAnalystVoices(ctx, NOW), fetchCnnFearGreed(ctx), fetchEcbRate(ctx), fetchAssets(ctx),
   ]);
+  const papers = await fetchJournalResearch({ get }, TOP_JOURNALS, previous.prevData?.papers, NOW);
   const insiders = await fetchInsiders(ctx, UNIVERSE.filter((t) => !t.includes(".") && !t.endsWith("-USD")), previous.prevData, NOW);
   const universePrices = Object.fromEntries(UNIVERSE.filter((t) => prices[t]).map((t) => [t, prices[t]]));
   const gems = findGems({ universePrices, consensus, benchmark3m: prices["^GSPC"]?.chg3m });
@@ -402,7 +403,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, research, papers, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),
@@ -413,7 +414,8 @@ async function main() {
   };
   data.aiBriefing = await claudeBriefing(data, previous.prevData);
   await claudeTranslate(data.voices.items, previous.prevData?.voices?.items);
-  await claudeTranslate(data.research, previous.prevData?.research);
+  await claudeTranslate(data.research, previous.prevData?.research, "Studien");
+  if (data.papers) { await claudeTranslate(data.papers.top, previous.prevData?.papers?.top, "Top-Journals"); await claudeTranslate(data.papers.recent, previous.prevData?.papers?.recent, "neue Journal-Studien"); }
   data.sources = status.sort((a, b) => Number(a.ok) - Number(b.ok));
 
   // Historie: ein Eintrag pro Tag (der neueste Lauf des Tages gewinnt), 365 Tage

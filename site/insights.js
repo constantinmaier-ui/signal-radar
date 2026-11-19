@@ -1,5 +1,5 @@
 // Nachrichten-Wirkung, Forschung, Immobilien (+ Rechner), Quellen-Übersicht, Einsteiger/Profi-Modus.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn } from "./ui.js";
 
 const DIR = { up: ["↑", "up", "steigt eher"], down: ["↓", "down", "fällt eher"], mixed: ["↕", "flat", "gemischt"], flat: ["–", "flat", "kaum Wirkung"] };
 const CLASSES = [["aktien", "Aktien"], ["anleihen", "Anleihen"], ["gold", "Gold"], ["immobilien", "Immobilien"], ["krypto", "Krypto"]];
@@ -42,9 +42,16 @@ const PRINCIPLES = [
 ];
 export function renderResearch() {
   $("#principles").innerHTML = PRINCIPLES.map(([t, what, src, use], i) => `<article class="principle"><div class="pnum">${i + 1}</div><div><h3>${esc(t)}</h3><p>${esc(what)}</p><p class="fine">Quelle: ${esc(src)}</p><p class="use">So nutzt es das Radar: ${esc(use)}</p></div></article>`).join("");
-  const r = state.data?.research || [];
-  $("#papers").innerHTML = r.length ? r.slice(0, 8).map((p) => `<a class="paper" href="${safeUrl(p.url)}" target="_blank" rel="noopener"><b>${esc(p.de || p.title)}</b>${p.de ? `<span class="fine">Original: ${esc(p.title)}</span>` : ""}<span class="fine">${esc(p.source)} · ${ago(p.published)}</span></a>`).join("")
-    : '<div class="empty">Gerade keine neuen Studien abrufbar.</div>';
+  const d = state.data || {}, P = d.papers || {};
+  const paper = (p, key, i) => `<button type="button" class="paper" data-detail="${key}"><span class="rank">${i + 1}</span><span><b>${esc(p.de || p.title)}</b>${p.de ? `<span class="fine">Original: ${esc(p.title)}</span>` : ""}
+    <span class="fine">${esc(typeof p.journal === "string" ? p.journal : p.source || "")} · ${p.date ? esc(p.date) : ago(p.published)}${ok(p.cites) ? ` · <b>${fmt(p.cites)}× zitiert</b>` : ""}${p.oa ? " · kostenlos lesbar" : ""}</span></span></button>`;
+  const list = (arr, key, n, empty) => arr?.length ? `<div class="paper-list">${limitList(key, arr, n).map((p, i) => paper(p, `${key}:${i}`, i)).join("")}</div>${moreBtn(key, arr.length, n, "Studien")}` : `<div class="empty">${empty}</div>`;
+  const wp = (d.research || []).map((p, i) => ({ ...p, i })).filter((p) => !(p.journal && P.recent?.length)); // journal RSS items are already in the peer-reviewed lists
+  $("#papers").innerHTML = `
+    <div class="paper-col"><h3>🏆 Meistzitiert aus Top-Journals (24 Monate)</h3><p class="fine">Begutachtet, sortiert danach, wie oft andere Forscher darauf aufbauen.</p>${list(P.top, "paper:top", 6, "Gerade nicht abrufbar.")}</div>
+    <div class="paper-col"><h3>🆕 Neu in Top-Journals</h3><p class="fine">Frisch erschienen, ebenfalls begutachtet.</p>${list(P.recent, "paper:recent", 6, "Gerade nicht abrufbar.")}</div>
+    <div class="paper-col"><h3>⚡ Ganz frische Arbeitspapiere</h3><p class="fine">NBER, EZB, BIZ, US-Notenbank, arXiv: am schnellsten, aber noch ungeprüft.</p>${wp.length ? `<div class="paper-list">${limitList("study", wp, 6).map((p, i) => paper(p, `study:${p.i}`, i)).join("")}</div>${moreBtn("study", wp.length, 6, "Studien")}` : '<div class="empty">Gerade keine neuen Studien abrufbar.</div>'}</div>
+    <p class="fine">Quelle der Journal-Listen: OpenAlex (offener Katalog mit rund 250 Mio. wissenschaftlichen Arbeiten). Top-Journals: Journal of Finance, Journal of Financial Economics, Review of Financial Studies, JFQA, Review of Finance, AER, QJE, Econometrica, JPE, Review of Economic Studies, Management Science, Journal of Monetary Economics.</p>`;
 }
 
 // ---------- Quellen-Übersicht ----------
@@ -63,7 +70,7 @@ const SOURCES = [
   ["Rohstoffe", "Terminbörsen (über Yahoo Finance)", "18 Rohstoffe: Preis, Trend, Lage in der Jahresspanne"],
   ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen"],
   ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs minütlich"],
-  ["Forschung", "Journal of Finance, Journal of Financial Economics, NBER, EZB, BIZ, US-Notenbank, arXiv", "Neueste begutachtete Studien und Arbeitspapiere"],
+  ["Forschung", "OpenAlex (12 Top-Journals: JF, JFE, RFS, AER, QJE, Econometrica u. a.), NBER, EZB, BIZ, US-Notenbank, arXiv", "Begutachtete Studien mit Zitierzahl und DOI, dazu frische Arbeitspapiere"],
   ["KI-Trends", "GitHub, Hugging Face, PyPI, npm", "Was Entwickler gerade nutzen und einbauen"],
   ["Krypto-Geldfluss", "DefiLlama", "Stablecoins, Kapital in DeFi-Anwendungen"],
   ["Strompreis", "Energy-Charts (Fraunhofer ISE)", "Börsenstrompreis Deutschland"],
@@ -153,10 +160,10 @@ export function renderInstruments() {
 export function renderInsiders() {
   const ins = state.data.insiders?.buys || [];
   const usd = (x) => (x >= 1e6 ? fmt(x / 1e6, 1) + " Mio. $" : fmt(x / 1e3) + " Tsd. $");
-  $("#insiders").innerHTML = ins.length ? ins.slice(0, 8).map((b) => `<article class="ins ${b.cluster ? "cluster" : ""}">
+  $("#insiders").innerHTML = ins.length ? limitList("ins", ins, 8).map((b) => `<article class="ins ${b.cluster ? "cluster" : ""}">
       <header><b>${esc(b.sym)}</b><span>${esc(b.name)}</span>${b.cluster ? '<span class="chip">mehrere Insider</span>' : ""}</header>
       <div class="ins-sum">${usd(b.total)} gekauft · zuletzt ${esc(b.last || "")}</div>
-      <div class="fine">${b.buyers.slice(0, 3).map((x) => `${esc(x.who)} (${esc(x.role)})`).join(", ")}</div></article>`).join("")
+      <div class="fine">${b.buyers.slice(0, 3).map((x) => `${esc(x.who)} (${esc(x.role)})`).join(", ")}</div></article>`).join("") + moreBtn("ins", ins.length, 8, "Insider-Käufe")
     : '<div class="empty">In den letzten 30 Tagen keine Insider-Käufe in den beobachteten Aktien. Insider kaufen selten. Wenn sie es tun, ist es umso bemerkenswerter.</div>';
 }
 
