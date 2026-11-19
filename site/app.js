@@ -5,7 +5,7 @@ import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
-import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderCommodities, commodityShareText } from "./insights.js";
+import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
@@ -302,7 +302,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------

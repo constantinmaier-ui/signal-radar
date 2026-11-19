@@ -201,16 +201,48 @@ export function renderPlan() {
     <div class="crash">💥 <b>Crash-Test wie 2008:</b> Aktien −45 %, Bitcoin −75 %, Themen −65 %, Gold und Anleihen leicht im Plus. Dein Einmalbetrag läge zeitweise bei <b>${eur(inp.once + crashLoss)}</b> (${pct(plan.crash, 0)}). ${plan.crash < -0.3 ? "Kannst du das aushalten, ohne zu verkaufen? Wenn nicht: einen Typ vorsichtiger wählen." : "Das ist gut aushaltbar."}</div>
     <h3>Deine Anti-Hype-Regeln</h3>
     <ol class="rules">${rules.map((r) => `<li>${r}</li>`).join("")}</ol>
-    <div class="brief-actions"><button class="btn btn-wa btn-wide" type="button" id="sharePlan">Plan in WhatsApp teilen (ohne Beträge)</button></div>
+    <div class="share-plan">
+      <h3>Plan teilen</h3>
+      <p class="fine">Zum Beispiel mit deinem Partner oder deiner Partnerin, um gemeinsam zu entscheiden, oder mit jemandem, der dich berät. Der Link öffnet genau diesen Plan mit Grafik, und die andere Person kann ihn selbst anpassen. Es wird nichts gespeichert oder hochgeladen: Alles steckt im Link selbst.</p>
+      <label class="chk"><input type="checkbox" id="shareAmounts"> Beträge mitschicken (sonst nur Aufteilung und Anlagedauer)</label>
+      <div class="brief-actions"><button class="btn btn-primary" type="button" id="sharePlan">Plan teilen</button><button class="btn btn-ghost" type="button" id="copyPlan">Link kopieren</button></div>
+    </div>
     <details class="fine"><summary>Annahmen &amp; Grenzen</summary>
       <p>Langfristige Renditeannahmen pro Jahr (vor Steuern und Kosten): Welt-Aktien 7 %, Schwellenländer 7,5 %, Anleihen 3 %, Gold 4 %, Bitcoin 8 % (bewusst vorsichtig, Schwankung 65 %), Themen 7 % (Schwankung 35 %), Tagesgeld = aktueller EZB-Einlagenzins. Die Zusammenhänge zwischen den Bausteinen sind vereinfacht. Echte Märkte können schlechter laufen als das schlechteste Szenario. Das ist ein Lern- und Orientierungswerkzeug, keine Anlageberatung.</p>
     </details>`;
   fanChart($("#fan"), sim);
-  $("#sharePlan").addEventListener("click", () => {
+  const planLink = () => {
+    const withAmounts = $("#shareAmounts").checked;
+    const q = new URLSearchParams({ p: inp.profile || "auto", y: inp.years, r: inp.reserve || "" });
+    if (withAmounts) { q.set("o", inp.once); q.set("m", inp.monthly); }
+    return `${location.href.split("#")[0]}#plan=${q.toString()}`;
+  };
+  const planText = () => {
     const parts = BUCKETS.filter((b) => plan.weights[b.id] > 0).map((b) => `• ${b.label}: ${plan.weights[b.id]} %`).join("\n");
-    const url = location.href.split("#")[0];
-    window.open(`https://wa.me/?text=${encodeURIComponent(`📊 *Mein Anlage-Plan (${plan.label})* mit dem Signal-Radar\n\n${parts}\n\nRisiko ${rc}/7 · erwartet ≈ ${fmt(plan.mu * 100, 1)} % p. a.\n\n👉 Mach deinen eigenen Plan (ohne Login): ${url}#plan\n_Keine Anlageberatung._`)}`, "_blank", "noopener");
+    const amounts = $("#shareAmounts").checked ? `\n${eur(inp.once)} einmalig, ${eur(inp.monthly)} pro Monat, ${inp.years} Jahre` : `\nAnlagedauer ${inp.years} Jahre`;
+    return `📊 Mein Anlage-Plan (${plan.label})${amounts}\n\n${parts}\n\nRisikoklasse ${rc} von 7 · erwartet ≈ ${fmt(plan.mu * 100, 1)} % pro Jahr\nKeine Anlageberatung.`;
+  };
+  $("#sharePlan").addEventListener("click", async () => {
+    const url = planLink(), text = planText();
+    if (navigator.share) { try { await navigator.share({ title: "Mein Anlage-Plan", text, url }); return; } catch (e) { if (e?.name === "AbortError") return; } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n\n👉 Plan ansehen und anpassen: ${url}`)}`, "_blank", "noopener");
   });
+  $("#copyPlan").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(`${planText()}\n\n${planLink()}`); toast("Link kopiert"); } catch { toast("Kopieren nicht möglich"); }
+  });
+}
+
+/** Applies a plan shared via link (#plan=p=…&y=…&o=…&m=…). Returns true if one was applied. */
+export function applySharedPlan(form, hash = location.hash) {
+  if (!hash.startsWith("#plan=")) return false;
+  const q = new URLSearchParams(hash.slice(6));
+  const num = (k, lo, hi) => { const v = Number(q.get(k)); return Number.isFinite(v) && v >= lo && v <= hi ? v : null; };
+  const p = q.get("p"); if (p && form.profile.querySelector(`option[value="${CSS.escape(p)}"]`)) form.profile.value = p;
+  const y = num("y", 1, 60); if (y !== null) form.years.value = y;
+  const o = num("o", 0, 1e9); if (o !== null) form.once.value = o;
+  const m = num("m", 0, 1e7); if (m !== null) form.monthly.value = m;
+  const r = q.get("r"); const el = r && form.querySelector(`input[name="reserve"][value="${CSS.escape(r)}"]`); if (el) el.checked = true;
+  return true;
 }
 
 export function initPlan() {
@@ -221,6 +253,7 @@ export function initPlan() {
     const setR = (n, v) => { const el = form.querySelector(`input[name="${n}"][value="${v}"]`); if (el) el.checked = true; };
     setR("reserve", saved.reserve); saved.q?.forEach((v, i) => setR("q" + (i + 1), v));
   }
+  if (applySharedPlan(form)) { setTimeout(() => toast("Geteilter Plan geöffnet. Du kannst alles anpassen."), 600); }
   let t;
   form.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { try { renderPlan(); } catch (e) { console.error(e); } }, 120); });
   form.addEventListener("submit", (e) => { e.preventDefault(); renderPlan(); toast("Plan aktualisiert"); });

@@ -17,6 +17,7 @@ const META = {
   anlagen: [0, "Yahoo Finance, Stooq, EZB", "Fakten und Kennzahlen, keine Prognose."],
   rohstoffe: [0, "Terminbörsen über Yahoo Finance; Prognosen: Weltbank, IWF, EIA, USDA", "Fakten. Rohstoffpreise sind kurzfristig kaum vorhersagbar."],
   immobilien: [0, "EZB, Eurostat, amtliche Mietspiegel", "Fakten und Faustregeln, keine Bewertung im Einzelfall."],
+  offiziell: [2, "EU-Kommission (Eurostat), Universität Michigan (FRED), US-Notenbank", "Amtliche Umfragen mit jahrzehntelanger Historie. Gut belegt für die Konjunktur. Für Aktienrenditen sind die Effekte klein und zeigen sich vor allem bei Extremen (Lemmon & Portniaguina 2006). Das Anleihe-Stressmaß sagt Konjunktur und Rezessionen gut voraus (Gilchrist & Zakrajšek 2012)."],
   stimmung: [1, "CNN Fear & Greed, alternative.me, Analysten-Ton, FRED, VIX, Polymarket", "Stimmung hilft am ehesten bei Extremen und vor allem bei spekulativen Aktien. Der Effekt ist in Studien eher klein (Baker & Wurgler 2006)."],
   trends: [2, "Kurse, Wikipedia-Aufrufe, GitHub, Hugging Face, PyPI, npm, DefiLlama, Energy-Charts", "Kurs-Trends über 3–12 Monate sind gut belegt (Momentum). Kurzfristige Ausschläge drehen oft wieder."],
   karte: [2, "Wikipedia-Aufrufe, Nachrichten, Hacker News, Themen-ETFs", "Momentum ist stark belegt. Viel Aufmerksamkeit geht eher schwächeren Renditen voraus (Barber & Odean 2008)."],

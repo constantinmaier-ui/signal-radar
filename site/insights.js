@@ -243,6 +243,28 @@ export function renderMood() {
     <ul class="mood-parts pro-only">${m.parts.map(([n, v]) => `<li><span>${esc(n)}</span><b>${v}</b></li>`).join("")}</ul>`;
 }
 
+// ---------- Official sentiment measures (surveys + credit-market stress) ----------
+export function renderOfficialMood() {
+  const S = state.data.sentiment; const el = $("#officialMood"); if (!el) return;
+  if (!S) { el.innerHTML = '<div class="empty">Offizielle Stimmungsdaten gerade nicht abrufbar.</div>'; return; }
+  const f1 = (x) => (ok(x) ? fmt(x, 1) : "–");
+  const delta = (a, b) => (ok(a) && ok(b) ? `<span class="${a >= b ? "up" : "down"}">${a >= b ? "▲" : "▼"} vor 1 Jahr ${f1(b)}</span>` : "");
+  const tile = (title, val, verdict, cls, expl, src, sp) => `<div class="om ${cls}"><span class="om-t">${title}</span><b>${val}</b><span class="om-v">${verdict}</span>${sp ? spark(sp, { w: 120, h: 24, color: "var(--s1)", label: title }) : ""}<p>${expl}</p><p class="fine">${src}</p></div>`;
+  const esiWord = (v) => (!ok(v) ? "" : v >= 105 ? "deutlich besser als üblich" : v >= 100 ? "etwas besser als üblich" : v >= 95 ? "etwas schlechter als üblich" : "deutlich schlechter als üblich");
+  const t = [];
+  if (S.esiDE) t.push(tile("Wirtschaftsstimmung Deutschland", f1(S.esiDE.value), `${esiWord(S.esiDE.value)} ${delta(S.esiDE.value, S.esiDE.ago1y)}`, S.esiDE.value >= 100 ? "good" : "warn",
+    "Monatliche Umfrage der EU-Kommission bei Firmen und Verbrauchern. 100 = langjähriger Durchschnitt, 90 oder 110 = ungewöhnlich schlecht oder gut.", `EU-Kommission über Eurostat · Stand ${esc(S.esiDE.period)}`, S.esiDE.series));
+  if (S.esiEA) t.push(tile("Wirtschaftsstimmung Euroraum", f1(S.esiEA.value), `${esiWord(S.esiEA.value)} ${delta(S.esiEA.value, S.esiEA.ago1y)}`, S.esiEA.value >= 100 ? "good" : "warn",
+    "Dieselbe Umfrage für alle Euro-Länder.", `EU-Kommission über Eurostat · Stand ${esc(S.esiEA.period)}`, S.esiEA.series));
+  if (S.consDE) t.push(tile("Verbrauchervertrauen Deutschland", f1(S.consDE.value), delta(S.consDE.value, S.consDE.ago1y), S.consDE.value >= (S.consDE.ago1y ?? S.consDE.value) ? "good" : "warn",
+    "Saldo aus optimistischen minus pessimistischen Antworten der Haushalte. Unter null heißt: mehr Pessimisten. Wichtig ist die Richtung.", `EU-Kommission über Eurostat · Stand ${esc(S.consDE.period)}`, S.consDE.series));
+  if (S.umich) t.push(tile("US-Verbraucherstimmung", f1(S.umich.value), `niedriger als in ${100 - S.umich.pct} % aller Monate seit ${esc(S.umich.since)}`, S.umich.pct < 25 ? "warn" : "good",
+    "Der älteste Stimmungsindex der Welt. Forschung: Sehr niedrige Verbraucherstimmung ging kleinen Aktien vor besseren Renditen voraus, sehr hohe vor schwächeren (Lemmon &amp; Portniaguina, Review of Financial Studies 2006).", `Universität Michigan über FRED · Stand ${esc(S.umich.date)}`, S.umich.series));
+  if (S.ebp) t.push(tile("Stress am Anleihemarkt (Excess Bond Premium)", `${S.ebp.value > 0 ? "+" : ""}${fmt(S.ebp.value, 2)}`, S.ebp.value > 0.5 ? "deutlich erhöht: Anleger meiden Risiko" : S.ebp.value > 0 ? "leicht erhöht" : "entspannt", S.ebp.value > 0.5 ? "bad" : S.ebp.value > 0 ? "warn" : "good",
+    `Der Teil der Risikoaufschläge von Firmenanleihen, der nicht durch Ausfallrisiko erklärt ist, also reine Risikoscheu. Steigt er, folgten oft schwächere Konjunktur und Börse (Gilchrist &amp; Zakrajšek, American Economic Review 2012).${ok(S.ebp.prob) ? ` Rezessions-Wahrscheinlichkeit der nächsten 12 Monate laut diesem Modell: <b>${fmt(S.ebp.prob * 100)} %</b>.` : ""}`, `US-Notenbank (Federal Reserve) · Stand ${esc(S.ebp.date)}`, S.ebp.series));
+  el.innerHTML = t.join("");
+}
+
 // ---------- Rohstoff-Monitor ----------
 const posWord = (p) => (!ok(p) ? "" : p < 0.2 ? "nahe Jahrestief" : p > 0.8 ? "nahe Jahreshoch" : p < 0.4 ? "eher unten" : p > 0.6 ? "eher oben" : "Mitte");
 export function renderCommodities() {

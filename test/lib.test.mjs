@@ -320,3 +320,10 @@ test("Show more: list limited until expanded", async () => {
   toggleMore("t"); assert.equal(limitList("t", l, 2).length, 5); assert.match(moreBtn("t", 5, 2), /Weniger/);
   assert.equal(moreBtn("u", 2, 5), "");
 });
+
+test("Excess bond premium CSV: columns found by name, bad rows skipped", async () => {
+  const { parseEbpCsv } = await import("../collector/insights.mjs");
+  const p = parseEbpCsv("date,gz_spread,ebp,est_prob\n2026-08-01,1.9,-0.12,0.10\n2026-09-01,2.0,NA,0.11\n2026-10-01,2.4,0.31,0.22\n");
+  assert.equal(p.length, 2); assert.equal(p[1].ebp, 0.31); assert.equal(p[1].prob, 0.22);
+  assert.equal(parseEbpCsv("x,y\n1,2"), null);
+});

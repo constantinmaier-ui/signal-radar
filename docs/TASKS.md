@@ -32,6 +32,10 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **"Show all" + ranks** instead of fixed cut-offs (trend radar, AI software with filter, studies, insiders, consensus, voices, prediction markets)
 - [x] **Detail view for every trend item**: key points in plain language, chart, sources, further reading (assets, commodities, AI models/projects, studies)
 - [x] **Peer-reviewed research, always current**: OpenAlex (12 top journals): most cited of 24 months + newest; DOI link, citations, field-weighted impact, free version; refreshed every 6 h
+- [x] **Official sentiment measures**: EU Economic Sentiment Indicator (DE, euro area), EU consumer confidence DE, University of Michigan consumer sentiment (percentile since start), Gilchrist–Zakrajšek excess bond premium + recession probability (Fed)
+- [x] **Plan sharing that makes sense**: link opens the same plan (adjustable), amounts optional, system share sheet / copy; nothing uploaded
+- [~] **KPI audit**: every KPI explained (what, formula, data, paper, evidence, limits); replace self-made scores with published measures where they exist (independent expert review running)
+- [ ] **Investors & insiders by interest area**: pick areas → matching superinvestors (by style/sector), insider purchases filtered to those sectors; more investors; Germany: BaFin directors' dealings, short positions (Bundesanzeiger)
 - [ ] **Germany focus + world**: DAX 40 movers, MDAX/SDAX/TecDAX, Euro Stoxx 50, Nikkei, emerging markets; tagesschau API; Bundesbank & Destatis data
 - [ ] **Investor profile survey at the start** (always editable): risk tolerance (Grable & Lytton 1999), risk capacity, horizon, loss aversion, experience (as MiFID II suitability asks) → sets goal profile
 - [ ] **Optional current portfolio** (local + encrypted, app works without it): ISIN lookup via OpenFIGI, import from Portfolio Performance/Ghostfolio CSV; concentration, costs, fit to goal
