@@ -15,7 +15,7 @@ export function renderCheck() {
   const d = state.data, r = d.risk || {};
   const plan = store.get("plan", {});
   const goal = store.get("goal", plan.profile && GOALS[plan.profile] ? plan.profile : "ausgewogen");
-  const years = plan.years || 15;
+  const years = Math.min(60, Math.max(1, Math.round(Number(plan.years)) || 15));
   const v = dailyVerdict(d, goal, years), ideas = ideasFor(d, goal);
   const lv = v.level === "grün" ? "g" : v.level === "rot" ? "r" : "y";
   const word = { g: "Grün", y: "Gelb", r: "Rot" }[lv];

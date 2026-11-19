@@ -259,7 +259,7 @@ export function initPlan() {
   const saved = store.get("plan", null);
   if (saved) {
     form.once.value = saved.once; form.monthly.value = saved.monthly; form.years.value = saved.years; form.profile.value = saved.profile || "auto";
-    const setR = (n, v) => { const el = form.querySelector(`input[name="${n}"][value="${v}"]`); if (el) el.checked = true; };
+    const setR = (n, v) => { if (v == null) return; const el = form.querySelector(`input[name="${CSS.escape(n)}"][value="${CSS.escape(String(v))}"]`); if (el) el.checked = true; };
     setR("reserve", saved.reserve); saved.q?.forEach((v, i) => setR("q" + (i + 1), v));
   }
   if (applySharedPlan(form)) { setTimeout(() => toast("Geteilter Plan geöffnet. Du kannst alles anpassen."), 600); }

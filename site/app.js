@@ -115,7 +115,7 @@ function renderGauge() {
   $("#components").innerHTML = b.components.map((c) => {
     const s = ok(c.score) ? c.score : null;
     const col = s === null ? "var(--axis)" : s >= 80 ? "var(--div-warm)" : s >= 60 ? "var(--serious)" : s >= 40 ? "var(--muted)" : "var(--div-cool)";
-    return `<li title="${esc(c.hint)}" data-tip="${esc(`<b>${c.label}</b><br>${c.hint}`)}"><span class="lbl">${esc(c.label)}</span><span class="bar"><i style="width:${s ?? 0}%;background:${col}"></i></span><span class="val">${s === null ? "–" : fmt(s)}</span></li>`;
+    return `<li title="${esc(c.hint)}" data-tip="${esc(`<b>${esc(c.label)}</b><br>${esc(c.hint)}`)}"><span class="lbl">${esc(c.label)}</span><span class="bar"><i style="width:${s ?? 0}%;background:${col}"></i></span><span class="val">${s === null ? "–" : fmt(s)}</span></li>`;
   }).join("");
 }
 
@@ -130,7 +130,7 @@ function renderMarket() {
     const live = m.sym === "BTC-USD" && state.liveBtc;
     const last = live ? state.liveBtc.usd : m.last, chg = live ? state.liveBtc.chg / 100 : m.chg1d;
     const col = m.sym === "^VIX" ? "var(--muted)" : chg >= 0 ? "var(--good)" : "var(--crit)";
-    return `<div class="tile" data-tip="${esc(`<b>${m.name}</b><br>1 Woche ${pct(m.chg1w)} · 1 Monat ${pct(m.chg1m)}<br>3 Monate ${pct(m.chg3m)} · 1 Jahr ${pct(m.chg1y)}`)}">
+    return `<div class="tile" data-tip="${esc(`<b>${esc(m.name)}</b><br>1 Woche ${pct(m.chg1w)} · 1 Monat ${pct(m.chg1m)}<br>3 Monate ${pct(m.chg3m)} · 1 Jahr ${pct(m.chg1y)}`)}">
       <div class="nm"><span>${esc(m.name)}</span>${live ? '<span class="livebadge">LIVE</span>' : ""}</div>
       <div class="px">${priceFmt(m, last)}</div>
       <div class="ch ${m.sym === "^VIX" ? "flat" : dirCls(chg)}">${arrow(chg)}${pct(chg, 2)} heute</div>
@@ -171,7 +171,7 @@ function renderScatter() {
   }).join("");
   const dots = themes.map((t) => {
     const x = sx(t.scores.hype), y = sy(t.scores.momentum), watched = state.watch.has(t.id), hot = t.scores.quadrant === "overheated";
-    return `<g class="pt" data-id="${t.id}" tabindex="0" role="button" aria-label="${esc(t.name)}: Hype ${fmt(t.scores.hype)}, Momentum ${fmt(t.scores.momentum)}">
+    return `<g class="pt" data-id="${esc(t.id)}" tabindex="0" role="button" aria-label="${esc(t.name)}: Hype ${fmt(t.scores.hype)}, Momentum ${fmt(t.scores.momentum)}">
       <circle cx="${x}" cy="${y}" r="18" fill="transparent"/>
       ${hot ? `<circle cx="${x}" cy="${y}" r="11.5" fill="none" stroke="var(--crit)" stroke-width="2"/>` : ""}
       <circle cx="${x}" cy="${y}" r="${watched ? 8 : 7}" fill="${watched ? "var(--s1)" : "var(--ink-2)"}" stroke="var(--surface)" stroke-width="2"/></g>`;
@@ -199,7 +199,7 @@ function renderScatter() {
     const list = state.data.themes.filter((t) => t.scores.quadrant === k);
     if (k === "overheated" && !list.length) return "";
     return `<div class="qbox" style="${QUAD[k].tint ? `background:var(${QUAD[k].tint})` : ""}"><h4>${QUAD[k].icon} ${QUAD[k].label} <span class="count">${list.length}</span></h4><p>${QUAD[k].desc}</p>
-      <div class="names">${list.map((t) => `<button type="button" data-open="${t.id}">${esc(t.short)}</button>`).join("") || '<span class="count">–</span>'}</div></div>`;
+      <div class="names">${list.map((t) => `<button type="button" data-open="${esc(t.id)}">${esc(t.short)}</button>`).join("") || '<span class="count">–</span>'}</div></div>`;
   }).join("");
 }
 
@@ -214,8 +214,8 @@ function renderThemes() {
   $("#themeList").innerHTML = head + list.map((t) => {
     const qd = QUAD[t.scores.quadrant] || QUAD.unknown;
     const w = state.watch.has(t.id);
-    return `<div class="trow" role="listitem" data-open="${t.id}" tabindex="0">
-      <button class="star ${w ? "on" : ""}" type="button" data-star="${t.id}" aria-label="${w ? "Von Merkliste entfernen" : "Auf Merkliste"}" aria-pressed="${w}">${w ? "★" : "☆"}</button>
+    return `<div class="trow" role="listitem" data-open="${esc(t.id)}" tabindex="0">
+      <button class="star ${w ? "on" : ""}" type="button" data-star="${esc(t.id)}" aria-label="${w ? "Von Merkliste entfernen" : "Auf Merkliste"}" aria-pressed="${w}">${w ? "★" : "☆"}</button>
       <div class="tname">${esc(t.name)}${hypeInfo(t) ? `<span class="hype" data-tip="${esc(`<b>Warum Hype?</b><br>${esc(hypeInfo(t))}`)}">⚡ Hype</span>` : ""}<small><span class="badge ${qd.cls}">${qd.icon} ${qd.label}</span> ${esc(t.etf)} 3 M <span class="${dirCls(t.price?.chg3m)}">${pct(t.price?.chg3m, 0)}</span></small></div>
       <div class="c-spark">${spark(t.attention?.spark, { label: `Wikipedia-Aufrufe ${t.name}` })}</div>
       ${metricCell(t.scores.hype, "var(--s1)")}
@@ -281,7 +281,7 @@ function renderFeed(freshKeys = new Set()) {
   $("#feedList").innerHTML = items.slice(0, state.shown).map((n) => `<li class="${freshKeys.has(normTitle(n.title)) ? "fresh" : ""}">
       <a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
       <button class="share" type="button" data-share="${esc(n.title)}" data-url="${esc(n.url)}" aria-label="Meldung in WhatsApp teilen">${WA_ICON}</button>
-      <div class="m">${n.live ? '<span class="live-tag">LIVE</span>' : ""}<span>${esc(n.source)}</span><span>${ago(n.published)}</span>${n.echo > 1 ? `<span title="So viele Quellen melden das">×${n.echo}</span>` : ""}${n.points ? `<span>▲ ${n.points}</span>` : ""}
+      <div class="m">${n.live ? '<span class="live-tag">LIVE</span>' : ""}<span>${esc(n.source)}</span><span>${ago(n.published)}</span>${n.echo > 1 ? `<span title="So viele Quellen melden das">×${n.echo}</span>` : ""}${n.points ? `<span>▲ ${fmt(Number(n.points))}</span>` : ""}
       ${(n.signals || []).map((s) => `<span class="sig ${esc(s)}">${esc(s)}</span>`).join("")}${(n.themes || []).slice(0, 3).map((t) => `<span class="tt">${esc(short[t] || t)}</span>`).join("")}</div></li>`).join("") || '<li class="empty">Keine Treffer.</li>';
   $("#moreBtn").hidden = items.length <= state.shown;
 }
@@ -515,10 +515,10 @@ initSignalControls();
 initGoalPicker(() => state.data && [renderCheck, renderSignals].forEach(safe));
 initRealEstateForm();
 initMietspiegel();
-renderMeta();
-applyPrefs();
-renderFitness();
-initBackup();
+safe(renderMeta);
+safe(applyPrefs);
+safe(renderFitness);
+safe(initBackup);
 $("#prefsBtn").addEventListener("click", () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; });
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));
