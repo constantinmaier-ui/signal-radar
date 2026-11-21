@@ -14,7 +14,7 @@ import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, read
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
 export const SECTION_TOPICS = {
   frueh: ["macro"], anlagen: ["stocks", "crypto"], rohstoffe: ["commodities"], weitere: ["stocks"], immobilien: ["realestate"],
-  stimmung: ["macro", "stocks", "crypto"], offiziell: ["macro"], trends: ["themes"], karte: ["themes"], themen: ["themes"],
+  stimmung: ["macro", "stocks", "crypto"], offiziell: ["macro"], fruehsignale: ["themes", "stocks", "pros"], trends: ["themes"], karte: ["themes"], themen: ["themes"],
   perlen: ["stocks"], ipo: ["themes"],
 };
 const ALL = TOPICS.map(([k]) => k);

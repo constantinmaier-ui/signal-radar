@@ -43,6 +43,18 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.6) – the app adapts to your situation, early signals (owner request 2026-11-21), by value ÷ effort
+- [x] **"Für dich geprüft"** on Heute: do you reach your goals (monthly need vs. saving rate, short goals flagged), every holding rule-checked (✅ fits · 👀 watch · ⚠️ check), where the plan has room, early signals on your topics
+- [x] **Rule checks per holding** with rule, source and "what you can do": emergency fund first, concentration > 10 %, strong run-up > 30 % over the 200-day average, downtrend < −10 % (broad ETFs: keep saving), crypto vs. risk profile, insider buys
+- [x] **"So passt sich das Radar an dich an"**: each input and what it changes, with a deep link to fill in what is missing
+- [x] **Signals that touch your holdings or topics come first**, marked "🎯 betrifft dich"
+- [x] **Frühsignale**: rising attention with a still flat price (two independent reasons or a weekly jump), specialist-only stories, cluster insider buys, new positions of single top investors; awareness meter, evidence and source per signal
+- [x] **Theme life cycle**: forgotten → early → rising quietly → trend → overheated, your themes marked
+- [x] Collector: trend data (1 and 3 months, distance to the 200-day average) for every portfolio instrument
+- [ ] Hit rate of early signals from the daily archive (did the price follow within 1–3 months?)
+- [ ] Alerts when a holding changes state (✅ → ⚠️) or a new early signal on your topic appears
+- [ ] Trend data for every crypto coin (CoinGecko market chart) instead of Bitcoin as a proxy
+
 ## Now (version 5.5) – every signal says what to do (owner request 2026-11-21)
 - [x] **"Was kannst du jetzt tun?" in every detail**: "Lohnt sich das für mich?" (short answer right there), "Zum passenden Trend-Thema", "Als eigenes Thema merken", "In mein Depot eintragen", "Mit meiner KI besprechen"; GitHub/AI projects explain what they mean for a private investor
 - [x] **Startups & business angels** as an honest entry (chances, risks, who it suits, where to start: BAND, BayStartUP)

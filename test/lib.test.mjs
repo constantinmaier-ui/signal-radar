@@ -667,3 +667,52 @@ test("install guide picks the right device", async () => {
   assert.equal(deviceOf("Mozilla/5.0 (Macintosh) Version/18.0 Safari/605.1.15"), "mac-safari");
   assert.equal(deviceOf("anything", true), "installed");
 });
+
+test("early signals: rising attention with a flat price is early, overheated is not", async () => {
+  const { themeStage, awareness, earlySignals, stageMap, hypeWeekAgo, myThemeIds } = await import("../site/early.js");
+  const now = Date.parse("2026-11-21T12:00:00Z");
+  const hist = [{ date: "2026-11-13", themes: { quantum: [40, 50, 10] } }, { date: "2026-11-21", themes: { quantum: [70, 50, 10] } }];
+  assert.equal(hypeWeekAgo(hist, "quantum", now), 40);
+  const early = { id: "quantum", name: "Quanten", etf: "QTUM", scores: { hype: 70, quadrant: "noise" }, price: { chg1m: 0.01, ext200: 0.02 }, attention: { mom: 0.1 }, newsAccel: 1 };
+  assert.equal(themeStage(early, 40), "frueh");
+  assert.equal(themeStage({ ...early, price: { chg1m: 0.2, ext200: 0.3 } }, 40), null, "price already ran: not early");
+  assert.equal(themeStage({ ...early, scores: { hype: 90, quadrant: "overheated" } }, 40), "heiss");
+  assert.equal(themeStage({ ...early, scores: { hype: 20, quadrant: "quiet" } }, 20), "still");
+  assert.ok(awareness({ scores: { hype: 10 }, price: { ext200: -0.05 } }) < awareness({ scores: { hype: 90 }, price: { ext200: 0.35 } }));
+  const d = {
+    themes: [early, { id: "ai", name: "KI", etf: "AIQ", scores: { hype: 90, quadrant: "overheated" }, price: { ext200: 0.4 } }],
+    news: [{ title: "Neue Batteriezelle", url: "https://example.com/a", reach: "specialist", echo: 3, outlets: ["A", "B", "C"], themes: ["battery"] },
+      { title: "Alle berichten", url: "https://example.com/b", reach: "mainstream", echo: 9, themes: [] }],
+    insiders: { buys: [{ sym: "XYZ", name: "XYZ Corp", cluster: true, buyers: [{}, {}], total: 100000 }, { sym: "ONE", cluster: false }] },
+    superinvestors: { investors: [{ id: "b", person: "B", moves: [{ type: "neu", name: "NEWCO" }] }], consensusBuys: [] },
+  };
+  const list = earlySignals(d, hist, new Set(["battery"]), now);
+  assert.deepEqual(list.map((x) => x.kind).sort(), ["insider", "investor", "news", "theme"]);
+  assert.equal(list[0].kind, "news", "own topic first");
+  assert.ok(list.every((x) => x.why.length && x.evidence && x.src && x.todo), "every early signal says why, evidence and what to do");
+  assert.equal(stageMap(d, hist, now).heiss[0].id, "ai");
+  const mine = myThemeIds({ personas: ["krypto"], topics: ["Quanten"], themes: d.themes, keywords: {} });
+  assert.ok(mine.has("crypto") && mine.has("quantum"));
+});
+
+test("position checks: concentration, overheated, downtrend and profile fit", async () => {
+  const { checkPosition, planGaps, goalStatus, inputImpact, touches } = await import("../site/foryou.js");
+  const d = { assets: [{ id: "world", ext200: -0.15 }, { id: "btc", ext200: 0.05 }], themes: [] };
+  const world = checkPosition({ cat: "world", name: "MSCI World", value: 8000 }, { total: 10000, d });
+  assert.equal(world.state, "ok", "broad ETF below its average is no reason to sell");
+  const hot = checkPosition({ cat: "stock", name: "Hotco", value: 3000, quote: { sym: "HOT", ext200: 0.5 } }, { total: 10000, d });
+  assert.equal(hot.state, "check"); assert.ok(hot.notes.some((n) => /Klumpen/.test(n.text)) && hot.notes.some((n) => /gelaufen/.test(n.text)));
+  const down = checkPosition({ cat: "stock", name: "Downco", value: 500, quote: { sym: "DN", ext200: -0.2 } }, { total: 10000, d });
+  assert.equal(down.state, "check"); assert.ok(down.notes.every((n) => n.rule && n.todo));
+  assert.equal(checkPosition({ cat: "btc", name: "Bitcoin", value: 100 }, { total: 10000, d, goal: "sicherheit" }).state, "check");
+  assert.equal(checkPosition({ cat: "btc", name: "Bitcoin", value: 100 }, { total: 10000, d, goal: "mutig" }).state, "ok");
+  assert.match(checkPosition({ cat: "themes", name: "X", value: 100 }, { total: 10000, d, cashTodo: true }).notes[0].text, /Notgroschen/);
+  assert.deepEqual(planGaps([{ cat: "em", share: 0, target: 0.1 }, { cat: "world", share: 0.6, target: 0.6 }]).map((g) => g.cat), ["em"]);
+  const gs = goalStatus({ save: 200, goals: [{ type: "eigenheim", amount: 60000, year: 2036 }] }, "ausgewogen", 0, 2026);
+  assert.ok(gs.need > 200 && gs.reach < 1 && gs.lines.length === 1);
+  assert.equal(goalStatus({ goals: [{ type: "eigenheim", amount: 10000, year: 2028 }] }, "ausgewogen", 0, 2026).short.length, 1);
+  assert.equal(inputImpact({}).filter((x) => x.done).length, 0);
+  assert.ok(inputImpact({}).every((x) => Number.isInteger(x.step) && x.gives));
+  assert.ok(touches("quiet-ai", new Set(["ai"])) && touches("crypto-greed", new Set(["btc"])) && touches("insider-NVDA", new Set(["NVDA"])));
+  assert.equal(touches("bubble-high", new Set(["ai"])), false);
+});
