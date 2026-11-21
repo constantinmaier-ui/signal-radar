@@ -3,7 +3,8 @@
 import { $, $$, esc, fmt, pct, ok, store, state, dirCls, toast } from "./ui.js";
 import { TOPICS } from "./trust.js";
 import { BUCKETS, buildPlan } from "./plan.js";
-import { GOALS } from "./signals.js";
+import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
+import { topicOf } from "./heute.js";
 
 // ---------- Interests ----------
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
@@ -118,7 +119,8 @@ function renderOnboarding() {
   const steps = 4, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
-    () => `<h2 id="sheetTitle">Was interessiert dich?</h2><p class="fine">Danach richtet sich, was oben steht und was eingeklappt wird. Mehrere möglich.</p>
+    () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.</div>
+      <h2 id="sheetTitle">Was interessiert dich?</h2><p class="fine">Danach richtet sich, was oben steht und was eingeklappt wird. Mehrere möglich.</p>
       <div class="chips-wrap">${TOPICS.map(([k, l]) => chip("int", k, ob.interests.includes(k), l)).join("")}</div>`,
     () => { const sug = suggestGoal(ob.drop, ob.horizon), g = ob.goal || sug;
       return `<h2 id="sheetTitle">Dein Ziel</h2>
@@ -248,6 +250,43 @@ function depotClick(e) {
   if (b.dataset.dp === "add") { const rows = editor.querySelector(".dp-rows"); const tmp = document.createElement("div"); tmp.innerHTML = depotEditor([{ cat: "world", name: "", value: "" }]); rows.appendChild(tmp.querySelector(".dp-row")); return true; }
   if (b.dataset.dp === "save") { readDepotEditor(b.closest("#depotBody"), (l) => store.set("portfolio", l)); renderDepot(); toast("Depot gespeichert (nur auf diesem Gerät)"); return true; }
   return false;
+}
+
+// ---------- Executive summary + quick access ----------
+/** Where a signal's details live (view:anchor). */
+export function anchorOf(id = "") {
+  const map = [[/^(quiet|hot|noise)-/, "entdecken:karte"], [/^ipo-/, "entdecken:ipo"], [/^gem-/, "entdecken:perlen"], [/^com-|^power-/, "entdecken:rohstoffe"],
+    [/^mortgage-/, "entdecken:immobilien"], [/^move-|^world-|^crypto-|^stablecoin-/, "entdecken:anlagen"], [/^(curve|credit|sahm)/, "entdecken:frueh"],
+    [/^(cons|insider|voices)-/, "profis:profis"], [/^event-/, "profis:eventsSec"]];
+  return map.find(([re]) => re.test(id))?.[1] || "heute:signals";
+}
+const QUICK = [["realestate", "🏡 Immobilien-Rechner", "entdecken:immobilien"], ["themes", "🚀 Trend-Radar", "entdecken:trends"], ["commodities", "🛢️ Rohstoffe", "entdecken:rohstoffe"],
+  ["stocks", "📈 Anlageklassen", "entdecken:anlagen"], ["crypto", "₿ Krypto", "entdecken:anlagen"], ["macro", "🌡️ Konjunktur", "entdecken:frueh"], ["pros", "👔 Profis & Insider", "profis:profis"],
+  ["news", "📰 Nachrichten", "profis:feed"], [null, "🫧 Blasen-Meter", "heute:lage"], [null, "💰 Mein Depot", "plan:depot"], [null, "🧮 Plan-Rechner", "plan:plan"], [null, "📚 Lexikon", "wissen:lexikon"]];
+export function renderSummary() {
+  const el = $("#summaryList"); if (!el) return;
+  const d = state.data || {}, mine = interests(), all = isAll(mine);
+  const off = ALL.filter((k) => !mine.includes(k));
+  const sig = buildSignals(d, state.history || []).filter((s) => !off.includes(topicOf(s.id)));
+  const plan = store.get("plan", {}) || {}, goal = store.get("goal", "ausgewogen");
+  const v = dailyVerdict(d, GOALS[goal] ? goal : "ausgewogen", plan.years || 15);
+  const word = { "grün": "🟢 Grün", gelb: "🟡 Gelb", rot: "🔴 Rot" }[v.level] || "🟡 Gelb";
+  const lines = [["🚦", "Lage", `${word}: ${v.head}`, "heute:check"]];
+  const dep = depotList();
+  if (dep.length) {
+    let targets = {}; try { targets = buildPlan({ once: 5000, monthly: 200, years: 15, profile: goal, ...plan }, d).weights || {}; } catch { /* ignore */ }
+    const a = analyzeDepot(dep, targets);
+    lines.push(["💰", "Dein Depot", a.warnings.length ? a.warnings[0] : `${fmt(a.total)} €, passt gut zu deinem Plan (${GOALS[goal]?.label || ""}).`, "plan:depot"]);
+  } else lines.push(["🎯", `Für dich (${GOALS[goal]?.label || "Ausgewogen"})`, v.doList[0], "plan:plan"]);
+  const chance = sig.find((s) => s.kind === "chance"), risk = sig.find((s) => s.kind === "warnung");
+  if (chance) lines.push(["🚀", "Chance", chance.title, anchorOf(chance.id)]);
+  if (risk) lines.push(["⚠️", "Risiko", risk.title, anchorOf(risk.id)]);
+  const ev = [...(d.events || [])].filter((e) => e.n48h > 0).sort((x, y) => y.n48h - x.n48h)[0];
+  if (ev && (all || mine.includes("news") || mine.includes("macro"))) lines.push([ev.icon || "📰", "Nachrichtenlage", `${ev.name}: ${ev.n48h} Meldungen in 48 Stunden`, "profis:eventsSec"]);
+  el.innerHTML = lines.slice(0, 5).map(([i, k, t, g]) => `<li><button type="button" class="sum-item" data-goto="${esc(g)}"><span class="ico">${esc(i)}</span><span><b>${esc(k)}:</b> ${esc(t)}</span><span class="go">›</span></button></li>`).join("");
+  const chips = [...QUICK.filter(([t]) => t && !all && mine.includes(t)), ...QUICK.filter(([t]) => !t), ...QUICK.filter(([t]) => t && (all || !mine.includes(t)))];
+  const seen = new Set();
+  $("#quickChips").innerHTML = `<span class="fine">Schnell zu:</span>${chips.filter(([, , g]) => !seen.has(g) && seen.add(g)).slice(0, 9).map(([, l, g]) => `<button type="button" class="chip-btn" data-goto="${esc(g)}">${esc(l)}</button>`).join("")}`;
 }
 
 // ---------- Wiring ----------

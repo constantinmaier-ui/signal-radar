@@ -7,7 +7,7 @@ import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
-import { initPersonal, renderDepot, goTo } from "./personal.js";
+import { initPersonal, renderDepot, renderSummary, goTo } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
@@ -303,7 +303,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -350,8 +350,8 @@ function closeDrawer() {
 async function loadData(initial = false) {
   try {
     const [d, h] = await Promise.all([
-      fetch(`data/data.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-      fetch(`data/history.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch(`data/data.json?t=${Date.now()}${initial ? "&fast=1" : ""}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch(`data/history.json?t=${Date.now()}${initial ? "&fast=1" : ""}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
     ]);
     const changed = !state.data || state.data.generatedAt !== d.generatedAt;
     state.data = d; state.history = Array.isArray(h) ? h : []; state.lastLoad = Date.now();
@@ -361,6 +361,7 @@ async function loadData(initial = false) {
       state.live = state.live.filter((n) => !known.has(normTitle(n.title)));
       renderAll();
       if (!initial) toast("Neue Daten geladen");
+      else setTimeout(() => loadData(false), 1200); // the first view may come from the stored copy: fetch fresh data right after
     } else safe(renderStamp);
   } catch (e) {
     if (initial) {
