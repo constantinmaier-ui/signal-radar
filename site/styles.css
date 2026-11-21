@@ -881,3 +881,20 @@ tr.clickable:hover td { background: var(--surface-2); }
 .auto-status.ok { color: var(--up, #2e7d32); }
 .auto-status.warn { color: var(--warn, #b26a00); }
 .auto-import { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); margin-bottom: 10px; font-size: 14px; }
+/* Dein Radar (profiles) */
+.pr-chips { margin: 8px 0 4px; }
+.pr-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 10px; }
+.pr-card { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.pr-card h3 { margin: 0 0 6px; font-size: 16px; }
+.pr-lines { list-style: none; margin: 0; padding: 0; }
+.pr-line { display: flex; gap: 8px; justify-content: space-between; width: 100%; text-align: left; background: none; border: 0; padding: 7px 0; font: inherit; font-size: 14px; color: inherit; cursor: pointer; border-bottom: 1px solid var(--ring); }
+.pr-line .go { opacity: .5; }
+.pr-fact { font-size: 13px; margin: 8px 0 0; }
+.link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--s1); text-decoration: underline; cursor: pointer; }
+/* Was die wenigsten wissen */
+.facts .fact { border-bottom: 1px solid var(--ring); padding: 8px 0; }
+.facts .fact summary { cursor: pointer; }
+.facts .fact p { margin: 6px 0; font-size: 14px; }
+/* search: ask AI */
+.sr-ai { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+.sr-ai .bk-btns { margin-top: 6px; }

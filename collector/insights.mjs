@@ -279,3 +279,33 @@ export async function fetchPower({ get, status }) {
   const last = days[days.length - 1], avg30 = days.slice(-30).reduce((x, y) => x + y.avg, 0) / Math.min(30, days.length);
   return { unit: j.unit || "EUR/MWh", day: last.day, avg: last.avg, min: last.min, max: last.max, avg30, series: days.map((x) => Math.round(x.avg * 10) / 10) };
 }
+
+// ---------- Early signal: share of job postings mentioning AI (Indeed Hiring Lab, CC BY 4.0) ----------
+// Companies hire before they ship and before revenue shows up in reports. Daily data, refreshed monthly by Indeed.
+export const AI_JOBS_URL = "https://raw.githubusercontent.com/hiring-lab/ai-tracker/main/AI_posting.csv";
+/** CSV (date,jobcountry,AI_share_postings) → per country: latest share, one year earlier, monthly spark (24 points). Pure. */
+export function parseAiJobs(csv, countries = ["DE", "US"]) {
+  const rows = {};
+  for (const line of String(csv || "").split(/\r?\n/).slice(1)) {
+    const [date, c, v] = line.split(","); const x = Number(v);
+    if (!countries.includes(c) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(x)) continue;
+    (rows[c] ||= []).push([date, x]);
+  }
+  const out = {};
+  for (const [c, list] of Object.entries(rows)) {
+    list.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    const [lastDate, last] = list.at(-1);
+    const yearAgo = new Date(Date.parse(lastDate) - 365 * 864e5).toISOString().slice(0, 10);
+    const prev = [...list].reverse().find(([d]) => d <= yearAgo);
+    const monthly = []; let m = "";
+    for (const [d, v] of list) if (d.slice(0, 7) !== m) { m = d.slice(0, 7); monthly.push(Math.round(v * 100) / 100); }
+    out[c] = { date: lastDate, share: last / 100, yearAgo: prev ? prev[1] / 100 : null, spark: monthly.slice(-24) };
+  }
+  return out;
+}
+export async function fetchAiJobs({ get }, prev, now = Date.now()) {
+  if (prev?.checkedAt && now - Date.parse(prev.checkedAt) < 24 * 3600e3 && prev.DE) return prev; // source updates monthly
+  const csv = await get(AI_JOBS_URL, { label: "Indeed Hiring Lab: KI-Stellenanzeigen", timeout: 20000 });
+  const parsed = csv ? parseAiJobs(csv) : {};
+  return parsed.DE || parsed.US ? { checkedAt: new Date(now).toISOString(), source: "Indeed Hiring Lab (CC BY 4.0)", ...parsed } : prev || null;
+}

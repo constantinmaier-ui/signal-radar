@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0 (in progress)
+Real added value per investor type: profiles (ETF, crypto, AI trends, commodities/procurement, real estate entry/owner) with a personal "Dein Radar" card of live lines; "Was die wenigsten wissen" with 15 cited research facts; search understands synonyms, plain questions and typos and can hand a question plus context to the user's own AI; new early signal: share of AI job postings (Indeed Hiring Lab); commodity moves in euro. Strategy in docs/STRATEGY.md.
+
 ## 3.2 (in progress)
 Keep your settings safely: automatic end-to-end encrypted backup (after every change into a file in your Dropbox/OneDrive folder on Chrome/Edge desktop; reminder + one-tap backup elsewhere), encrypted transfer link to another device, browser asked to keep the data.
 

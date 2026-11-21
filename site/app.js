@@ -11,6 +11,7 @@ import { initPersonal, renderDepot, renderSummary, goTo } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { initSync } from "./sync.js";
+import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -304,7 +305,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -527,6 +528,9 @@ const openPrefs = () => { renderPrefs(() => state.data && [renderSignals, render
 $("#prefsBtn").addEventListener("click", openPrefs);
 initPersonal({ openPrefs, onGoto: goTo });
 safe(() => initSync({ openPrefs }));
+safe(renderFacts);
+safe(renderMyRadar);
+initPersonas(() => safe(renderSummary));
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));
 $("#shareCom").addEventListener("click", () => state.data && share(commodityShareText(state.data, pageUrl())));

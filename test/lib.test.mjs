@@ -436,3 +436,55 @@ test("auto backup: key-based encryption opens with the password, link encoding r
   assert.equal(needsReminder({ hasFile: true, dirty: true, at: null, now }), false);
   assert.equal(needsReminder({ hasFile: false, dirty: false, at: null, now }), false);
 });
+
+test("AI job postings (Indeed Hiring Lab CSV): latest share, one year earlier, monthly spark", async () => {
+  const { parseAiJobs } = await import("../collector/insights.mjs");
+  const rows = ["date,jobcountry,AI_share_postings"];
+  for (let i = 0; i < 800; i++) { const d = new Date(Date.UTC(2024, 8, 1) + i * 864e5).toISOString().slice(0, 10); rows.push(`${d},DE,${(4 + i / 400).toFixed(3)}`, `${d},FR,1`); }
+  rows.push("bad,DE,x", "2026-01-01,DE,");
+  const o = parseAiJobs(rows.join("\n"));
+  assert.deepEqual(Object.keys(o), ["DE"]);
+  assert.equal(o.DE.date, "2026-11-09");
+  assert.ok(Math.abs(o.DE.share - (4 + 799 / 400) / 100) < 1e-4);
+  assert.ok(Math.abs(o.DE.yearAgo - (4 + 434 / 400) / 100) < 1e-4);
+  assert.equal(o.DE.spark.length, 24);
+});
+
+test("profiles: live lines from data, euro conversion, loan payment, every fact cited", async () => {
+  const { personaLines, inEuro, loanPayment, FACTS, PERSONAS } = await import("../site/personas.js");
+  assert.ok(Math.abs(inEuro(0.10, 0.10)) < 1e-12, "dollar price +10 % while euro +10 % = unchanged in euro");
+  assert.ok(Math.abs(inEuro(0, -0.05) - 0.0526) < 1e-3);
+  assert.equal(inEuro(null, 0.1), null);
+  assert.equal(Math.round(loanPayment(300000, 0.035)), 1375);
+  const d = {
+    market: [{ sym: "EURUSD=X", chg1m: 0.02 }],
+    commodities: [{ id: "copper", name: "Kupfer", unit: "$/Pfund", chg1m: 0.10 }, { id: "ttf", name: "Erdgas TTF", unit: "€/MWh", last: 31.2, chg1m: -0.2 }],
+    realEstate: { mortgage: { rate: 0.035, period: "2026-10", series: Array.from({ length: 14 }, (_, i) => ({ period: `p${i}`, value: 3 + i / 10 })) }, hpi: { yoy: 0.03, period: "2026-Q2" } },
+    aiJobs: { DE: { share: 0.0628, yearAgo: 0.05 } },
+  };
+  const roh = personaLines("rohstoffe", d).map((l) => l.t).join(" | ");
+  assert.match(roh, /billiger/);
+  assert.match(roh, /Erdgas TTF −20/);
+  assert.match(personaLines("immo_neu", d).map((l) => l.t).join(" "), /1\.375 € im Monat/);
+  assert.match(personaLines("ki", d)[0].t, /6,3 %/);
+  assert.deepEqual(personaLines("krypto", {}), []);
+  for (const l of personaLines("rohstoffe", d)) assert.match(l.go, /^(detail:|[a-z]+:)/);
+  for (const p of PERSONAS) assert.ok(FACTS.some((f) => f.tags.includes(p.id)), `fact for ${p.id}`);
+  for (const f of FACTS) assert.ok(f.cite && (f.url || f.q) && f.text && f.so, f.id);
+});
+
+test("search 2.0: synonyms, filler words, short words as whole words, one typo", async () => {
+  const { search, expandQuery, oneEdit, askAiPrompt } = await import("../site/search.js");
+  const { fold } = await import("../site/ui.js");
+  const it = (title, extra = "") => ({ title, sub: "", hay: fold(`${title} ${extra}`), t: fold(title) });
+  const idx = [it("Volatilität", "Schwankung"), it("Rohöl Brent", "Energie"), it("Bitcoin", "Krypto"), it("Bauzinsen", "EZB"), it("Gold")];
+  assert.deepEqual(search(idx, "Lohnt sich Öl gerade?").map((h) => h.title), ["Rohöl Brent"]);
+  assert.deepEqual(search(idx, "mortgage").map((h) => h.title), ["Bauzinsen"]);
+  assert.deepEqual(search(idx, "bitcion").map((h) => h.title), ["Bitcoin"]);
+  assert.deepEqual(search(idx, "gold").map((h) => h.title), ["Gold"], "a member does not pull in the whole category");
+  assert.ok(search(idx, "rohstoffe").some((h) => h.title === "Gold"), "the category finds its members");
+  assert.deepEqual(expandQuery("was ist")[0], ["was"], "only filler words: keep them");
+  assert.equal(oneEdit("kupfer", "kupfre"), true);
+  assert.equal(oneEdit("kupfer", "kpfre"), false);
+  assert.match(askAiPrompt("Lohnt sich Gold?", [{ title: "Gold", sub: "+3 % 1 Monat" }], {}), /Meine Frage: Lohnt sich Gold\?[\s\S]*- Gold: \+3 %/);
+});

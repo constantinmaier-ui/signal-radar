@@ -43,6 +43,23 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 4.0) – real added value per investor type (owner request 2026-11-21), by value ÷ effort
+Full reasoning: [STRATEGY.md](STRATEGY.md)
+- [x] **Profiles + "Dein Radar"**: ETF, crypto, AI trends, commodities/procurement, real estate entry/owner; live lines with links, daily research fact; chosen in onboarding or directly on the card
+- [x] **"Was die wenigsten wissen"**: 15 research facts (peer-reviewed unless marked), what each means for the user, sources
+- [x] **Search 2.0**: synonyms DE/EN, questions in plain language, typo tolerance, short words as whole words; "ask your AI" with radar context
+- [x] **Early signal: AI share of job postings** (Indeed Hiring Lab, DE + US)
+- [x] **Commodity moves in euro** (FX effect for buyers)
+- [ ] Commodities: futures curve (backwardation/contango), CFTC positioning, price alerts in euro
+- [ ] Nowcasts: NY Fed WEI, Atlanta Fed GDPNow, Chicago Fed NFCI, Bundesbank WAI
+- [ ] AI: hyperscaler capex (SEC XBRL company facts), TSMC monthly revenue, arXiv counts
+- [ ] Crypto: funding rates / open interest, on-chain valuation, ETF flows (source reachable from GitHub's US servers)
+- [ ] Real estate: buy-vs-rent calculator, follow-up financing planner, regional prices (Destatis)
+- [ ] Learning units "How the greats invest" (Buffett, Bogle, Lynch, Dalio, Simons), gamified, documented facts only
+- [ ] Precomputed AI answers to common questions per profile (collector, cached)
+- [ ] Watchlist alerts (price, insider buy, news spike)
+- [ ] Apply for Google Trends API alpha (👤 owner, optional)
+
 ## Now (version 3.2) – keep personal data safely (owner request 2026-11-21), by value ÷ effort
 - [x] **Ask the browser to keep the data** (`navigator.storage.persist()` after onboarding / backup setup) – tiny effort
 - [x] **Automatic encrypted backup**: Chrome/Edge desktop write after every change into a chosen file (e.g. in the Dropbox/OneDrive folder → end-to-end encrypted cloud copy); iPhone/Firefox: key kept, reminder + one-tap backup via share sheet
