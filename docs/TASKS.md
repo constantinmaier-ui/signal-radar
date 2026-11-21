@@ -43,6 +43,14 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.5) – every signal says what to do (owner request 2026-11-21)
+- [x] **"Was kannst du jetzt tun?" in every detail**: "Lohnt sich das für mich?" (short answer right there), "Zum passenden Trend-Thema", "Als eigenes Thema merken", "In mein Depot eintragen", "Mit meiner KI besprechen"; GitHub/AI projects explain what they mean for a private investor
+- [x] **Startups & business angels** as an honest entry (chances, risks, who it suits, where to start: BAND, BayStartUP)
+- [x] **Install guide for the device in use** (iPhone, Android, Chrome/Edge, Mac Safari, Firefox), then straight to backup
+- [x] **Repeat the setup** with previous answers prefilled (profile hub and menu)
+- [x] **Deep links**: links open the exact form, box or entry (e.g. the mortgage calculator, the Blasen-Meter method entry), not an overview
+- [ ] Startup data feed (e.g. funding rounds, crowdinvesting offers) once a reliable free source is found
+
 ## Now (version 5.4) – setup that really works (owner request 2026-11-21)
 - [x] **Readiness check editable in place**: missing emergency fund / debts / spending entered right in the card (the old "Situation ändern" opened the wrong step)
 - [x] **Several goals** (e.g. pension gap + home + trip), each with amount and year; total monthly need vs. what you save, with a hint when it does not fit

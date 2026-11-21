@@ -2,6 +2,8 @@
 import { $, esc, fmt, pct, ok, dirCls, safeUrl, lineChart, dayLabels, state, compact, growList, store } from "./ui.js";
 import { buildSignals, GOALS } from "./signals.js";
 import { anchorOf, placeName } from "./subnav.js";
+import { quickAnswer, answerHtml } from "./answers.js";
+import { readinessLine } from "./situation.js";
 
 const news = (q) => `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;
 const scholar = (q) => `https://scholar.google.com/scholar?q=${encodeURIComponent(q)}`;
@@ -23,13 +25,26 @@ export function pricePoints(x) {
   return out;
 }
 
-function show({ title, badge = "", sub = "", kpis = [], series = null, end = Date.now(), body = "", points = [], links = [], more = null, chartLabel = "Verlauf, ca. 3 Monate", step = 1, fmtV = (v) => fmt(v, 2) }) {
+/** "Was kannst du tun?": always concrete next actions, never a dead end. */
+function actionsHtml({ title, topic, theme, ask, depot = false }) {
+  const q = encodeURIComponent(`Mein Signal-Radar zeigt: ${title}. Ich bin Privatanleger (Profil ${GOALS[store.get("goal", "ausgewogen")]?.label || "Ausgewogen"}). Was heißt das für mich, welche Risiken gibt es, und was ist gut belegt? Bitte Vorschläge statt Empfehlungen.`);
+  const btns = [
+    ask ? `<button type="button" class="act-btn" data-ask="${esc(ask)}">💬 Lohnt sich das für mich?</button>` : "",
+    theme ? `<button type="button" class="act-btn" data-open="${esc(theme)}">🚀 Zum passenden Trend-Thema</button>` : "",
+    topic ? `<button type="button" class="act-btn" data-keep-topic="${esc(topic)}">★ Als eigenes Thema merken</button>` : "",
+    depot ? `<button type="button" class="act-btn" data-edit="4">💼 In mein Depot eintragen</button>` : "",
+    `<a class="act-btn" href="https://claude.ai/new?q=${q}" target="_blank" rel="noopener">🤖 Mit meiner KI besprechen ↗</a>`,
+  ].filter(Boolean).join("");
+  return `<h3>Was kannst du jetzt tun?</h3><div class="act-row">${btns}</div><div class="act-answer"></div>`;
+}
+function show({ title, badge = "", sub = "", kpis = [], series = null, end = Date.now(), body = "", points = [], links = [], more = null, chartLabel = "Verlauf, ca. 3 Monate", step = 1, fmtV = (v) => fmt(v, 2), actions = null }) {
   $("#drawerBody").innerHTML = `<h2 id="drawerTitle">${esc(title)}</h2>${badge}
     ${sub ? `<p class="sub">${sub}</p>` : ""}
     ${kpis.length ? `<div class="kpi-grid">${kpis.map(([l, v, c]) => `<div class="kpi"><span>${esc(l)}</span><b class="${c || ""}">${v}</b></div>`).join("")}</div>` : ""}
     ${series ? `<div class="chart"><h4>${esc(chartLabel)}</h4><div id="dSeries"></div></div>` : ""}
     ${points.length ? `<h3>Das Wichtigste</h3><ul class="points">${points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
     ${body}
+    ${actionsHtml(actions || { title })}
     ${links.length ? `<h3>Weiterlesen &amp; Quellen</h3><div class="link-list">${links.map(([l, u]) => `<a href="${safeUrl(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join("")}</div>` : ""}
     ${more ? `<button type="button" class="btn btn-ghost btn-wide more-place" data-goto="${esc(more)}">Mehr dazu: ${esc(placeName(more))} →</button>` : ""}
     <p class="fine">Regelbasiert zusammengefasst aus den Daten der letzten Aktualisierung. Keine Anlageberatung.</p>`;
@@ -130,10 +145,10 @@ export function openDetailFor(key) {
     const where = anchorOf(id);
     show({ title: sg.title, badge: `<span class="badge ${sg.kind === "warnung" ? "b-noise" : "b-quiet"}">${esc({ chance: "Chance", warnung: "Risiko", info: "Info" }[sg.kind] || sg.kind)}</span>`, sub: `Quelle: ${esc(sg.source || "")}`,
       points: [`Was ist los: ${sg.text}`, ...(sg.hype ? [`Warum Hype: ${sg.hype}`] : []), `Was du tun könntest (${goalName()}): ${sg.todo}`],
-      more: where !== "heute:signals" ? where : null });
+      more: where !== "heute:signals" ? where : null, actions: { title: sg.title, topic: sg.title.split(/[:(]/)[0].slice(0, 40) } });
     return true;
   }
-  if (key.startsWith("info:")) { const x = infoDetail(key.slice(5), d); if (!x) return false; show(x); return true; }
+  if (key.startsWith("info:")) { const x = infoDetail(key.slice(5), d); if (!x) return false; show({ ...x, actions: { title: x.title } }); return true; }
   const [kind, a, b] = key.split(":");
   if (kind === "asset" || kind === "com" || kind === "mkt") {
     const x = kind === "mkt" ? d.market?.find((v) => v.sym === a) : (kind === "asset" ? d.assets : d.commodities)?.find((v) => v.id === a); if (!x) return false;
@@ -144,6 +159,7 @@ export function openDetailFor(key) {
       points: pricePoints(x),
       body: (x.examples ? `<p class="fine">${esc(x.examples)}</p>` : "") + newsBlock(relatedNews(words, d)),
       links: [["Aktuelle Nachrichten", news(x.name)], ["Kurs bei Yahoo Finance", `https://finance.yahoo.com/quote/${encodeURIComponent(x.sym)}`]],
+      actions: { title: x.name, ask: x.name, topic: x.name.split(/[ (]/)[0], depot: kind !== "mkt" },
     });
     return true;
   }
@@ -157,7 +173,9 @@ export function openDetailFor(key) {
         x.desc ? `Worum es geht: ${x.desc}` : null,
         kind === "repo" ? "Sterne sind Lesezeichen von Entwicklern. Viele neue Sterne in kurzer Zeit zeigen echtes Interesse, nicht nur Medienrummel." : "Downloads zeigen, wie viele das Modell tatsächlich einsetzen.",
         x.ticker ? `Börsennotierte Firma dahinter: ${x.ticker}. Ein einzelnes Projekt bewegt den Kurs selten, zeigt aber, wo die Firma technisch steht.` : "Keine eindeutig börsennotierte Firma dahinter.",
+        `Was heißt das für dich? Das Projekt selbst kannst du nicht kaufen. Es zeigt, welche KI-Technik gerade Fahrt aufnimmt. Sinnvolle Schritte: das passende Trend-Thema verfolgen${x.ticker ? `, die Firma ${x.ticker} beobachten` : ""}, und erst handeln, wenn Kurs und Hype-Check zusammenpassen.`,
       ].filter(Boolean),
+      actions: { title: x.name, theme: (d.themes || []).find((t) => (t.tickers || []).some((k) => k.sym === x.ticker))?.id || "ai", topic: x.name.split("/").pop() },
       links: [[kind === "repo" ? "Projekt auf GitHub" : "Modell auf Hugging Face", x.url], ["Nachrichten dazu", news(x.name.split("/").pop())], ["Mehr von " + org, kind === "repo" ? `https://github.com/${encodeURIComponent(org)}` : `https://huggingface.co/${encodeURIComponent(org)}`]],
     });
     return true;
@@ -181,3 +199,12 @@ export function openDetailFor(key) {
   }
   return false;
 }
+
+// "Lohnt sich das für mich?" inside a detail: the short answer appears right there
+if (typeof document !== "undefined") document.addEventListener("click", (e) => {
+  const b = e.target.closest?.("#drawer [data-ask]"); if (!b) return;
+  const box = document.querySelector("#drawer .act-answer"); if (!box) return;
+  let html = ""; try { html = answerHtml(quickAnswer(b.dataset.ask, state.data || {}, store.get("goal", "ausgewogen"), !!readinessLine())); } catch { /* ignore */ }
+  box.innerHTML = html || '<p class="fine">Dazu gibt es noch keine Kurzantwort. Frag gern deine KI (Knopf daneben).</p>';
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+});

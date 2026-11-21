@@ -658,3 +658,12 @@ test("several goals: old single goal migrates, duplicates and junk dropped", asy
   assert.doesNotMatch(s.goals[1].name, /[<>"]/); assert.equal(s.goals[1].amount, 8000);
   assert.equal(goalsOf(cleanSituation({})).length, 0);
 });
+
+test("install guide picks the right device", async () => {
+  const { deviceOf } = await import("../site/personal.js");
+  assert.equal(deviceOf("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit Safari/604.1"), "ios");
+  assert.equal(deviceOf("Mozilla/5.0 (Linux; Android 15) Chrome/130.0 Mobile Safari/537.36"), "android");
+  assert.equal(deviceOf("Mozilla/5.0 (Windows NT 10.0) Chrome/130.0 Safari/537.36 Edg/130.0"), "desktop-chromium");
+  assert.equal(deviceOf("Mozilla/5.0 (Macintosh) Version/18.0 Safari/605.1.15"), "mac-safari");
+  assert.equal(deviceOf("anything", true), "installed");
+});

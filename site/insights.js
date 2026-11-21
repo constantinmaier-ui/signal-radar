@@ -1,5 +1,5 @@
 // Nachrichten-Wirkung, Forschung, Immobilien (+ Rechner), Quellen-Übersicht, Einsteiger/Profi-Modus.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn, growList, toast } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn, growList, toast, fold } from "./ui.js";
 
 const DIR = { up: ["↑", "up", "steigt eher"], down: ["↓", "down", "fällt eher"], mixed: ["↕", "flat", "gemischt"], flat: ["–", "flat", "kaum Wirkung"] };
 const CLASSES = [["aktien", "Aktien"], ["anleihen", "Anleihen"], ["gold", "Gold"], ["immobilien", "Immobilien"], ["krypto", "Krypto"]];
@@ -74,7 +74,7 @@ export const KPIS = [
 export function renderKpis() {
   const el = $("#kpiList"); if (!el) return;
   const LV = ["reine Regel", "schwach belegt", "mittel belegt", "stark belegt"], CL = ["ev0", "ev1", "ev2", "ev3"];
-  el.innerHTML = KPIS.map(([n, what, how, src, lv, lim]) => `<details class="kpi-item"><summary><b>${esc(n)}</b><span class="ev ${CL[lv]}">${"●".repeat(lv)}${"○".repeat(3 - lv)} ${LV[lv]}</span><span class="fine">${esc(what)}</span></summary>
+  el.innerHTML = KPIS.map(([n, what, how, src, lv, lim]) => `<details class="kpi-item" id="kpi-${fold(n).replace(/[^a-z0-9]+/g, "-")}"><summary><b>${esc(n)}</b><span class="ev ${CL[lv]}">${"●".repeat(lv)}${"○".repeat(3 - lv)} ${LV[lv]}</span><span class="fine">${esc(what)}</span></summary>
     <dl><dt>So wird gerechnet</dt><dd>${esc(how)}</dd><dt>Forschung dahinter</dt><dd>${esc(src)}</dd><dt>Grenzen</dt><dd>${esc(lim)}</dd></dl></details>`).join("");
 }
 
@@ -171,6 +171,7 @@ const INSTRUMENTS = [
   { name: "Tokenisierte Wertpapiere", tag: "Neuartig", verdict: ["y", "Beobachten"], what: "Klassische Anlagen wie Anleihen oder Geldmarktfonds als digitales Token auf einer Blockchain. In Deutschland seit dem eWpG (2021) möglich; große Fondshäuser bieten erste Produkte an.", chance: "Schneller, rund um die Uhr, günstiger in der Abwicklung.", risk: "Junger Markt, Verwahrung und Rechtslage teils noch unklar.", who: "Spannend zum Beobachten, für Einsteiger noch nicht nötig." },
   { name: "Infrastruktur", tag: "Sachwert", verdict: ["g", "Als Beimischung"], what: "Netze, Häfen, Pipelines, Rechenzentren. Stabile, oft an die Inflation gekoppelte Einnahmen.", chance: "Profitiert vom Ausbau für KI und Energiewende.", risk: "Zinsempfindlich, teils politisch reguliert.", who: "Als kleiner Baustein neben dem Welt-ETF." },
   { name: "Private Credit", tag: "Im Trend", verdict: ["y", "Vorsicht"], what: "Kredite an Firmen außerhalb der Banken, verpackt in Fonds.", chance: "Hohe laufende Zinsen.", risk: "Wenig erprobt in schweren Krisen; Ausfälle können sich häufen.", who: "Höchstens kleiner Anteil für Erfahrene." },
+  { name: "Startups: Business Angel & Crowdinvesting", tag: "Sehr riskant", verdict: ["y", "Nur gezielt"], what: "Du beteiligst dich an jungen Firmen: als Business Angel direkt (meist ab 10.000–25.000 €) oder per Crowdinvesting-Plattform mit kleinen Beträgen.", chance: "Einzelne Treffer können ein Vielfaches bringen; du förderst Gründer und lernst viel.", risk: "Die meisten Startups scheitern oder bringen wenig, das Geld ist oft 5–10 Jahre gebunden und kaum verkäuflich. Erträge kommen von sehr wenigen Treffern, daher nur mit vielen kleinen Beteiligungen sinnvoll.", who: "Für Geld, das du komplett verlieren kannst, höchstens wenige Prozent des Vermögens. Einstieg: Business Angels Netzwerk Deutschland (business-angels.de), in Bayern BayStartUP (baystartup.de)." },
   { name: "P2P- und Crowd-Kredite", tag: "Riskant", verdict: ["r", "Eher lassen"], what: "Du leihst Privatleuten oder kleinen Firmen über eine Plattform Geld, auch für Immobilienprojekte.", chance: "Hohe versprochene Zinsen.", risk: "Häufige Ausfälle; mehrere Plattformen sind pleitegegangen.", who: "Nur Spielgeld, das du komplett verlieren kannst." },
   { name: "Hebelprodukte & CFDs", tag: "Finger weg", verdict: ["r", "Finger weg"], what: "Wetten mit Hebel auf Kurse (Optionsscheine, Knock-outs, CFDs).", chance: "Schnelle große Gewinne möglich.", risk: "Laut EU-Pflichthinweis verlieren die meisten Privatkunden (rund 3 von 4) mit CFDs Geld.", who: "Für Vermögensaufbau ungeeignet." },
   { name: "Covered-Call-ETFs („Dividenden-Maschinen“)", tag: "Marketing-Falle", verdict: ["r", "Eher lassen"], what: "ETFs, die durch Optionsverkäufe hohe Ausschüttungen erzeugen.", chance: "Hohe laufende Auszahlungen.", risk: "Gewinne nach oben sind gedeckelt. Langfristig meist schwächer als ein normaler ETF.", who: "Für Vermögensaufbau meist ungeeignet." },

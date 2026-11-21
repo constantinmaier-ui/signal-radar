@@ -1004,3 +1004,11 @@ details[open]::details-content { height: auto; }
 .nm-bar.th i { background: var(--s3); }
 .nm-bar em { position: absolute; top: -3px; width: 2px; height: 16px; background: var(--ink); opacity: .55; }
 @media (max-width: 420px) { .nm-row { grid-template-columns: 110px 1fr 30px; } }
+/* actions in every detail */
+.act-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.act-btn { border: 1px solid var(--ring); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 8px 12px; font: 14px var(--font); cursor: pointer; text-decoration: none; }
+.act-btn:hover { border-color: var(--s1); }
+.act-answer:not(:empty) { margin-top: 10px; }
+.ob-again { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--s1) 10%, var(--surface)); font-size: 14px; margin-bottom: 12px; }
+.install-box { border: 2px solid var(--s1); border-radius: 12px; padding: 10px 14px; margin: 6px 0 12px; font-size: 14px; }
+.install-box ol { margin: 6px 0; padding-left: 20px; } .install-box li { margin: 4px 0; }

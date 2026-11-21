@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.5 (in progress)
+Every detail ends with concrete actions ("Lohnt sich das für mich?", follow the theme, remember as topic, add to portfolio, ask your AI); startups and business angels explained; install guide for the device in use; setup can be repeated with previous answers; deep links straight to forms and entries.
+
 ## 5.4 (in progress)
 Several goals with amount and year and a combined monthly need; wish pension; the readiness check can be completed in place; a backup step in the setup that explains the options and what is safe.
 
