@@ -52,12 +52,10 @@
     </div>
     <nav class="views" id="views" aria-label="Bereiche">
       <a href="#heute" data-nav="heute"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 7v5l3 2"/></svg><span>Heute</span></a>
-      <a href="#plan" data-nav="plan"><svg viewBox="0 0 24 24"><path d="M12 3v9h9A9 9 0 1 1 12 3Zm3-.5A9 9 0 0 1 21.5 9H15Z"/></svg><span>Mein Plan</span></a>
-      <a href="#maerkte" data-nav="maerkte"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-9M15 7h5v5"/></svg><span>Märkte</span></a>
-      <a href="#chancen" data-nav="chancen"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.6 6.5 19.5l1-6.2L3 8.9 9 8Z"/></svg><span>Chancen</span></a>
-      <a href="#profis" data-nav="profis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>Profis</span></a>
-      <a href="#news" data-nav="news"><svg viewBox="0 0 24 24"><path d="M4 5h13v14H6a2 2 0 0 1-2-2Zm13 4h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></svg><span>News</span></a>
-      <a href="#wissen" data-nav="wissen"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5Zm0 15A2.5 2.5 0 0 0 6.5 23H20v-5M8 7h8"/></svg><span>Wissen</span></a>
+      <a href="#plan" data-nav="plan"><svg viewBox="0 0 24 24"><path d="M12 3v9h9A9 9 0 1 1 12 3Zm3-.5A9 9 0 0 1 21.5 9H15Z"/></svg><span>Mein Geld</span></a>
+      <a href="#entdecken" data-nav="entdecken"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-9M15 7h5v5"/></svg><span>Entdecken</span></a>
+      <a href="#profis" data-nav="profis" id="navSmart"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>Profis &amp; News</span></a>
+      <a href="#menu" data-menu data-nav="wissen"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menü</span></a>
     </nav>
   </header>
 
@@ -118,6 +116,10 @@
     </div>
 
     <div class="view" data-view="plan" hidden>
+    <section id="depot" class="card">
+      <div class="card-head"><div><h2>Mein Depot</h2><p class="sub">Was du schon hast, verglichen mit deinem Plan. Freiwillig, bleibt nur auf deinem Gerät, jederzeit änderbar.</p></div></div>
+      <div id="depotBody"></div>
+    </section>
     <section id="plan" class="card plan-card">
       <div class="card-head">
         <div>
@@ -173,7 +175,7 @@
     </section>
     </div>
 
-    <div class="view" data-view="maerkte" hidden>
+    <div class="view" data-view="entdecken" hidden>
     <section id="frueh" class="card">
       <div class="card-head"><div><h2>Konjunktur-Warnsystem</h2><p class="sub">Drei gut erforschte Rezessions-Anzeiger aus US-Daten (FRED). Zinskurve und Risikoaufschläge warnen oft Monate vorher, die Sahm-Regel meldet eher den Beginn. Grün = ruhig, Gelb = beobachten, Rot = Warnsignal. Fehlalarme kommen vor, etwa die lange umgekehrte Zinskurve 2022–24.</p></div></div>
       <div id="macro" class="macros"></div>
@@ -281,9 +283,6 @@
       <div class="card-head"><div><h2>Offizielle Stimmungs-Messungen</h2><p class="sub">Amtliche, seit Jahrzehnten geführte Umfragen und ein Stress-Maß der US-Notenbank. Monatlich statt minütlich, dafür methodisch geprüft und in der Forschung verwendet. Sie ergänzen das schnelle Barometer oben.</p></div></div>
       <div id="officialMood" class="om-grid"></div>
     </section>
-    </div>
-
-    <div class="view" data-view="chancen" hidden>
     <section id="trends" class="card">
       <div class="card-head"><div><h2>Trend-Radar: Was gerade abhebt</h2><p class="sub">Was sich gerade ungewöhnlich stark bewegt, über alle Anlageklassen, Rohstoffe und Themen hinweg. „2,0×“ heißt: doppelt so weit wie eine typische Monatsschwankung. Dazu Aufmerksamkeit, die gerade sprunghaft steigt, und KI-Software, die Entwickler massenhaft herunterladen.</p></div></div>
       <div id="trendsBody" class="trends"></div>
@@ -363,12 +362,6 @@
       <p class="sub">Durchschnittliches Kursziel der Banken-Analysten für die nächsten 12 Monate im Vergleich zum aktuellen Kurs. Analysten liegen oft daneben, sind aber ein guter Stimmungsmesser.</p>
       <div id="targets" class="targets"></div></div>
     </section>
-
-
-
-    </div>
-
-    <div class="view" data-view="news" hidden>
     <section id="eventsSec" class="card">
       <div class="card-head"><div><h2>Ereignisse und ihre typische Wirkung</h2><p class="sub">Jede Meldung wird einer Ereignis-Art zugeordnet: Zinsen, Zölle, Krieg, Wahlen, Quartalszahlen und mehr. Die Pfeile zeigen historische Muster, keine Garantie. Unter „Was sagt die Forschung?“ steht jeweils die Quelle.</p></div></div>
       <div id="eventsAll" class="events"></div>
@@ -483,6 +476,12 @@
     <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
       <button class="btn btn-icon drawer-close" type="button" data-close aria-label="Schließen">✕</button>
       <div id="drawerBody"></div>
+    </div>
+  </div>
+  <div id="sheet" class="search-ov sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="search-panel sheet-panel">
+      <button class="btn btn-icon sheet-close" type="button" data-sheet-close aria-label="Schließen">✕</button>
+      <div id="sheetBody"></div>
     </div>
   </div>
   <div id="prefsPanel" class="drawer" hidden>

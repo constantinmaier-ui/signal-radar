@@ -9,7 +9,10 @@ const KIND = {
   warnung: { icon: "!", label: "Warnung", cls: "k-warn" },
   info: { icon: "i", label: "Gut zu wissen", cls: "k-info" },
 };
-const VIEW_LABEL = { heute: "Heute", plan: "Mein Plan", maerkte: "Märkte", chancen: "Chancen", profis: "Profis", news: "News", wissen: "Wissen" };
+const VIEW_LABEL = { heute: "Heute", plan: "Mein Geld", entdecken: "Entdecken", profis: "Profis & News", wissen: "Wissen" };
+// Old section names (shared links, signal targets) map onto the new, simpler structure
+export const VIEW_ALIAS = { maerkte: "entdecken", chancen: "entdecken", news: "profis" };
+export const viewOf = (v) => VIEW_ALIAS[v] || v;
 
 export function renderCheck() {
   const d = state.data, r = d.risk || {};
@@ -63,7 +66,7 @@ export function renderSignals() {
         ${s.hype ? `<p class="hype-why"><b>Warum Hype:</b> ${esc(s.hype)}</p>` : ""}
         <p>${esc(s.text)}</p>
         <p class="sig-todo"><b>Möglicher nächster Schritt:</b> ${esc(s.todo)}</p>
-        ${s.view && s.view !== "heute" ? `<a class="sig-link" href="#${s.view}">Details in „${VIEW_LABEL[s.view]}“ →</a>` : ""}
+        ${s.view && s.view !== "heute" ? `<a class="sig-link" href="#${viewOf(s.view)}">Details in „${VIEW_LABEL[viewOf(s.view)]}“ →</a>` : ""}
       </div></article>`;
   }).join("") : '<div class="empty">Gerade keine auffälligen Signale. Das ist ein gutes Zeichen: einfach beim Plan bleiben.</div>';
   const more = $("#sigMore");
@@ -80,10 +83,10 @@ export function initSignalControls() {
 }
 
 // ---------- Bereiche (Hash-Navigation) ----------
-const VIEWS = ["heute", "plan", "maerkte", "chancen", "profis", "news", "wissen"];
+const VIEWS = ["heute", "plan", "entdecken", "profis", "wissen"];
 export function currentView() {
-  const h = location.hash.replace("#", "");
-  if (h.startsWith("thema=")) return "chancen";
+  const h = viewOf(location.hash.replace("#", ""));
+  if (h.startsWith("thema=")) return "entdecken";
   if (h.startsWith("plan=")) return "plan";
   return VIEWS.includes(h) ? h : "heute";
 }

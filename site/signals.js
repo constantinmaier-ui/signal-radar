@@ -108,7 +108,7 @@ export function buildSignals(d, history = []) {
   const m = d.realEstate?.mortgage;
   if (m && ok(m.rate) && ok(m.yearAgo) && Math.abs(m.rate - m.yearAgo) >= 0.005) {
     const up = m.rate > m.yearAgo;
-    add({ id: "mortgage-move", kind: up ? "warnung" : "chance", weight: 52, view: "maerkte", title: `Bauzinsen ${up ? "gestiegen" : "gesunken"}: ${(m.rate * 100).toFixed(2).replace(".", ",")} %`, text: `Vor einem Jahr lagen sie bei ${(m.yearAgo * 100).toFixed(2).replace(".", ",")} %. ${up ? "Höhere Zinsen verteuern Kredite und bremsen die Hauspreise." : "Günstigere Kredite machen Kaufen wieder attraktiver."}`, todo: "Mit dem Immobilien-Rechner unter „Märkte“ durchrechnen, bevor du dich entscheidest.", source: "EZB-Statistik" });
+    add({ id: "mortgage-move", kind: up ? "warnung" : "chance", weight: 52, view: "maerkte", title: `Bauzinsen ${up ? "gestiegen" : "gesunken"}: ${(m.rate * 100).toFixed(2).replace(".", ",")} %`, text: `Vor einem Jahr lagen sie bei ${(m.yearAgo * 100).toFixed(2).replace(".", ",")} %. ${up ? "Höhere Zinsen verteuern Kredite und bremsen die Hauspreise." : "Günstigere Kredite machen Kaufen wieder attraktiver."}`, todo: "Mit dem Immobilien-Rechner unter „Entdecken“ durchrechnen, bevor du dich entscheidest.", source: "EZB-Statistik" });
   }
 
   return s.sort((a, b2) => b2.weight - a.weight);
