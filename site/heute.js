@@ -104,7 +104,8 @@ export function showView(onShow) {
   else swap();
   $$("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === v));
   document.title = v === "heute" ? "Signal-Radar" : `${VIEW_LABEL[v]} · Signal-Radar`;
-  if (!location.hash.startsWith("#thema=")) window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  // Jump to the top without the page-wide smooth scrolling, which fought with the user's own swipes
+  if (!location.hash.startsWith("#thema=")) { try { window.scrollTo({ top: 0, behavior: "instant" }); } catch { window.scrollTo(0, 0); } }
   onShow?.(v);
 }
 

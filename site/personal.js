@@ -8,6 +8,7 @@ import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
 import { hashFor, applySub, anchorOf } from "./subnav.js";
 import { validRef, quoteOf, positionValue, ensureDatalist, matchAny, suggestCoins, loadCoins, refreshCoinPrices, fmtEur } from "./holdings.js";
+import { saveDraft, loadDraft, clearDraft, draftAge } from "./drafts.js";
 import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine, goalsOf } from "./situation.js";
 
 // ---------- Interests ----------
@@ -96,9 +97,9 @@ export function openMenu() {
         <button type="button" class="menu-item" data-act="backup">Sicherung &amp; andere Geräte</button>
         <button type="button" class="menu-item" data-goto="wissen:installieren">Als App installieren</button>
       </div></div>`;
-  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+  $("#sheet").hidden = false;
 }
-export const closeSheet = () => { $("#sheet").hidden = true; document.body.style.overflow = ""; };
+export const closeSheet = () => { $("#sheet").hidden = true; setTimeout(() => renderNextSteps(), 50); };
 
 // ---------- "Mein Profil": everything entered, in one place, each part editable ----------
 export function openProfile(openPrefs) {
@@ -120,7 +121,7 @@ export function openProfile(openPrefs) {
     ${row("Sicherung &amp; andere Geräte", "verschlüsselt sichern, auf Handy oder Computer übertragen", '<button type="button" class="btn btn-ghost btn-sm" data-act="backup">Öffnen</button>')}
     <div class="bk-btns"><button type="button" class="btn btn-primary" data-act="onboard">🔁 Einrichtung wiederholen</button></div>
     <p class="fine">Deine bisherigen Angaben sind dabei vorausgefüllt. Du änderst nur, was nicht mehr stimmt.</p>`;
-  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+  $("#sheet").hidden = false;
 }
 
 // ---------- Onboarding ----------
@@ -165,9 +166,22 @@ export function openOnboarding(step = 0, single = false) {
   const plan = store.get("plan", {}) || {};
   ob = { step, single, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, horizon0: null, goal: store.get("goal", null), personas: personas(), watch: [...state.watch], topics: myTopics(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
   ob.horizon0 = ob.horizon;
+  // Half-finished setup? Continue where the user left off, with everything entered so far
+  const dr = loadDraft(obKey(step, single));
+  if (dr && dr.value && typeof dr.value === "object") ob = { ...ob, ...dr.value, single, restored: dr.at, ...(single ? { step } : {}) };
   renderOnboarding();
-  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+  $("#sheet").hidden = false;
 }
+const obKey = (step, single) => (single ? `onboarding-${step}` : "onboarding");
+/** Reads everything typed on the current step into the setup state (also unfinished rows). */
+function captureStep() {
+  readSituation(); readTopics();
+  const root = $("#sheet");
+  if (root && root.querySelector(".dp-row")) { ob.depotRaw = rawDepotRows(root); readDepotEditor(root, (l) => (ob.depot = l)); }
+}
+/** Keeps the setup as a draft on this device (step and everything entered so far). */
+/** Only once the user changed something, so merely opening and closing leaves no draft. */
+function saveObDraft() { if (!ob || !ob.touched) return; const { restored, ...rest } = ob; saveDraft(obKey(ob.step, ob.single), rest); }
 function renderOnboarding() {
   const steps = 6, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
@@ -216,7 +230,7 @@ function renderOnboarding() {
       </div>`; },
     () => `<h2 id="sheetTitle">Wie viel Detail?</h2><div class="chips-wrap">${chip("mode", "easy", ob.mode !== "pro", "Einsteiger: das Wichtigste, einfach erklärt")}${chip("mode", "pro", ob.mode === "pro", "Profi: alle Kennzahlen und Tabellen")}</div>
       <p><b>Was möchtest du lernen?</b> <span class="fine">(freiwillig, mehrere möglich)</span></p><div class="chips-wrap">${LEARN.map(([k, l]) => chip("learn", k, ob.learn.includes(k), l)).join("")}</div>`,
-    () => `<h2 id="sheetTitle">Dein Depot <span class="fine">(freiwillig)</span></h2><p class="fine">Dann sagt dir das Radar, was zu deinen Anlagen passt und wo du vom Plan abweichst. Bleibt nur auf deinem Gerät. Kannst du auch später unter „Mein Geld“ eintragen.</p>${depotEditor(ob.depot)}`,
+    () => `<h2 id="sheetTitle">Dein Depot <span class="fine">(freiwillig)</span></h2><p class="fine">Dann sagt dir das Radar, was zu deinen Anlagen passt und wo du vom Plan abweichst. Bleibt nur auf deinem Gerät. Kannst du auch später unter „Mein Geld“ eintragen.</p>${depotEditor(ob.depotRaw?.length ? ob.depotRaw : ob.depot)}`,
     () => `<h2 id="sheetTitle">🔒 Sichern &amp; Geräte <span class="fine">(empfohlen)</span></h2>
       <p>Deine Eingaben liegen nur auf diesem Gerät, nicht bei uns. Das ist sicher, aber sie können verloren gehen. Wähle, wie du sie schützen willst:</p>
       <div class="bk-choose">
@@ -231,8 +245,10 @@ function renderOnboarding() {
       <p><b>Jetzt einrichten?</b></p>
       <div class="chips-wrap">${chip("bk", "now", ob.backup === "now", "Ja, gleich nach dem Einrichten")}${chip("bk", "later", ob.backup !== "now", "Später (unter 👤 Mein Profil)")}</div>`,
   ][s]();
-  $("#sheetBody").innerHTML = `<div class="ob-dots" ${ob.single ? "hidden" : ""}>${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
-    <div class="ob-actions">${ob.single ? '<button type="button" class="btn btn-ghost" data-sheet-close>Abbrechen</button><button type="button" class="btn btn-primary" data-ob="done">Speichern</button>'
+  const restoredNote = ob.restored ? `<div class="ob-draft">📝 <b>Weiter, wo du aufgehört hast.</b> Deine Eingaben (${esc(draftAge(ob.restored))}) sind noch da. <button type="button" class="link-btn" data-ob="fresh">Neu beginnen</button></div>` : "";
+  saveObDraft();
+  $("#sheetBody").innerHTML = `${restoredNote}<div class="ob-dots" ${ob.single ? "hidden" : ""}>${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
+    <div class="ob-actions">${ob.single ? '<button type="button" class="btn btn-ghost" data-ob="cancel">Abbrechen</button><button type="button" class="btn btn-primary" data-ob="done">Speichern</button>'
       : `${s ? '<button type="button" class="btn btn-ghost" data-ob="back">Zurück</button>' : '<button type="button" class="btn btn-ghost" data-ob="skip">Überspringen</button>'}
       <button type="button" class="btn btn-primary" data-ob="${s === steps - 1 ? "done" : "next"}">${s === steps - 1 ? "Fertig" : "Weiter"}</button>`}</div>`;
 }
@@ -246,8 +262,9 @@ function readSituation() {
   const age = n("#sitAge"); if (age !== undefined) ob.sit.birthYear = age ? new Date().getFullYear() - age : null;
 }
 function finishOnboarding() {
-  readDepotEditor($("#sheet"), (list) => (ob.depot = list));
-  readSituation();
+  captureStep();
+  clearDraft(obKey(ob.step, ob.single));
+  if (!ob.single) for (let i = 0; i < 6; i++) clearDraft(obKey(i, true));
   const list = ob.interests.length ? ob.interests : ALL;
   store.set("interests", list);
   store.set("personas", ob.personas);
@@ -271,6 +288,7 @@ function finishOnboarding() {
 }
 function onboardingClick(e) {
   const t = e.target;
+  if (ob && t.closest?.("#sheet button") && !t.closest("[data-sheet-close], [data-ob='skip'], [data-ob='fresh'], [data-ob='cancel']")) ob.touched = true;
   const pick = (sel) => t.closest(sel);
   let b;
   if ((b = pick("[data-pers]"))) { readTopics();
@@ -294,9 +312,11 @@ function onboardingClick(e) {
   if ((b = pick("[data-mode]")) && b.closest("#sheet")) { ob.mode = b.dataset.mode; return renderOnboarding(), true; }
   if ((b = pick("[data-ob]"))) {
     const a = b.dataset.ob;
-    if (a === "skip") { store.set("onboarded", true); closeSheet(); }
-    else if (a === "back") { readDepotEditor($("#sheet"), (l) => (ob.depot = l)); readSituation(); ob.step--; renderOnboarding(); }
-    else if (a === "next") { readSituation(); readTopics(); ob.step++; renderOnboarding(); }
+    if (a === "skip") { store.set("onboarded", true); clearDraft("onboarding"); closeSheet(); }
+    else if (a === "back") { captureStep(); ob.step--; renderOnboarding(); }
+    else if (a === "next") { captureStep(); ob.step++; renderOnboarding(); }
+    else if (a === "cancel") { clearDraft(obKey(ob.step, ob.single)); closeSheet(); }
+    else if (a === "fresh") { clearDraft(obKey(ob.step, ob.single)); const { step, single } = ob; openOnboarding(single ? step : 0, single); }
     else if (a === "done") finishOnboarding();
     return true;
   }
@@ -332,6 +352,11 @@ function readDepotEditor(root, cb) {
     const q = ref ? quoteOf(ref) : null;
     return { cat: r.querySelector(".dp-cat").value, name: (m?.name || nameEl.value.trim()).slice(0, 60), ...(ref ? { ref } : {}), ...(qty > 0 ? { qty } : {}), value: value || (q && qty ? qty * q.last : 0) };
   }).filter((p) => CAT_IDS.includes(p.cat) && (p.value > 0 || (p.qty > 0 && p.ref))));
+}
+/** Every editor row as typed, also unfinished ones (for drafts). Pure given the DOM. */
+function rawDepotRows(root) {
+  return $$(".dp-row", root).map((r) => ({ cat: r.querySelector(".dp-cat")?.value || "world", name: r.querySelector(".dp-name")?.value || "", ref: r.querySelector(".dp-name")?.dataset.ref || "", qty: r.querySelector(".dp-qty")?.value || "", value: r.querySelector(".dp-val")?.value || "" }))
+    .filter((r) => r.name.trim() || r.qty || r.value);
 }
 /** Compares holdings with the plan. Pure: returns shares, deviations and warnings. */
 export function analyzeDepot(list, targets = {}) {
@@ -375,8 +400,11 @@ export function renderDepot() {
   let targets = {};
   try { targets = buildPlan(store.get("plan", { once: 5000, monthly: 200, years: 15, profile: store.get("goal", "auto") }), d).weights || {}; } catch { /* no plan yet */ }
   const a = analyzeDepot(list, targets);
+  // Unsaved changes from last time come back, clearly marked
+  const dd = loadDraft("depot"), draft = dd?.value?.length ? dd.value : null;
+  const draftNote = draft ? `<div class="ob-draft">📝 <b>Noch nicht gespeichert:</b> deine Eingaben (${esc(draftAge(dd.at))}) sind noch da. <button type="button" class="link-btn" data-dp="discard">Verwerfen</button></div>` : "";
   if (!raw.length) {
-    el.innerHTML = `<p>Trag ein, was du schon hast. Dann zeigt dir das Radar, wo du vom Plan abweichst, wo ein Klumpenrisiko steckt und was es zu deinen Anlagen sagt. <b>Freiwillig, bleibt auf deinem Gerät.</b></p>${depotEditor([])}<button type="button" class="btn btn-primary" data-dp="save">Depot speichern</button>`;
+    el.innerHTML = `<p>Trag ein, was du schon hast. Dann zeigt dir das Radar, wo du vom Plan abweichst, wo ein Klumpenrisiko steckt und was es zu deinen Anlagen sagt. <b>Freiwillig, bleibt auf deinem Gerät.</b></p>${draftNote}${depotEditor(draft || [])}<button type="button" class="btn btn-primary" data-dp="save">Depot speichern</button>`;
     return;
   }
   const label = (k) => CATS.find(([c]) => c === k)?.[1] || k;
@@ -390,14 +418,15 @@ export function renderDepot() {
     <p class="fine">Strich = Anteil laut deinem Plan (Ziel ${esc(GOALS[store.get("goal", "ausgewogen")]?.label || "")}).</p>
     ${a.warnings.length ? `<div class="dp-warn"><h3>Das fällt auf</h3><ul>${a.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>` : '<p class="dp-ok">✓ Dein Depot passt gut zu deinem Plan.</p>'}
     ${says.length ? `<h3>Was das Radar zu deinen Anlagen sagt</h3><div class="dp-says">${says.join("")}</div>` : ""}
-    <details class="dp-edit"><summary>Depot bearbeiten</summary>${depotEditor(raw)}<button type="button" class="btn btn-primary" data-dp="save">Speichern</button></details>`;
+    <details class="dp-edit" ${draft ? "open" : ""}><summary>Depot bearbeiten</summary>${draftNote}${depotEditor(draft || raw)}<button type="button" class="btn btn-primary" data-dp="save">Speichern</button></details>`;
 }
 function depotClick(e) {
   const b = e.target.closest("[data-dp], .dp-del"); if (!b) return false;
   const editor = b.closest(".dp-editor, #depotBody, #sheetBody");
   if (b.classList.contains("dp-del")) { const row = b.closest(".dp-row"); if (row.parentElement.children.length > 1) row.remove(); else row.querySelectorAll("input").forEach((i) => (i.value = "")); return true; }
   if (b.dataset.dp === "add") { const rows = editor.querySelector(".dp-rows"); const tmp = document.createElement("div"); tmp.innerHTML = depotEditor([{ cat: "world", name: "", value: "" }]); rows.appendChild(tmp.querySelector(".dp-row")); return true; }
-  if (b.dataset.dp === "save") { readDepotEditor(b.closest("#depotBody"), (l) => store.set("portfolio", l)); renderDepot(); toast("Depot gespeichert (nur auf diesem Gerät)"); return true; }
+  if (b.dataset.dp === "save") { readDepotEditor(b.closest("#depotBody"), (l) => store.set("portfolio", l)); clearDraft("depot"); renderDepot(); toast("Depot gespeichert (nur auf diesem Gerät)"); return true; }
+  if (b.dataset.dp === "discard") { clearDraft("depot"); renderDepot(); toast("Entwurf verworfen"); return true; }
   return false;
 }
 
@@ -440,8 +469,9 @@ export function renderSummary() {
 
 // ---------- "Dein nächster Schritt": what is missing and where to go next ----------
 /** Open setup steps, most useful first. Pure given the inputs. */
-export function nextSteps({ personas: pers = [], goalSet = false, age = null, depot = 0, backupAt = null, installed = false } = {}) {
+export function nextSteps({ personas: pers = [], goalSet = false, age = null, depot = 0, backupAt = null, installed = false, draftStep = null } = {}) {
   const all = [
+    ...(draftStep !== null ? [{ id: "draft", done: false, title: "Einrichtung fertig machen", why: `Du warst bei Schritt ${draftStep + 1} von 6. Alles, was du eingegeben hast, ist noch da.`, time: "1 Min.", act: 'data-act="onboard"' }] : []),
     { id: "use", done: pers.length > 0, title: "Sag dem Radar, wofür du es nutzt", why: "Dann siehst du oben deine eigenen Live-Infos.", time: "30 Sek.", act: 'data-edit="0"' },
     { id: "risk", done: goalSet, title: "Risikoprofil wählen", why: "Alle Hinweise richten sich danach, wie mutig du anlegen willst.", time: "1 Min.", act: 'data-edit="1"' },
     { id: "age", done: age !== null, title: "Alter und Ziel eintragen", why: "Dann rechnet das Radar deine Rentenlücke und ob du bereit bist zu investieren.", time: "1 Min.", act: 'data-edit="2"' },
@@ -454,7 +484,8 @@ export function nextSteps({ personas: pers = [], goalSet = false, age = null, de
 export function renderNextSteps() {
   const box = $("#nextSteps"); if (!box) return;
   const installed = typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true);
-  const n = nextSteps({ personas: personas(), goalSet: !!store.get("goal", null), age: ageOf(situation()), depot: depotList().length, backupAt: store.get("backupAt", null) || store.get("autoAt", null), installed });
+  const dr = loadDraft("onboarding"), draftStep = dr && Number.isInteger(dr.value?.step) && !($("#sheet") && !$("#sheet").hidden) ? dr.value.step : null;
+  const n = nextSteps({ personas: personas(), goalSet: !!store.get("goal", null), age: ageOf(situation()), depot: depotList().length, backupAt: store.get("backupAt", null) || store.get("autoAt", null), installed, draftStep });
   if (!n.open.length) { box.hidden = true; return; }
   box.hidden = false;
   const pctDone = Math.round((n.done / n.total) * 100);
@@ -493,13 +524,25 @@ export function renderInstallMine() {
 }
 
 // ---------- Wiring ----------
+let typeTimer = 0;
+function onDraftInput(e) {
+  const inSheet = e.target.closest?.("#sheet"), inDepot = e.target.closest?.("#depotBody .dp-editor");
+  if (!inSheet && !inDepot) return;
+  clearTimeout(typeTimer);
+  typeTimer = setTimeout(() => {
+    if (inSheet && ob && !$("#sheet").hidden) { ob.touched = true; captureStep(); saveObDraft(); }
+    if (inDepot) saveDraft("depot", rawDepotRows($("#depotBody .dp-editor")));
+  }, 400);
+}
 export function initPersonal({ openPrefs, onGoto }) {
+  document.addEventListener("input", onDraftInput);
+  document.addEventListener("change", onDraftInput);
   for (const el of document.querySelectorAll("[data-fill]")) el.innerHTML = { value: VALUE_HTML, sources: SOURCES_HTML }[el.dataset.fill] || "";
   document.addEventListener("click", (e) => {
     if (depotClick(e)) return;
     if (!$("#sheet").hidden && onboardingClick(e)) return;
     const g = e.target.closest("[data-goto]");
-    if (g) { e.preventDefault(); closeSheet(); const dr = $("#drawer"); if (dr && !dr.hidden) { dr.hidden = true; document.body.style.overflow = ""; } const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
+    if (g) { e.preventDefault(); closeSheet(); const dr = $("#drawer"); if (dr && !dr.hidden) { dr.hidden = true; } const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
     const act = e.target.closest("[data-act]");
     // quick risk-profile switch on "Heute": one tap, everything follows
     if (e.target.closest("[data-pp-toggle]")) { const c = $("#profilePill .pp-choices"); c.hidden = !c.hidden; e.target.closest("[data-pp-toggle]").setAttribute("aria-expanded", String(!c.hidden)); return; }
@@ -514,7 +557,7 @@ export function initPersonal({ openPrefs, onGoto }) {
     const kt = e.target.closest("#drawer [data-keep-topic]");
     if (kt) { store.set("mytopics", cleanTopics([...myTopics(), kt.dataset.keepTopic])); kt.textContent = "★ Gemerkt"; kt.disabled = true; toast(`„${kt.dataset.keepTopic}“ gemerkt: erscheint unter „Dein Radar“ und im Feed`); window.dispatchEvent(new Event("radar:topics")); return; }
     const ed = e.target.closest("[data-edit]");
-    if (ed && !$("#drawer").hidden) { $("#drawer").hidden = true; document.body.style.overflow = ""; }
+    if (ed && !$("#drawer").hidden) { $("#drawer").hidden = true; }
     if (ed) { openOnboarding(Number(ed.dataset.edit) || 0, true); return; }
     if (e.target.closest("#profileBtn, [data-act='profile']")) { openProfile(openPrefs); return; }
     if (act) { const a = act.dataset.act; if (a === "onboard") openOnboarding(); else if (a === "prefs") { closeSheet(); openPrefs(); } else if (a === "backup") { closeSheet(); openPrefs(); setTimeout(() => $("#backupBox")?.scrollIntoView(), 100); } return; }

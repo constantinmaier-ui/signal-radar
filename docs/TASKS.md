@@ -43,6 +43,15 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.7) – nothing gets lost, scrolling works (owner request 2026-11-21), by value ÷ effort
+- [x] **Bug: the end of every page sat under the phone's tab bar** and could not be reached (`.wrap` overrode `main`'s bottom padding)
+- [x] **Bug: positions entered during the setup were lost** when tapping "Weiter" to the backup step
+- [x] **Bug: swipe-back / back button left a detail window open and the page locked**; now back closes the window, and one central rule locks scrolling only while a window is open
+- [x] Bug: switching pages scrolled smoothly to the top and fought with the user's own swipe; now it jumps
+- [x] **Drafts**: the setup continues where you stopped (also after closing or reloading), single edits too; unsaved portfolio rows come back marked "noch nicht gespeichert"; the real-estate and rent-index calculators keep their inputs; "Dein nächster Schritt" offers "Einrichtung fertig machen"
+- [x] Phone layout: windows respect the home bar and the visible screen height (dvh); toasts no longer hide behind the tab bar
+- [ ] **"Neu seit deinem letzten Besuch"** instead of pop-ups: one quiet line on Heute (e.g. "1 Position jetzt ⚠️, 2 neue Frühsignale zu deinen Themen")
+
 ## Now (version 5.6) – the app adapts to your situation, early signals (owner request 2026-11-21), by value ÷ effort
 - [x] **"Für dich geprüft"** on Heute: do you reach your goals (monthly need vs. saving rate, short goals flagged), every holding rule-checked (✅ fits · 👀 watch · ⚠️ check), where the plan has room, early signals on your topics
 - [x] **Rule checks per holding** with rule, source and "what you can do": emergency fund first, concentration > 10 %, strong run-up > 30 % over the 200-day average, downtrend < −10 % (broad ETFs: keep saving), crypto vs. risk profile, insider buys

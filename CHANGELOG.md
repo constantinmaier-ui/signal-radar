@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.7 (in progress)
+Nothing gets lost: the setup, single edits, unsaved portfolio rows and the calculators keep what you typed and continue where you stopped. Fixed: the end of each page was hidden under the phone's tab bar; positions entered in the setup were lost; the back gesture left a detail window open and the page locked; page switches fought with scrolling.
+
 ## 5.6 (in progress)
 The app adapts to your situation: "Für dich geprüft" shows whether you reach your goals, rule-checks every holding (concentration, run-up, downtrend, profile fit, emergency fund) with rule, source and next step, shows where your plan has room and what each input changes. Signals that touch your holdings come first. New "Frühsignale": what only a few have noticed yet (rising attention with a flat price, specialist-only news, cluster insider buys, new positions of single top investors) and a life-cycle view of all themes.
 
