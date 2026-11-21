@@ -7,7 +7,7 @@ const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 
 // ---------------- SEC 13F ----------------
 export async function fetchSuperinvestors({ get, sleep, status }) {
-  const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard (open source; github.com)";
+  const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard signal-radar@users.noreply.github.com"; // SEC requires an e-mail address in the User-Agent
   const sec = (url, type = "json") => get(url, { type, headers: { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" }, timeout: 20000 });
   const out = [];
   for (const inv of INVESTORS) {
@@ -206,7 +206,7 @@ export { UNIVERSE, ASSETS };
 import { parseForm4 } from "./lib.mjs";
 export async function fetchInsiders({ get, sleep, status }, symbols, prev, NOW) {
   if (prev?.insiders?.checkedAt && NOW - Date.parse(prev.insiders.checkedAt) < 55 * 60e3) return prev.insiders;
-  const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard (open source; github.com)";
+  const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard signal-radar@users.noreply.github.com"; // SEC requires an e-mail address in the User-Agent
   const sec = (url, type = "json") => get(url, { type, headers: { "User-Agent": UA }, timeout: 20000 });
   const map = await sec("https://www.sec.gov/files/company_tickers.json");
   if (!map) { status.push({ source: "SEC Insider-Meldungen", ok: false, error: "Ticker-Liste nicht abrufbar" }); return prev?.insiders || null; }

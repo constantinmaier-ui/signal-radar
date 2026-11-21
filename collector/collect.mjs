@@ -210,16 +210,22 @@ async function fetchPolymarket() {
 }
 
 // GDELT: Anteil der weltweiten Berichterstattung über "Blase" (Medien-Temperatur)
-async function fetchBubbleChatter() {
+async function fetchBubbleChatter(prev) {
+  // GDELT allows about one request per 5 s and often answers shared GitHub IPs with 429:
+  // refresh at most hourly, retry once, otherwise keep the last value
+  if (prev?.checkedAt && NOW - Date.parse(prev.checkedAt) < 55 * 60e3) return prev;
   const q = encodeURIComponent('("ai bubble" OR "tech bubble" OR "stock market bubble" OR "KI-Blase")');
-  const j = await get(`https://api.gdeltproject.org/api/v2/doc/doc?query=${q}&mode=timelinevol&format=json&timespan=90d`, { type: "json", label: "GDELT Blasen-Berichterstattung", timeout: 25000 });
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${q}&mode=timelinevol&format=json&timespan=90d`;
+  let j = await get(url, { type: "json", timeout: 25000 });
+  if (!j) { await sleep(6000); j = await get(url, { type: "json", label: "GDELT Blasen-Berichterstattung", timeout: 25000 }); }
+  else status.push({ source: "GDELT Blasen-Berichterstattung", ok: true });
   const data = j?.timeline?.[0]?.data;
-  if (!data?.length) return null;
+  if (!data?.length) return prev || null;
   const v = data.map((d) => d.value);
   const last7 = mean(v.slice(-7)), base = v.slice(0, -7);
   const m = mean(base);
   const sd = Math.sqrt(mean(base.map((x) => (x - m) ** 2))) || 1;
-  return { z: (last7 - m) / sd, ratio: m ? last7 / m : null, spark: v.slice(-60).map((x) => Math.round(x * 1e4) / 1e4) };
+  return { checkedAt: new Date(NOW).toISOString(), z: (last7 - m) / sd, ratio: m ? last7 / m : null, spark: v.slice(-60).map((x) => Math.round(x * 1e4) / 1e4) };
 }
 
 // ---------------- Historie & optionaler Claude-Bericht ----------------
@@ -318,7 +324,7 @@ async function main() {
   const [prices, attention, newsRaw, hnRatios, fearGreed, cryptoTrending, polymarket, previous] = await Promise.all([
     fetchAllPrices(), fetchAttention(), fetchNews(), fetchHnRatios(), fetchFearGreed(), fetchCrypto(), fetchPolymarket(), loadPrevious(),
   ]);
-  const chatter = await fetchBubbleChatter();
+  const chatter = await fetchBubbleChatter(previous.prevData?.bubble?.chatter);
   const ctx = { get, pool, sleep, status, fetchSeries, priceStats };
   const [adoption, cryptoFlows, power] = await Promise.all([fetchAdoption({ get, pool, status }), fetchCryptoFlows({ get, status }), fetchPower({ get, status })]);
   const [research, realEstate, macro, commodities, tech] = await Promise.all([fetchResearch({ get, pool }, NOW), fetchRealEstate({ get, fetchSeries, priceStats, status }), fetchMacro({ get }), fetchCommodities({ fetchSeries, priceStats, pool, status }), fetchTechTrends({ get, status }, NOW)]);
