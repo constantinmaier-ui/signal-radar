@@ -90,7 +90,7 @@ export function openMenu() {
     <div class="menu-grid">${groups}
       <div class="menu-group"><h4>Einstellungen</h4>
         <button type="button" class="menu-item" data-act="profile">👤 Mein Profil: alles ansehen &amp; ändern</button>
-        <button type="button" class="menu-item" data-act="onboard">Persönlich einrichten</button>
+        <button type="button" class="menu-item" data-act="onboard">🔁 Einrichtung wiederholen (vorausgefüllt)</button>
         <button type="button" class="menu-item" data-act="prefs">Interessen &amp; Bereiche anpassen</button>
         <button type="button" class="menu-item" data-goto="plan:depot">Mein Depot bearbeiten</button>
         <button type="button" class="menu-item" data-act="backup">Sicherung &amp; andere Geräte</button>
@@ -118,7 +118,8 @@ export function openProfile(openPrefs) {
     ${row("Dein Depot", dep.length ? esc(`${dep.length} Positionen, ${fmt(total)} €`) : "", edit(4))}
     ${row("Bereiche ausblenden", "einzelne Abschnitte ein- oder ausschalten", '<button type="button" class="btn btn-ghost btn-sm" data-act="prefs">Öffnen</button>')}
     ${row("Sicherung &amp; andere Geräte", "verschlüsselt sichern, auf Handy oder Computer übertragen", '<button type="button" class="btn btn-ghost btn-sm" data-act="backup">Öffnen</button>')}
-    <div class="bk-btns"><button type="button" class="btn btn-ghost" data-act="onboard">Alles Schritt für Schritt neu einrichten</button></div>`;
+    <div class="bk-btns"><button type="button" class="btn btn-primary" data-act="onboard">🔁 Einrichtung wiederholen</button></div>
+    <p class="fine">Deine bisherigen Angaben sind dabei vorausgefüllt. Du änderst nur, was nicht mehr stimmt.</p>`;
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
 
@@ -171,7 +172,7 @@ function renderOnboarding() {
   const steps = 6, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
-    () => `${ob.single ? "" : `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
+    () => `${!ob.single && store.get("onboarded", false) ? `<div class="ob-again">🔁 <b>Einrichtung wiederholen.</b> Deine bisherigen Angaben sind vorausgefüllt. Ändere nur, was nicht mehr stimmt, und tippe dich mit „Weiter“ durch.</div>` : ""}${ob.single || store.get("onboarded", false) ? "" : `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
         <details class="ob-more"><summary>Was macht es besser als Finanzportale und Apps?</summary>${VALUE_HTML}</details>
         <details class="ob-more"><summary>Welche Quellen, wie oft?</summary>${SOURCES_HTML}</details></div>`}
       <h2 id="sheetTitle">Wofür nutzt du das Radar?</h2><p class="fine">Dann bekommst du unter „Dein Radar“ eigene Live-Infos. Mehrere möglich, freiwillig.</p>
@@ -463,6 +464,34 @@ export function renderNextSteps() {
     ${n.open.length > 2 ? `<p class="fine">Danach noch ${n.open.length - 2} weitere Schritt${n.open.length - 2 === 1 ? "" : "e"}. Alles freiwillig.</p>` : ""}`;
 }
 
+// ---------- Install guide for the device in use ----------
+/** Which device/browser this is, for the right install steps. Pure given the user agent. */
+export function deviceOf(ua = "", standalone = false) {
+  if (standalone) return "installed";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  if (/Edg\/|Chrome\//i.test(ua) && !/Mobile/i.test(ua)) return "desktop-chromium";
+  if (/Firefox\//i.test(ua)) return "firefox";
+  if (/Safari\//i.test(ua)) return "mac-safari";
+  return "other";
+}
+const INSTALL = {
+  installed: ["✓ Du nutzt das Radar schon als App.", ["Deine Eingaben bleiben so dauerhaft gespeichert.", "Für ein zweites Gerät: 👤 Mein Profil → Sicherung → „Link fürs andere Gerät“."]],
+  ios: ["iPhone / iPad: so installierst du das Radar", ["In <b>Safari</b> unten auf das Teilen-Symbol tippen (Quadrat mit Pfeil nach oben).", "Nach unten scrollen und „<b>Zum Home-Bildschirm</b>“ wählen.", "Oben rechts „<b>Hinzufügen</b>“. Fertig, das Radar-Symbol liegt jetzt bei deinen Apps.", "Wichtig: Nur so bleiben deine Eingaben am iPhone dauerhaft gespeichert."]],
+  android: ["Android: so installierst du das Radar", ["In <b>Chrome</b> oben rechts auf ⋮ tippen.", "„<b>App installieren</b>“ oder „Zum Startbildschirm hinzufügen“ wählen.", "Bestätigen. Fertig, das Radar liegt bei deinen Apps."]],
+  "desktop-chromium": ["Computer (Chrome / Edge): so installierst du das Radar", ["Oben in der Adresszeile rechts auf das Symbol mit dem Bildschirm und Pfeil klicken (oder oben im Radar auf „App installieren“, falls sichtbar).", "„<b>Installieren</b>“ klicken. Fertig, das Radar öffnet sich wie ein eigenes Programm."]],
+  "mac-safari": ["Mac (Safari): so installierst du das Radar", ["Oben im Menü <b>Ablage</b> → „<b>Zum Dock hinzufügen</b>“.", "Fertig, das Radar liegt im Dock."]],
+  firefox: ["Firefox: Installieren geht hier leider nicht", ["Am Computer: das Radar in Chrome oder Edge öffnen und dort installieren.", "Als Lesezeichen funktioniert es aber auch in Firefox."]],
+  other: ["So installierst du das Radar", ["Im Browser-Menü nach „App installieren“ oder „Zum Startbildschirm“ suchen."]],
+};
+export function renderInstallMine() {
+  const box = $("#installMine"); if (!box) return;
+  const standalone = typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true);
+  const [title, steps] = INSTALL[deviceOf(navigator.userAgent, standalone)];
+  box.innerHTML = `<div class="install-box"><b>${esc(title)}</b><ol>${steps.map((x) => `<li>${x}</li>`).join("")}</ol>
+    <p class="fine">Danach: <button type="button" class="link-btn" data-act="backup">Sicherung einrichten →</button> (schützt deine Eingaben und bringt sie auf andere Geräte). Anleitungen für alle Geräte stehen darunter.</p></div>`;
+}
+
 // ---------- Wiring ----------
 export function initPersonal({ openPrefs, onGoto }) {
   for (const el of document.querySelectorAll("[data-fill]")) el.innerHTML = { value: VALUE_HTML, sources: SOURCES_HTML }[el.dataset.fill] || "";
@@ -482,7 +511,10 @@ export function initPersonal({ openPrefs, onGoto }) {
       renderSummary(); const c = $("#profilePill .pp-choices"); if (c) c.hidden = false;
       toast(`Profil „${GOALS[k].label}“: Hinweise, Plan und Erklärungen sind angepasst.`); return;
     }
+    const kt = e.target.closest("#drawer [data-keep-topic]");
+    if (kt) { store.set("mytopics", cleanTopics([...myTopics(), kt.dataset.keepTopic])); kt.textContent = "★ Gemerkt"; kt.disabled = true; toast(`„${kt.dataset.keepTopic}“ gemerkt: erscheint unter „Dein Radar“ und im Feed`); window.dispatchEvent(new Event("radar:topics")); return; }
     const ed = e.target.closest("[data-edit]");
+    if (ed && !$("#drawer").hidden) { $("#drawer").hidden = true; document.body.style.overflow = ""; }
     if (ed) { openOnboarding(Number(ed.dataset.edit) || 0, true); return; }
     if (e.target.closest("#profileBtn, [data-act='profile']")) { openProfile(openPrefs); return; }
     if (act) { const a = act.dataset.act; if (a === "onboard") openOnboarding(); else if (a === "prefs") { closeSheet(); openPrefs(); } else if (a === "backup") { closeSheet(); openPrefs(); setTimeout(() => $("#backupBox")?.scrollIntoView(), 100); } return; }

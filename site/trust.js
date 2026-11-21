@@ -35,7 +35,7 @@ const sch = (q) => `https://scholar.google.com/scholar?q=${encodeURIComponent(q)
 // How each part is made, how often it updates, where to read more. Shown on tap ("ⓘ"), so the page stays short.
 const INFO = {
   lage: { freq: "alle 15 Min. (Kurse), stündlich (Berichterstattung)", how: "Eigenes Messgerät des Radars: mehrere Warnzeichen werden zu 0–100 gemischt, z. B. wie weit Tech-Aktien und Nvidia über ihrem 200-Tage-Schnitt liegen, Sorglosigkeit (niedriger VIX), Börsengang-Fieber und wie oft Medien „Blase“ schreiben. Die Gewichte sind selbst gewählt und offen einsehbar unter Wissen → So rechnet das Radar.",
-    links: [["Greenwood, Shleifer & You (2019): Bubbles for Fama", sch("Greenwood Shleifer You Bubbles for Fama")], ["Gewichte und Rechenweg", "#wissen/zahlen"]] },
+    links: [["Greenwood, Shleifer & You (2019): Bubbles for Fama", sch("Greenwood Shleifer You Bubbles for Fama")], ["Gewichte und Rechenweg", "goto:wissen:kpi-blasen-meter"]] },
   stimmung: { freq: "alle 15 Min.", how: "Das Angst-und-Gier-Barometer von CNN mischt sieben Marktdaten zu 0–100: Kursdynamik, Kursstärke, Marktbreite, Absicherungen mit Optionen (Put/Call), Nachfrage nach riskanten Anleihen, Schwankung (VIX) und Flucht in sichere Anlagen. Das Krypto-Barometer (alternative.me) nutzt u. a. Schwankung, Handelsvolumen, soziale Medien, Bitcoin-Anteil und Suchinteresse. Beide sind Branchen-Kennzahlen, keine wissenschaftlich geprüften Maße.",
     links: [["CNN Fear & Greed (Original)", "https://edition.cnn.com/markets/fear-and-greed"], ["Krypto-Barometer (alternative.me)", "https://alternative.me/crypto/fear-and-greed-index/"], ["Baker & Wurgler (2006): Investor Sentiment", sch("Baker Wurgler Investor Sentiment and the Cross-Section of Stock Returns")]] },
   frueh: { freq: "täglich bis monatlich (amtliche US-Daten)", how: "Drei bekannte Anzeiger: Zinskurve (lange minus kurze Zinsen; negativ ging Rezessionen oft voraus), Risikoaufschläge von Firmenanleihen und die Sahm-Regel (Anstieg der Arbeitslosenquote, meldet den Beginn einer Rezession).",
@@ -93,7 +93,7 @@ export function renderMeta() {
         <p><b>So entsteht es:</b> ${esc(info.how)}</p>
         <p><b>Wie gut belegt:</b> ${esc(word)}. ${esc(note)}</p>
         ${now ? `<p><b>Was heißt das jetzt für dich</b> (Profil ${esc({ sicherheit: "Sicherheit", ausgewogen: "Ausgewogen", wachstum: "Wachstum", mutig: "Mutig" }[goal] || goal)}): ${esc(now)}</p>` : ""}
-        <p><b>Weiterlesen:</b> ${info.links.map(([l, u]) => u.startsWith("#") ? `<a href="${esc(u)}">${esc(l)}</a>` : `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join(" · ")}</p>
+        <p><b>Weiterlesen:</b> ${info.links.map(([l, u]) => u.startsWith("goto:") ? `<button type="button" class="link-btn" data-goto="${esc(u.slice(5))}">${esc(l)} →</button>` : `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join(" · ")}</p>
         <p class="fine">Beobachtungen und Regeln, keine Anlageberatung. Die Bedeutung kann sich mit neuen Daten ändern.</p></details>` : "");
   }
 }

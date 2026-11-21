@@ -133,7 +133,7 @@ export function personaLines(id, d = {}, ctx = {}) {
     const moves = (d.commodities || []).map((c) => ({ c, e: eur(c) })).filter((x) => ok(x.e)).sort((a, b) => Math.abs(b.e) - Math.abs(a.e)).slice(0, 3);
     if (moves.length) add(`Größte Bewegungen in Euro (1 Monat): ${moves.map((x) => `${x.c.name} ${pct(x.e, 0)}`).join(", ")}. Starke Ausschläge sind bei Rohstoffen normal.`, `detail:com:${moves[0].c.id}`);
     if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. Rohstoffe kosten in Dollar, ein stärkerer Euro drückt deinen Gewinn in Euro.`, "detail:mkt:EURUSD=X");
-    add("So legen Privatanleger an: Gold physisch oder als Xetra-Gold (nach 1 Jahr Haltedauer steuerfrei), sonst breit gestreute Rohstoff-ETCs statt Einzelwetten. Als Beimischung von etwa 5–10 %, nicht als Kern.", "entdecken:rohstoffe");
+    add("So legen Privatanleger an: Gold physisch oder als Xetra-Gold (nach 1 Jahr Haltedauer steuerfrei), sonst breit gestreute Rohstoff-ETCs statt Einzelwetten. Als Beimischung von etwa 5–10 %, nicht als Kern.", "entdecken:com-invest");
   }
   if (id === "einkauf") {
     const fx = find(d.market, "sym", "EURUSD=X");
@@ -150,8 +150,8 @@ export function personaLines(id, d = {}, ctx = {}) {
     const m = d.realEstate?.mortgage, s = m?.series || [];
     const yr = s.length > 12 ? s[s.length - 13].value / 100 : null;
     if (m && ok(m.rate)) add(`Bauzinsen (EZB-Statistik, ${m.period || ""}): ${fmt(m.rate * 100, 2)} %${ok(yr) ? `, vor einem Jahr ${fmt(yr * 100, 2)} %` : ""}.`, "detail:info:mortgage");
-    if (id === "immo_neu" && m && ok(m.rate)) add(`Beispiel: 300.000 € Kredit mit 2 % Tilgung kosten bei diesem Zins rund ${nf0(loanPayment(300000, m.rate))} € im Monat.`, "entdecken:immobilien");
-    if (id === "immo_haben" && m && ok(m.rate)) add(`Anschlussfinanzierung: Jeder Prozentpunkt mehr Zins kostet bei 200.000 € Restschuld rund ${nf0(loanPayment(200000, 0.01, 0))} € mehr im Monat. Mit einem Forward-Darlehen lassen sich Zinsen meist bis zu 5 Jahre vorab festschreiben.`, "entdecken:immobilien");
+    if (id === "immo_neu" && m && ok(m.rate)) add(`Beispiel: 300.000 € Kredit mit 2 % Tilgung kosten bei diesem Zins rund ${nf0(loanPayment(300000, m.rate))} € im Monat.`, "entdecken:reForm");
+    if (id === "immo_haben" && m && ok(m.rate)) add(`Anschlussfinanzierung: Jeder Prozentpunkt mehr Zins kostet bei 200.000 € Restschuld rund ${nf0(loanPayment(200000, 0.01, 0))} € mehr im Monat. Mit einem Forward-Darlehen lassen sich Zinsen meist bis zu 5 Jahre vorab festschreiben.`, "entdecken:reForm");
     const h = d.realEstate?.hpi;
     if (h && ok(h.yoy)) add(`Hauspreise Deutschland: ${pct(h.yoy)} zum Vorjahr (Eurostat, ${h.period || ""}).`, "detail:info:hpi");
   }

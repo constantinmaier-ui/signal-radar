@@ -7,6 +7,7 @@
 - **Merging (owner's standing permission)**: Claude may merge its own pull requests without asking again, but only when the whole batch of work is finished, all tests pass, the PR has no conflicts, and the last workflow run on `main` is green. Merge one PR at a time and check that the run on `main` after each merge succeeds before the next. Until then say clearly "not ready to merge".
 - **Every owner request becomes a task**: add it to `docs/TASKS.md`, ordered by priority (value ÷ effort), and work through it in that order.
 - **Setup must be click, click, done** (for the owner and for users): at most 3 steps, one step at a time, direct links to the exact settings page, copy buttons for values, a "test" button with a clear ✓ at the end. Short first, details on tap, never a wall of text.
+- **Deep links only**: every link or button opens the exact form, file, entry or item it talks about, never a general overview page. Every detail ends with "what can you do now".
 - **Everything the user enters can be changed later** (profile, goal, portfolio, preferences). The app must work without optional inputs.
 - For every step say briefly: *what* changes, *why* it helps, *what* the owner has to do themselves (with click-by-click instructions; note when something only works in a desktop browser).
 - No jargon without explanation. Prefer an example over a technical term.
