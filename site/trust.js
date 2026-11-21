@@ -309,20 +309,29 @@ export async function decryptBackup(text, pass) {
 }
 export function initBackup() {
   const box = $("#backupBox"); if (!box) return;
-  box.innerHTML = `<h3>Sichern &amp; auf andere Geräte übertragen</h3>
-    <p class="fine">Plan, Merkliste, Interessen und Fitness-Fortschritt werden mit deinem Passwort verschlüsselt (AES-256). Die Datei kannst du in deine Cloud legen (OneDrive, iCloud, Dropbox) oder dir selbst schicken. Ohne Passwort kann sie niemand lesen, auch nicht der Betreiber dieser Seite.</p>
-    <label class="bk-label">Passwort (mind. 10 Zeichen)<input id="bkPass" type="password" autocomplete="new-password" minlength="10"></label>
-    <div class="bk-btns"><button class="btn btn-primary" type="button" id="bkSave">Sicherung erstellen</button><label class="btn btn-ghost bk-file">Sicherung laden<input id="bkFile" type="file" accept=".radar,application/json" hidden></label></div>
-    <p class="fine" id="bkMsg"></p><div id="autoBox"></div>`;
-  const msg = (t) => ($("#bkMsg").textContent = t);
+  box.innerHTML = `<h3>🔒 Sichern &amp; auf andere Geräte</h3>
+    <p class="fine">Deine Einstellungen werden mit deinem Passwort verschlüsselt (AES-256). Ohne Passwort kann sie niemand lesen, auch nicht wir. Das Passwort wird nirgends gespeichert.</p>
+    <label class="bk-label">1. Passwort wählen (mind. 10 Zeichen)<input id="bkPass" type="password" autocomplete="new-password" minlength="10" placeholder="z. B. ein langer Satz"></label>
+    <p class="bk-step">2. Wie möchtest du sichern?</p>
+    <div class="bk-opts">
+      <button class="btn btn-primary" type="button" id="bkSave">💾 Als Datei sichern<span class="fine">Handy: Teilen-Menü → Dateien, iCloud, Dropbox, Google Drive</span></button>
+      <button class="btn btn-ghost" type="button" data-auto="link">🔗 Link fürs andere Gerät<span class="fine">an dich selbst schicken, dort Passwort eingeben</span></button>
+      <label class="btn btn-ghost bk-file">📂 Sicherung laden<span class="fine">Datei auswählen, Passwort von oben</span><input id="bkFile" type="file" accept=".radar,application/json" hidden></label>
+    </div>
+    <p class="fine" id="bkMsg" role="status"></p><div id="autoBox"></div>`;
+  const msg = (t, focus) => { $("#bkMsg").textContent = t; toast(t); if (focus) { const f = $("#bkPass"); f.focus(); f.classList.add("need"); setTimeout(() => f.classList.remove("need"), 2500); } };
   $("#bkSave").onclick = async () => {
-    const pass = $("#bkPass").value; if (pass.length < 10) return msg("Bitte ein Passwort mit mindestens 10 Zeichen wählen.");
-    const blob = new Blob([await encryptBackup(collectBackup(), pass)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `signal-radar-${new Date().toISOString().slice(0, 10)}.radar`; a.click();
-    msg("Sicherung erstellt. Passwort gut merken: Ohne Passwort ist sie nicht wiederherstellbar.");
+    const pass = $("#bkPass").value; if (pass.length < 10) return msg("Bitte zuerst oben ein Passwort mit mindestens 10 Zeichen eingeben.", true);
+    msg("Wird verschlüsselt …");
+    try {
+      const { shareOrDownload } = await import("./sync.js");
+      const done = await shareOrDownload(await encryptBackup(collectBackup(), pass));
+      msg(done ? "Sicherung erstellt. Passwort gut merken: Ohne Passwort lässt sie sich nicht öffnen." : "Abgebrochen, nichts gespeichert.");
+    } catch { msg("Das hat nicht geklappt. Bitte noch einmal versuchen."); }
   };
   $("#bkFile").onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
+    if ($("#bkPass").value.length < 10) { e.target.value = ""; return msg("Bitte zuerst oben das Passwort der Sicherung eingeben, dann die Datei wählen.", true); }
     try {
       applyBackup(await decryptBackup(await file.text(), $("#bkPass").value));
       msg("Sicherung geladen. Die Seite lädt neu …"); setTimeout(() => location.reload(), 900);

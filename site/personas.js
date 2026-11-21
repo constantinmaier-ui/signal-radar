@@ -8,7 +8,7 @@ export const PERSONAS = [
   { id: "etf", icon: "🌍", label: "ETF & Vermögensaufbau", interests: ["stocks", "macro"] },
   { id: "krypto", icon: "₿", label: "Krypto", interests: ["crypto"] },
   { id: "ki", icon: "🤖", label: "KI & neue Trends früh erkennen", interests: ["themes", "stocks"] },
-  { id: "rohstoffe", icon: "🛢️", label: "Rohstoffe (z. B. beruflich im Einkauf)", interests: ["commodities", "macro"] },
+  { id: "rohstoffe", icon: "🥇", label: "Rohstoffe & Edelmetalle als Anlage", interests: ["commodities", "macro"] },
   { id: "immo_neu", icon: "🔑", label: "Immobilien: Einstieg", interests: ["realestate", "macro"] },
   { id: "immo_haben", icon: "🏠", label: "Immobilien: habe schon", interests: ["realestate", "macro"] },
 ];
@@ -60,12 +60,16 @@ export const FACTS = [
     cite: "Cohen, Malloy & Pomorski (2012), Journal of Finance", q: "Cohen Malloy Pomorski Decoding inside information" },
   { id: "terminkurve", tags: ["rohstoffe"], title: "Die Terminkurve verrät Knappheit",
     text: "Liegt der Preis für spätere Lieferung unter dem heutigen Preis (Backwardation), ist eine Ware knapp. Dieser Preisabstand („Carry“) sagt über viele Märkte hinweg die Renditen von Rohstoff-Terminkontrakten voraus.",
-    so: "Für den Einkauf heißt das: Nicht nur auf den heutigen Preis schauen, sondern auch auf die Preise für spätere Monate.",
+    so: "Für Anleger heißt das: Bei Rohstoff-ETCs zählt nicht nur der heutige Preis, sondern auch, ob spätere Monate teurer oder billiger sind. Das entscheidet mit über die Rendite.",
     cite: "Koijen, Moskowitz, Pedersen & Vrugt (2018), Journal of Financial Economics", q: "Koijen Moskowitz Pedersen Vrugt Carry" },
   { id: "trends-halten", tags: ["rohstoffe", "etf"], title: "Preistrends halten oft rund ein Jahr",
     text: "In 58 Terminmärkten (Rohstoffe, Währungen, Anleihen, Aktienindizes) setzte sich die Richtung der letzten 12 Monate im Schnitt fort, über längere Zeit kehrte sie sich teilweise um.",
     so: "Ein Preis, der ein Jahr lang gestiegen ist, ist nicht automatisch „zu hoch“. Dauerhaft steigt er aber auch nicht.",
     cite: "Moskowitz, Ooi & Pedersen (2012), Journal of Financial Economics", q: "Moskowitz Ooi Pedersen Time series momentum" },
+  { id: "rohstoff-rendite", tags: ["rohstoffe"], title: "Rohstoffe streuen, aber nicht immer",
+    text: "Über Jahrzehnte brachten breit gestreute Rohstoff-Terminkontrakte ähnliche Renditen wie Aktien und liefen oft anders als Aktien und Anleihen, besonders bei unerwarteter Inflation.",
+    so: "Eine kleine Beimischung kann das Depot stabiler machen. Einzelne Rohstoffe schwanken aber stark, und Terminkontrakte haben eigene Kosten beim Wechsel in den nächsten Monat.",
+    cite: "Gorton & Rouwenhorst (2006), Financial Analysts Journal", q: "Gorton Rouwenhorst Facts and fantasies about commodity futures" },
   { id: "immo-rendite", tags: ["immo_neu", "immo_haben"], title: "Wohnimmobilien: ähnliche Rendite wie Aktien, anderes Risiko",
     text: "Über 145 Jahre in 16 Ländern brachten Wohnimmobilien (Miete plus Wertsteigerung) ähnlich viel wie Aktien, rund 7 % pro Jahr nach Inflation, und schwankten deutlich weniger.",
     so: "Der Haken: Ein einzelnes Haus ist nicht gestreut, teuer zu kaufen und zu verkaufen, und Arbeit macht es auch. Die Durchschnittszahl gilt für viele Häuser, nicht für eines.",
@@ -120,13 +124,15 @@ export function personaLines(id, d = {}, ctx = {}) {
     if (ok(d.bubble?.score)) { const nv = find(d.bubble.components, "id", "nvda"); add(`KI-Blasen-Check: ${d.bubble.score}/100 (${d.bubble.zone})${nv && ok(nv.raw) ? `, Nvidia ${pct(nv.raw, 0)} gegenüber dem 200-Tage-Schnitt` : ""}.`, "heute:lage"); }
   }
   if (id === "rohstoffe") {
-    const fx = find(d.market, "sym", "EURUSD=X");
-    if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. In Dollar gehandelte Rohstoffe werden dadurch für Euro-Käufer ${fx.chg1m > 0 ? "billiger" : "teurer"}.`, "heute:market");
-    const moves = (d.commodities || []).map((c) => ({ c, e: /€/.test(c.unit || "") ? c.chg1m : inEuro(c.chg1m, fx?.chg1m) })).filter((x) => ok(x.e)).sort((a, b) => Math.abs(b.e) - Math.abs(a.e)).slice(0, 3);
-    if (moves.length) add(`Größte Preisbewegungen in Euro (1 Monat): ${moves.map((x) => `${x.c.name} ${pct(x.e, 0)}`).join(", ")}.`, `detail:com:${moves[0].c.id}`);
-    const ttf = find(d.commodities, "id", "ttf");
-    if (ttf && ok(ttf.last)) add(`Erdgas Europa (TTF): ${fmt(ttf.last, 1)} €/MWh, ${pct(ttf.chg1m)} in 1 Monat.`, "detail:com:ttf");
-    if (ok(d.power?.avg)) add(`Strom Deutschland (Börse): heute im Schnitt ${fmt(d.power.avg)} €/MWh${ok(d.power.avg30) ? `, 30-Tage-Schnitt ${fmt(d.power.avg30)} €/MWh` : ""}.`, "entdecken:rohstoffe");
+    const fx = find(d.market, "sym", "EURUSD=X"), eur = (c) => (/€/.test(c?.unit || "") ? c.chg1m : inEuro(c?.chg1m, fx?.chg1m));
+    for (const k of ["gold", "silver"]) {
+      const c = find(d.commodities, "id", k), e1 = eur(c), e1y = c && ok(c.chg1y) ? inEuro(c.chg1y, fx?.chg1y) : null;
+      if (c && ok(e1)) add(`${c.name} in Euro: ${pct(e1)} in 1 Monat${ok(e1y) ? `, ${pct(e1y, 0)} in 1 Jahr` : ""}${ok(c.pos52) ? `, ${fmt(c.pos52 * 100)} % der Jahresspanne` : ""}.`, `detail:com:${k}`);
+    }
+    const moves = (d.commodities || []).map((c) => ({ c, e: eur(c) })).filter((x) => ok(x.e)).sort((a, b) => Math.abs(b.e) - Math.abs(a.e)).slice(0, 3);
+    if (moves.length) add(`Größte Bewegungen in Euro (1 Monat): ${moves.map((x) => `${x.c.name} ${pct(x.e, 0)}`).join(", ")}. Starke Ausschläge sind bei Rohstoffen normal.`, `detail:com:${moves[0].c.id}`);
+    if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. Rohstoffe kosten in Dollar, ein stärkerer Euro drückt deinen Gewinn in Euro.`, "heute:market");
+    add("So legen Privatanleger an: Gold physisch oder als Xetra-Gold (nach 1 Jahr Haltedauer steuerfrei), sonst breit gestreute Rohstoff-ETCs statt Einzelwetten. Als Beimischung von etwa 5–10 %, nicht als Kern.", "entdecken:rohstoffe");
   }
   if (id === "immo_neu" || id === "immo_haben") {
     const m = d.realEstate?.mortgage, s = m?.series || [];

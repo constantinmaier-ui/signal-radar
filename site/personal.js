@@ -58,6 +58,9 @@ export function smartNav() {
 
 // ---------- Navigation helper ----------
 export function goTo(view, anchor) {
+  // a section only shown in the Profi view: switch it on instead of landing on an empty spot
+  const t = anchor && document.getElementById(anchor);
+  if (t?.closest(".pro-only") && document.body.classList.contains("mode-easy")) document.querySelector('#modeSeg [data-mode="pro"]')?.click();
   const target = hashFor(view, anchor);
   if (location.hash !== target) location.hash = target.slice(1); else applySub(view);
   setTimeout(() => {
@@ -78,7 +81,8 @@ export function openMenu() {
     const items = $$(`.view[data-view="${v}"] > section[id]`).map((s) => {
       const label = FALLBACK[s.id] || s.querySelector("h2")?.textContent.trim(); if (!label) return "";
       const star = !all && (SECTION_TOPICS[s.id] || []).some((t) => mine.includes(t)) ? " ★" : "";
-      return `<button type="button" class="menu-item" data-goto="${v}:${esc(s.id)}">${esc(label)}${star}</button>`;
+      const pro = s.classList.contains("pro-only") ? ' <span class="fine">(Profi)</span>' : "";
+      return `<button type="button" class="menu-item" data-goto="${v}:${esc(s.id)}">${esc(label)}${star}${pro}</button>`;
     }).join("");
     return `<div class="menu-group"><h4>${title}</h4>${items}</div>`;
   }).join("");

@@ -463,7 +463,8 @@ test("profiles: live lines from data, euro conversion, loan payment, every fact 
     aiJobs: { DE: { share: 0.0628, yearAgo: 0.05 } },
   };
   const roh = personaLines("rohstoffe", d).map((l) => l.t).join(" | ");
-  assert.match(roh, /billiger/);
+  assert.match(roh, /Euro zum Dollar/);
+  assert.match(roh, /Xetra-Gold/);
   assert.match(roh, /Erdgas TTF −20/);
   assert.match(personaLines("immo_neu", d).map((l) => l.t).join(" "), /1\.375 € im Monat/);
   assert.match(personaLines("ki", d)[0].t, /6,3 %/);
