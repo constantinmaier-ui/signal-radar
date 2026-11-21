@@ -578,3 +578,19 @@ test("own topics: cleaned, matched umlaut-insensitively", async () => {
   assert.equal(matchesTopic("Großauftrag für Rüstung", ["Grossauftrag"]), true);
   assert.equal(matchesTopic("Gold steigt", ["Wasserstoff"]), false);
 });
+
+test("sub-pages, risk profile facts and what a gauge means now", async () => {
+  const { parseHash, subFor, orderedSubs } = await import("../site/subnav.js");
+  assert.deepEqual(parseHash("#entdecken/immobilien"), ["entdecken", "immobilien"]);
+  assert.equal(subFor("entdecken", "immobilien"), "immobilien");
+  assert.equal(subFor("profis", "eventsSec"), "ereignisse");
+  assert.equal(orderedSubs("entdecken", ["realestate"])[0][0], "immobilien");
+  const { profileFacts } = await import("../site/plan.js");
+  const a = profileFacts("sicherheit"), b = profileFacts("mutig");
+  assert.ok(a.risky < b.risky && a.crash > b.crash, "bolder = more stocks, bigger crash");
+  assert.equal(a.risky + a.safe, 100);
+  const { meaningNow } = await import("../site/trust.js");
+  assert.match(meaningNow("lage", { bubble: { score: 37 } }, "wachstum"), /Vorsicht/);
+  assert.match(meaningNow("lage", { bubble: { score: 85 } }, "mutig"), /Trend-Anteil begrenzen/);
+  assert.equal(meaningNow("lage", {}, "mutig"), "");
+});

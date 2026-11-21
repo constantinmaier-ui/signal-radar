@@ -135,7 +135,7 @@ export function showTip(ev, html) {
 }
 export function hideTip() { tipEl().hidden = true; }
 let toastTimer;
-export function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600); }
+export function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), Math.max(2600, String(msg).length * 45)); }
 
 
 // ---------- "Show more" for any list (key → expanded) ----------

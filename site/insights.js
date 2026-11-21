@@ -1,5 +1,5 @@
 // Nachrichten-Wirkung, Forschung, Immobilien (+ Rechner), Quellen-Übersicht, Einsteiger/Profi-Modus.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn, growList } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn, growList, toast } from "./ui.js";
 
 const DIR = { up: ["↑", "up", "steigt eher"], down: ["↓", "down", "fällt eher"], mixed: ["↕", "flat", "gemischt"], flat: ["–", "flat", "kaum Wirkung"] };
 const CLASSES = [["aktien", "Aktien"], ["anleihen", "Anleihen"], ["gold", "Gold"], ["immobilien", "Immobilien"], ["krypto", "Krypto"]];
@@ -83,7 +83,7 @@ const SOURCES = [
   ["Kurse & Indizes", "Yahoo Finance (Ersatz: Stooq)", "Schlusskurse, Trends, Schwankung", "alle 15 Min."],
   ["Analysten", "Yahoo-Finance-Konsens + Google News", "Kursziele, Noten, Zitate", "alle 15 Min."],
   ["Große Investoren", "US-Börsenaufsicht SEC (EDGAR, 13F)", "Offizielle Pflichtmeldungen", "geprüft alle 15 Min., Meldungen vierteljährlich"],
-  ["Nachrichten", "21 Portale: tagesschau, Handelsblatt, FAZ, Spiegel, Zeit, Süddeutsche, n-tv, manager magazin, BBC, Guardian, NYT, WSJ, CNBC, MarketWatch, TechCrunch, Ars Technica, The Verge, CoinDesk, Cointelegraph, Decrypt; dazu Google News", "Schlagzeilen, Ereignis-Arten, wie viele Portale dieselbe Geschichte melden", "alle 15 Min."],
+  ["Nachrichten", "28 Portale: tagesschau, Handelsblatt, FAZ, Spiegel, Zeit, Süddeutsche, n-tv, manager magazin, DW, BBC, Guardian, NYT, WSJ, CNBC, MarketWatch; Fachpresse: heise, Golem, MIT Technology Review, TechCrunch, Ars Technica, The Verge, pv magazine, Electrek, CoinDesk, Cointelegraph, Decrypt, The Block; dazu Google News", "Schlagzeilen, Ereignis-Arten, wie viele Portale dieselbe Geschichte melden", "alle 15 Min."],
   ["Amtliche Mitteilungen", "EZB, US-Notenbank (Pressemitteilungen)", "Entscheidungen aus erster Hand, bevor Medien berichten", "alle 15 Min."],
   ["Tech-Szene & Foren", "Hacker News", "Was die Tech-Szene diskutiert", "live jede Minute"],
   ["Aufmerksamkeit", "Wikipedia-Seitenaufrufe (Wikimedia)", "Wie stark ein Thema gesucht wird", "täglich"],
@@ -157,6 +157,8 @@ export function initMode(onChange) {
   $("#modeSeg").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-mode]"); if (!b) return;
     store.set("mode", b.dataset.mode); apply(b.dataset.mode); onChange?.();
+    // visible feedback: say what changed and where (the extra parts are spread over several pages)
+    toast(b.dataset.mode === "pro" ? "Profi-Ansicht an: Bestandteile des Blasen-Meters, Analysten-Kursziele, Themen-Ranking, Zins-Verlauf und Schwankung der Rohstoffe sind jetzt eingeblendet." : "Einsteiger-Ansicht: nur das Wichtigste, Detailtabellen sind ausgeblendet.");
   });
 }
 

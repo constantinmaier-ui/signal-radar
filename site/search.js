@@ -5,6 +5,7 @@ import { MIETSPIEGEL } from "./mietspiegel.js";
 import { buildSignals } from "./signals.js";
 import { PERSONAS, FACTS } from "./personas.js";
 import { aiPrompt } from "./trust.js";
+import { hashFor } from "./subnav.js";
 
 const VIEW_LABEL = { heute: "Heute", plan: "Mein Geld", entdecken: "Entdecken", profis: "Profis & News", wissen: "Wissen" };
 const GROUPS = [
@@ -143,7 +144,8 @@ function go(it, openDetailFor) {
   if (g.theme) { location.hash = `thema=${g.theme}`; return; }
   if (g.detail) { openDetailFor(g.detail); return; }
   const view = g.city ? "entdecken" : ({ maerkte: "entdecken", chancen: "entdecken", news: "profis" }[g.view] || g.view), anchor = g.city ? "immobilien" : g.anchor;
-  if (location.hash !== `#${view}`) location.hash = view;
+  const target = hashFor(view, anchor);
+  if (location.hash !== target) location.hash = target.slice(1);
   setTimeout(() => {
     if (g.city) { const inp = $("#msCity"); if (inp) { inp.value = cap(g.city); inp.dispatchEvent(new Event("input", { bubbles: true })); } }
     const el = document.getElementById(anchor); if (!el) return;

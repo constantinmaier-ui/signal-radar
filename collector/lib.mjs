@@ -82,6 +82,7 @@ export function dedupe(items) {
     const prev = map.get(k);
     if (!prev) { map.set(k, { ...it, themes: [...(it.themes || [])], outlets: new Set([outlet]), echo: 1 }); return; }
     prev.outlets.add(outlet); prev.echo = prev.outlets.size;
+    for (const a of it.areas || []) if (!(prev.areas ||= []).includes(a)) prev.areas.push(a);
     for (const t of it.themes || []) if (!prev.themes.includes(t)) prev.themes.push(t);
     if (it.published && (!prev.published || it.published < prev.published)) prev.published = it.published;
   });
@@ -135,6 +136,7 @@ export function clusterStories(items, { minShared = 3, minJaccard = 0.45 } = {})
     for (const o of outlets) grp.outlets.add(o);
     for (const t of it.themes || []) if (!grp.lead.themes.includes(t)) grp.lead.themes.push(t);
     for (const t of it.signals || []) if (!grp.lead.signals.includes(t)) grp.lead.signals.push(t);
+    for (const a of it.areas || []) if (!(grp.lead.areas ||= []).includes(a)) grp.lead.areas.push(a);
     if (it.published && (!grp.lead.published || it.published < grp.lead.published)) grp.lead.firstSeen = it.published;
   }
   return groups.map(({ lead, outlets }) => {

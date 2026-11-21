@@ -11,7 +11,8 @@ import { hypeInfo } from "./signals.js";
 const META = {
   check: [2, "Eigene Regeln, gespeist aus allen Quellen dieser Seite", "Die Regeln folgen belegten Mustern. Eine Prognose sind sie nicht."],
   signals: [2, "Signal-Leser über alle Quellen", "Jedes Signal nennt seine Quelle. Die Beweislage unterscheidet sich je Signal."],
-  newsImpact: [2, "Google News + 10 Nachrichtenportale; Wirkung aus Studien je Ereignis-Art", "Die typischen Wirkungen sind historische Durchschnitte, im Einzelfall kann es anders laufen."],
+  themen: [2, "Themen-ETFs, Wikipedia-Aufrufe, Nachrichten", "Branchen-Momentum ist gut belegt (Moskowitz & Grinblatt 1999). Die Hype-Bremse folgt Barber & Odean (2008)."],
+  newsImpact: [2, "28 Nachrichtenportale + Google News; Wirkung aus Studien je Ereignis-Art", "Die typischen Wirkungen sind historische Durchschnitte, im Einzelfall kann es anders laufen."],
   lage: [1, "Yahoo Finance, GDELT", "Eigenes Messgerät, kein veröffentlichtes Maß, und noch ohne geprüfte Trefferquote. Verwandte Forschung: Kursverdopplungen in zwei Jahren erhöhen das Absturzrisiko, ohne dass danach die Renditen verlässlich schlechter sind (Greenwood, Shleifer & You 2019)."],
   plan: [3, "Langfristige Durchschnittsrenditen, 2.000 Simulationen", "Breit streuen und niedrige Kosten sind die am besten belegten Regeln der Finanzforschung."],
   hebel: [3, "Morningstar „Mind the Gap“, Zinseszins-Rechnung", "Kosten, Sparrate und Durchhalten sind nachweislich die größten Hebel."],
@@ -26,10 +27,57 @@ const META = {
   perlen: [1, "Yahoo-Finance-Analystenkonsens, Kurse", "Analysten-Kursziele treffen selten (Bradshaw, Brown & Huang 2013). Ideen zum Prüfen, mehr nicht."],
   ipo: [2, "Nachrichten, Wikipedia, Polymarket", "Hype-Börsengänge laufen langfristig im Schnitt schwächer (Ritter 1991)."],
   profis: [2, "US-Börsenaufsicht SEC (13F, Form 4), Yahoo-Konsens, Nachrichten", "Insider-Käufe gingen im Schnitt besseren Kursen voraus, am stärksten bei kleinen Firmen (Lakonishok & Lee 2001). Am aussagekräftigsten sind Käufe außerhalb des üblichen Musters einer Person (Cohen, Malloy & Pomorski 2012); diese Unterscheidung macht das Radar noch nicht. Das Nachbilden von 13F-Depots zeigt gemischte Ergebnisse."],
-  feed: [0, "21 Nachrichtenportale, amtliche Mitteilungen, Google News, siehe „Unsere Quellen“", "Rohe Meldungen. Erst im Signal-Leser werden sie eingeordnet."],
+  feed: [0, "28 Nachrichtenportale, amtliche Mitteilungen, Google News, siehe „Unsere Quellen“", "Rohe Meldungen. Erst im Signal-Leser werden sie eingeordnet."],
   forschung: [3, "Begutachtete Fachzeitschriften und Arbeitspapiere", "Arbeitspapiere sind noch nicht begutachtet und deshalb gekennzeichnet."],
 };
 const LEVEL = { 3: ["stark belegt", "ev3"], 2: ["mittel belegt", "ev2"], 1: ["schwach belegt", "ev1"], 0: ["Fakten & Daten", "ev0"] };
+const sch = (q) => `https://scholar.google.com/scholar?q=${encodeURIComponent(q)}`;
+// How each part is made, how often it updates, where to read more. Shown on tap ("ⓘ"), so the page stays short.
+const INFO = {
+  lage: { freq: "alle 15 Min. (Kurse), stündlich (Berichterstattung)", how: "Eigenes Messgerät des Radars: mehrere Warnzeichen werden zu 0–100 gemischt, z. B. wie weit Tech-Aktien und Nvidia über ihrem 200-Tage-Schnitt liegen, Sorglosigkeit (niedriger VIX), Börsengang-Fieber und wie oft Medien „Blase“ schreiben. Die Gewichte sind selbst gewählt und offen einsehbar unter Wissen → So rechnet das Radar.",
+    links: [["Greenwood, Shleifer & You (2019): Bubbles for Fama", sch("Greenwood Shleifer You Bubbles for Fama")], ["Gewichte und Rechenweg", "#wissen/zahlen"]] },
+  stimmung: { freq: "alle 15 Min.", how: "Das Angst-und-Gier-Barometer von CNN mischt sieben Marktdaten zu 0–100: Kursdynamik, Kursstärke, Marktbreite, Absicherungen mit Optionen (Put/Call), Nachfrage nach riskanten Anleihen, Schwankung (VIX) und Flucht in sichere Anlagen. Das Krypto-Barometer (alternative.me) nutzt u. a. Schwankung, Handelsvolumen, soziale Medien, Bitcoin-Anteil und Suchinteresse. Beide sind Branchen-Kennzahlen, keine wissenschaftlich geprüften Maße.",
+    links: [["CNN Fear & Greed (Original)", "https://edition.cnn.com/markets/fear-and-greed"], ["Krypto-Barometer (alternative.me)", "https://alternative.me/crypto/fear-and-greed-index/"], ["Baker & Wurgler (2006): Investor Sentiment", sch("Baker Wurgler Investor Sentiment and the Cross-Section of Stock Returns")]] },
+  frueh: { freq: "täglich bis monatlich (amtliche US-Daten)", how: "Drei bekannte Anzeiger: Zinskurve (lange minus kurze Zinsen; negativ ging Rezessionen oft voraus), Risikoaufschläge von Firmenanleihen und die Sahm-Regel (Anstieg der Arbeitslosenquote, meldet den Beginn einer Rezession).",
+    links: [["Estrella & Mishkin (1998): Zinskurve", sch("Estrella Mishkin Predicting US recessions financial variables as leading indicators")], ["Zinskurve live (FRED)", "https://fred.stlouisfed.org/series/T10Y3M"], ["Sahm-Regel live (FRED)", "https://fred.stlouisfed.org/series/SAHMREALTIME"]] },
+  offiziell: { freq: "monatlich (amtliche Umfragen)", how: "Unverändert übernommen: EU-Wirtschaftsstimmung und Verbrauchervertrauen (EU-Kommission über Eurostat), US-Verbraucherstimmung (Uni Michigan) und das Anleihe-Stressmaß der US-Notenbank (Excess Bond Premium).",
+    links: [["Lemmon & Portniaguina (2006): Verbrauchervertrauen und Renditen", sch("Lemmon Portniaguina Consumer confidence and asset prices")], ["Gilchrist & Zakrajšek (2012): Credit Spreads", sch("Gilchrist Zakrajsek Credit spreads and business cycle fluctuations")], ["US-Verbraucherstimmung (FRED)", "https://fred.stlouisfed.org/series/UMCSENT"]] },
+  trends: { freq: "alle 15 Min. (Kurse), täglich (Aufmerksamkeit, Downloads)", how: "Ungewöhnliche Bewegungen im Verhältnis zur normalen Schwankung („2,0×“), sprunghaft steigende Wikipedia-Aufrufe und KI-Software, die Entwickler gerade massenhaft herunterladen.",
+    links: [["Jegadeesh & Titman (1993): Momentum", sch("Jegadeesh Titman Returns to buying winners and selling losers")], ["Da, Engelberg & Gao (2011): Aufmerksamkeit", sch("Da Engelberg Gao In search of attention")]] },
+  karte: { freq: "alle 15 Min.", how: "Jedes Thema bekommt zwei Werte: Kurs-Trend (12-1-Momentum des Themen-ETFs) und Aufmerksamkeit (Wikipedia, Nachrichten-Tempo, Hacker News). Viel Aufmerksamkeit ohne Kurs = Hype; Verdopplung in zwei Jahren = überhitzt.",
+    links: [["Barber & Odean (2008): All That Glitters", sch("Barber Odean All that glitters attention")], ["Greenwood, Shleifer & You (2019)", sch("Greenwood Shleifer You Bubbles for Fama")]] },
+  themen: { freq: "alle 15 Min.", how: "Rangfolge der Themen nach Kurs-Trend, Aufmerksamkeit und Überhitzung, gleiche Regeln wie die Hype-Karte.", links: [["Moskowitz & Grinblatt (1999): Branchen-Momentum", sch("Moskowitz Grinblatt Do industries explain momentum")]] },
+  perlen: { freq: "alle 15 Min.", how: "Regelbasierte Vorauswahl aus Analysten-Konsens, Bewertung und Kurs. Ideen zum Selbst-Prüfen, keine Empfehlung.", links: [["Bradshaw, Brown & Huang (2013): Kursziele", sch("Bradshaw Brown Huang Do sell-side analysts exhibit differential target price forecasting ability")]] },
+  ipo: { freq: "alle 15 Min.", how: "Schlagzeilen zu Börsengängen, Wikipedia-Aufmerksamkeit, Wettmärkte und der Kurs eines IPO-ETFs.", links: [["Ritter (1991): Long-run performance of IPOs", sch("Ritter The long-run performance of initial public offerings")], ["IPO-Statistiken (Jay Ritter)", "https://site.warrington.ufl.edu/ritter/ipo-data/"]] },
+  profis: { freq: "stündlich (Insider-Käufe), vierteljährlich mit 45 Tagen Verzug (Depots der Profis)", how: "Pflichtmeldungen an die US-Börsenaufsicht: Formular 4 (Käufe von Vorständen) und 13F (Depots großer Investoren).",
+    links: [["SEC-Datenbank EDGAR", "https://www.sec.gov/edgar/search/"], ["Cohen, Malloy & Pomorski (2012): Insider", sch("Cohen Malloy Pomorski Decoding inside information")]] },
+  rohstoffe: { freq: "alle 15 Min. (bis 15 Min. verzögert)", how: "Preise des nächsten Liefermonats an den Terminbörsen. Der Balken zeigt die Lage zwischen Jahrestief und Jahreshoch.",
+    links: [["Weltbank: Rohstoffpreise & Prognosen", "https://www.worldbank.org/en/research/commodity-markets"], ["Koijen u. a. (2018): Carry", sch("Koijen Moskowitz Pedersen Vrugt Carry")]] },
+  immobilien: { freq: "monatlich (Bauzinsen), vierteljährlich (Hauspreise)", how: "Amtliche Statistik: Bauzinsen der EZB-Zinsstatistik, Hauspreisindex von Eurostat, dazu Rechner und amtliche Mietspiegel.",
+    links: [["Jordà u. a. (2019): Rate of Return on Everything", sch("The Rate of Return on Everything 1870-2015")], ["Eurostat Hauspreisindex", "https://ec.europa.eu/eurostat/web/housing-price-statistics"]] },
+  anlagen: { freq: "alle 15 Min.", how: "Kurse breiter ETFs und Indizes je Anlageklasse mit Trend (200-Tage-Schnitt), Schwankung und Risikoklasse nach EU-Regeln (PRIIPs).", links: [["Markowitz (1952): Portfolio Selection", sch("Markowitz Portfolio Selection 1952")]] },
+  feed: { freq: "alle 15 Min.", how: "Schlagzeilen aus über 20 Portalen und amtlichen Mitteilungen. Gleiche Geschichten werden zusammengefasst und nach Zahl der Medien gezählt.", links: [["Fang & Peress (2009): Medien und Renditen", sch("Fang Peress Media coverage and the cross-section of stock returns")], ["Tetlock (2007): Medien-Pessimismus", sch("Tetlock Giving content to investor sentiment")]] },
+  newsImpact: { freq: "alle 15 Min.", how: "Jede Meldung wird einer Ereignis-Art zugeordnet (Zinsen, Zölle, Krieg, Wahlen, Quartalszahlen …). Die Pfeile zeigen, wie solche Ereignisse laut Studien im Schnitt wirkten.", links: [["MacKinlay (1997): Event Studies", sch("MacKinlay Event studies in economics and finance")]] },
+  plan: { freq: "sofort bei jeder Eingabe", how: "Aufteilung nach deinem Risikoprofil, Prognose-Spanne aus 2.000 Zufallsverläufen mit langfristigen Durchschnittsrenditen, Crash-Test mit Aktien −50 %.", links: [["Markowitz (1952)", sch("Markowitz Portfolio Selection 1952")], ["Vanguard (2012): Einmal- vs. Ratenanlage", sch("Vanguard Dollar-cost averaging just means taking risk later")]] },
+};
+/** One plain line on what a gauge means right now for the user's risk profile. Pure. */
+export function meaningNow(id, d, goal) {
+  const bold = goal === "wachstum" || goal === "mutig";
+  if (id === "lage" && Number.isFinite(d?.bubble?.score)) {
+    // same steps as the gauge: <20 Angst, <40 Vorsicht, <60 Neutral, <80 Euphorie, else Blasen-Alarm
+    const b = d.bubble.score;
+    return b < 20 ? "Zone „Angst“: kaum Übertreibung, eher Sorge am Markt. Sparplan weiterlaufen lassen, nichts überstürzt verkaufen."
+      : b < 40 ? "Zone „Vorsicht“: wenig Übertreibung, Anleger sind zurückhaltend. Ein normales Umfeld, um nach Plan weiter zu sparen."
+      : b < 60 ? "Zone „Neutral“: Sparplan normal weiter, Hype-Themen nur klein beimischen."
+      : b < 80 ? (bold ? "Zone „Euphorie“: investiert bleiben, aber den Trend-Anteil nicht erhöhen." : "Zone „Euphorie“: Plan halten, nichts nachkaufen, nur weil es stark gestiegen ist.")
+      : (bold ? "Zone „Blasen-Alarm“: keine überhitzten Themen nachkaufen, Trend-Anteil begrenzen." : "Zone „Blasen-Alarm“: Plan halten, Mischung prüfen, nichts Heißes kaufen.");
+  }
+  if (id === "stimmung" && Number.isFinite(d?.cnnFearGreed?.value)) {
+    const v = d.cnnFearGreed.value;
+    return v >= 75 ? "Viel Gier am Markt: keinem Hype hinterherlaufen, Plan halten." : v <= 25 ? "Viel Angst am Markt: Ruhe bewahren, den Sparplan weiterlaufen lassen. Wer in Angstphasen verkauft, verpasst oft die Erholung." : "Stimmung im normalen Bereich: kein Grund zu handeln.";
+  }
+  return "";
+}
 export function renderMeta() {
   for (const [id, [lvl, src, note]] of Object.entries(META)) {
     const sec = document.getElementById(id); if (!sec) continue;
@@ -37,7 +85,16 @@ export function renderMeta() {
     const host = sec.matches(".grid-hero, .grid-2") ? sec.querySelector("article") : sec;
     if (!el) { el = document.createElement("div"); el.className = "meta-line"; host.appendChild(el); }
     const [word, cls] = LEVEL[lvl];
-    el.innerHTML = `<span class="ev ${cls}" data-tip="${esc(`<b>Beweislage: ${word}</b><br>${esc(note)}`)}">${"●".repeat(lvl)}${"○".repeat(3 - lvl)} ${word}</span><span class="src">Quelle: ${esc(src)}</span>`;
+    const info = INFO[id], d = state.data, goal = store.get("goal", "ausgewogen");
+    const at = d?.generatedAt ? new Date(d.generatedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : null;
+    const now = info ? meaningNow(id, d, goal) : "";
+    el.innerHTML = `<span class="ev ${cls}" data-tip="${esc(`<b>Beweislage: ${word}</b><br>${esc(note)}`)}">${"●".repeat(lvl)}${"○".repeat(3 - lvl)} ${word}</span><span class="src">Quelle: ${esc(src)}</span>`
+      + (info ? `<details class="info-box"><summary>ⓘ Wie entsteht das?${at ? ` · Stand ${at} Uhr` : ""} · ${esc(info.freq)}</summary>
+        <p><b>So entsteht es:</b> ${esc(info.how)}</p>
+        <p><b>Wie gut belegt:</b> ${esc(word)}. ${esc(note)}</p>
+        ${now ? `<p><b>Was heißt das jetzt für dich</b> (Profil ${esc({ sicherheit: "Sicherheit", ausgewogen: "Ausgewogen", wachstum: "Wachstum", mutig: "Mutig" }[goal] || goal)}): ${esc(now)}</p>` : ""}
+        <p><b>Weiterlesen:</b> ${info.links.map(([l, u]) => u.startsWith("#") ? `<a href="${esc(u)}">${esc(l)}</a>` : `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join(" · ")}</p>
+        <p class="fine">Beobachtungen und Regeln, keine Anlageberatung. Die Bedeutung kann sich mit neuen Daten ändern.</p></details>` : "");
   }
 }
 

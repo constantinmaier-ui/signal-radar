@@ -164,6 +164,8 @@ async function fetchNews() {
   return { results, hnItems };
 }
 
+// Which news area a theme search belongs to (for the feed filter "Bereich")
+const THEME_AREA = { ai: "tech", chips: "tech", power: "energie", nuclear: "energie", defense: "politik", crypto: "krypto", gold: "rohstoffe", quantum: "tech", robotics: "tech", space: "tech", health: "gesundheit", cyber: "tech", ipo: "wirtschaft", rareearth: "rohstoffe", battery: "energie", genome: "gesundheit", renewables: "energie", india: "wirtschaft" };
 const themeMatchers = THEMES.map((t) => [t.id, makeMatcher(t.kw)]);
 const signalMatchers = SIGNAL_WORDS.map((s) => [s.tag, makeMatcher(s.kw)]);
 const ipoMatchers = IPO_WATCH.map((w) => [w.id, makeMatcher(w.kw)]);
@@ -367,10 +369,11 @@ async function main() {
       const text = `${it.title} ${it.summary || ""}`;
       const themes = new Set(tagThemes(it.title));
       if (job.kind === "theme" && themes.size === 0) themes.add(job.theme); // Suchtreffer gehört zum Thema
-      all.push({ ...it, source: it.source || job.feed?.name || "Google News", social: !!job.feed?.social, themes: [...themes], signals: tagSignals(text), ipoHint: job.ipo || null });
+      const area = job.feed?.area || (job.kind === "event" ? "politik" : job.kind === "theme" ? THEME_AREA[job.theme] || "wirtschaft" : job.kind === "ipo" ? "wirtschaft" : null);
+      all.push({ ...it, source: it.source || job.feed?.name || "Google News", social: !!job.feed?.social, themes: [...themes], signals: tagSignals(text), ipoHint: job.ipo || null, areas: area ? [area] : [] });
     }
   }
-  for (const it of newsRaw.hnItems) all.push({ ...it, themes: tagThemes(it.title), signals: tagSignals(it.title) });
+  for (const it of newsRaw.hnItems) all.push({ ...it, themes: tagThemes(it.title), signals: tagSignals(it.title), areas: ["tech"] });
   all = all.filter((n) => !n.published || n.published > NOW - 8 * DAY);
   // exact duplicates first, then the same story under different headlines (counts distinct outlets)
   const news = clusterStories(dedupe(all)

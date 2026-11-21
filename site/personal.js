@@ -2,10 +2,11 @@
 // Everything stays in the browser (localStorage) and can be changed at any time.
 import { $, $$, esc, fmt, pct, ok, store, state, dirCls, toast, cleanTopics, myTopics } from "./ui.js";
 import { TOPICS } from "./trust.js";
-import { BUCKETS, buildPlan } from "./plan.js";
+import { BUCKETS, buildPlan, profileFacts } from "./plan.js";
 import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
 import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
+import { hashFor, applySub } from "./subnav.js";
 import { validRef, quoteOf, positionValue, ensureDatalist, matchAny, suggestCoins, loadCoins, refreshCoinPrices, fmtEur } from "./holdings.js";
 import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine } from "./situation.js";
 
@@ -31,21 +32,11 @@ export function splitSections(ids, list) {
   return { mine, rest: ids.filter((id) => !mine.includes(id)) };
 }
 
-/** Puts the user's sections first in "Entdecken" and folds the rest behind one button. */
+/** Interests now order the sub-pages (see subnav.js); old folding state is cleared. */
 export function applyInterests() {
   const view = $('.view[data-view="entdecken"]'); if (!view) return;
-  const secs = $$(":scope > section[id]", view), ids = secs.map((s) => s.id);
-  const { mine, rest } = splitSections(ids, interests());
   view.querySelector(".more-sections")?.remove();
-  for (const id of mine) view.appendChild(document.getElementById(id));
-  if (rest.length) {
-    const box = document.createElement("div");
-    box.className = "more-sections";
-    box.innerHTML = `<button type="button" class="btn btn-ghost btn-wide" id="moreSecBtn">Weitere Bereiche anzeigen (${rest.length})</button><p class="fine">Ausgeblendet, weil sie nicht zu deinen Interessen gehören. Ändern unter Menü → „Persönlich einrichten“.</p>`;
-    view.appendChild(box);
-  }
-  for (const id of rest) { const el = document.getElementById(id); el.classList.add("folded"); view.appendChild(el); }
-  for (const id of mine) document.getElementById(id).classList.remove("folded");
+  for (const el of view.querySelectorAll(".folded")) el.classList.remove("folded");
   view.classList.remove("show-folded");
 }
 
@@ -67,7 +58,8 @@ export function smartNav() {
 
 // ---------- Navigation helper ----------
 export function goTo(view, anchor) {
-  if (location.hash !== `#${view}`) location.hash = view;
+  const target = hashFor(view, anchor);
+  if (location.hash !== target) location.hash = target.slice(1); else applySub(view);
   setTimeout(() => {
     const el = anchor && document.getElementById(anchor); if (!el) return;
     if (el.tagName === "DETAILS") el.open = true;
@@ -93,6 +85,7 @@ export function openMenu() {
   $("#sheetBody").innerHTML = `<h2 id="sheetTitle">Alles auf einen Blick</h2><p class="fine">★ = passt zu deinen Interessen. Tipp: Mit der Suche 🔍 findest du alles noch schneller.</p>
     <div class="menu-grid">${groups}
       <div class="menu-group"><h4>Einstellungen</h4>
+        <button type="button" class="menu-item" data-act="profile">👤 Mein Profil: alles ansehen &amp; ändern</button>
         <button type="button" class="menu-item" data-act="onboard">Persönlich einrichten</button>
         <button type="button" class="menu-item" data-act="prefs">Interessen &amp; Bereiche anpassen</button>
         <button type="button" class="menu-item" data-goto="plan:depot">Mein Depot bearbeiten</button>
@@ -102,6 +95,28 @@ export function openMenu() {
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
 export const closeSheet = () => { $("#sheet").hidden = true; document.body.style.overflow = ""; };
+
+// ---------- "Mein Profil": everything entered, in one place, each part editable ----------
+export function openProfile(openPrefs) {
+  const sit = situation(), plan = store.get("plan", {}) || {}, goal = store.get("goal", "ausgewogen");
+  const pers = personas().map((k) => PERSONAS.find((p) => p.id === k)?.label).filter(Boolean);
+  const ints = interests(), themes = (state.data?.themes || []).filter((t) => state.watch.has(t.id)).map((t) => t.short), topics = myTopics();
+  const dep = liveDepot(), total = dep.reduce((a, p) => a + p.value, 0), age = ageOf(sit);
+  const goalLabel = GOAL_TYPES.find(([k]) => k === sit.goal)?.[1];
+  const row = (title, value, act) => `<div class="pf-row"><div><b>${title}</b><span class="fine">${value || "noch nichts eingetragen"}</span></div>${act}</div>`;
+  const edit = (step) => `<button type="button" class="btn btn-ghost btn-sm" data-edit="${step}">Ändern</button>`;
+  $("#sheetBody").innerHTML = `<h2 id="sheetTitle">👤 Mein Profil</h2><p class="fine">Alles, was du eingegeben hast. Jeder Teil lässt sich einzeln ändern. Bleibt nur auf diesem Gerät.</p>
+    ${row("Wofür du das Radar nutzt", esc(pers.join(", ")), edit(0))}
+    ${row("Interessen &amp; Themen", esc([isAll(ints) ? "alle Bereiche" : ints.map((k) => TOPICS.find(([x]) => x === k)?.[1]).filter(Boolean).join(", "), themes.length ? `Trends: ${themes.join(", ")}` : "", topics.length ? `eigene: ${topics.join(", ")}` : ""].filter(Boolean).join(" · ")), edit(0))}
+    ${row("Risikoprofil &amp; Anlagedauer", `${esc(GOALS[goal]?.label || "")}${plan.years ? `, ${plan.years} Jahre` : ""}<br>${profileText(goal)}`, edit(1))}
+    ${row("Deine Situation &amp; Ziel", esc([age ? `${age} Jahre` : "", sit.retireAge || age ? `Rente mit ${sit.retireAge || 67}` : "", goalLabel || "", sit.spend ? `Ausgaben ${fmt(sit.spend)} €/Mon.` : ""].filter(Boolean).join(" · ")), edit(2))}
+    ${row("Detailgrad &amp; Lernen", esc(store.get("mode", "easy") === "pro" ? "Profi" : "Einsteiger"), edit(3))}
+    ${row("Dein Depot", dep.length ? esc(`${dep.length} Positionen, ${fmt(total)} €`) : "", edit(4))}
+    ${row("Bereiche ausblenden", "einzelne Abschnitte ein- oder ausschalten", '<button type="button" class="btn btn-ghost btn-sm" data-act="prefs">Öffnen</button>')}
+    ${row("Sicherung &amp; andere Geräte", "verschlüsselt sichern, auf Handy oder Computer übertragen", '<button type="button" class="btn btn-ghost btn-sm" data-act="backup">Öffnen</button>')}
+    <div class="bk-btns"><button type="button" class="btn btn-ghost" data-act="onboard">Alles Schritt für Schritt neu einrichten</button></div>`;
+  $("#sheet").hidden = false; document.body.style.overflow = "hidden";
+}
 
 // ---------- Onboarding ----------
 const HORIZON = [["kurz", "unter 3 Jahren", 2], ["mittel", "3 bis 10 Jahre", 7], ["lang", "über 10 Jahre", 15]];
@@ -122,17 +137,29 @@ export const VALUE_HTML = `<ul>
   <li><b>Was es nicht ist:</b> keine Anlageberatung, keine Kursprognose, kein Echtzeit-Werkzeug für Daytrader.</li></ul>`;
 export const SOURCES_HTML = `<ul>
   <li><b>Jede Minute live, solange die App offen ist:</b> Bitcoin und Ethereum (CoinGecko, Binance), Tech-News (Hacker News)</li>
-  <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 21 Nachrichtenportale und Pressemitteilungen von EZB und Fed, plus Google News zu jedem der 16 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
+  <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 28 Nachrichtenportale und Pressemitteilungen von EZB und Fed, plus Google News zu jedem der 18 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
   <li><b>Stündlich:</b> Insider-Käufe (US-Börsenaufsicht SEC), weltweite Berichterstattung über „Blase“ (GDELT)</li>
   <li><b>Alle 6 Stunden:</b> Studien aus Top-Fachzeitschriften (OpenAlex)</li>
   <li><b>Täglich bis monatlich (amtlich):</b> EZB-Zinsen, Hauspreise (Eurostat), Konjunktur und Stimmung (US-Notenbank, EU-Kommission), Wikipedia-Aufrufe, KI-Stellenanzeigen (Indeed Hiring Lab)</li>
   <li><b>Vierteljährlich:</b> Depots der Top-Investoren (SEC 13F)</li></ul>
   <p class="fine">Komplette Liste mit allen Quellen: Menü → Wissen → Unsere Quellen.</p>`;
 
+// What each risk profile means, in numbers from the plan's real allocation
+const PROFILE_FOR = { sicherheit: "Für Geld, das sicher bleiben soll, oder wenn Schwankungen dich nervös machen.", ausgewogen: "Für mittlere Zeiträume (5–10 Jahre) oder wenn du Schwankungen nur begrenzt aushältst.", wachstum: "Für 10+ Jahre, wenn du Rückgänge aussitzen kannst, ohne zu verkaufen.", mutig: "Für 15+ Jahre und starke Nerven: mehr Trends und Krypto, größere Ausschläge." };
+export function profileText(k) {
+  const f = profileFacts(k); if (!f || !GOALS[k]) return "";
+  return `<b>${esc(GOALS[k].label)}:</b> etwa ${f.risky} % Aktien, Trends und Krypto, ${f.safe} % sichere Anlagen. Bei einem Börsencrash (Aktien −50 %) etwa ${String(f.crash).replace("-", "−")} % auf das ganze Depot. ${esc(PROFILE_FOR[k] || "")}`;
+}
+export function profileTable() {
+  return `<table class="pf-table"><thead><tr><th>Profil</th><th>Aktien &amp; Co.</th><th>Sicher</th><th>Crash</th></tr></thead><tbody>${Object.keys(GOALS).map((k) => { const f = profileFacts(k); return f ? `<tr><td>${esc(GOALS[k].label)}</td><td>${f.risky} %</td><td>${f.safe} %</td><td>${String(f.crash).replace("-", "−")} %</td></tr>` : ""; }).join("")}</tbody></table>
+    <p class="fine">„Crash“ = Rückgang des ganzen Depots, wenn Aktien um die Hälfte fallen (wie 2008/09). Es ist eine Faustrechnung mit der Aufteilung im Plan, keine Prognose.</p>`;
+}
+
 let ob = null;
-export function openOnboarding() {
+export function openOnboarding(step = 0, single = false) {
   const plan = store.get("plan", {}) || {};
-  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), watch: [...state.watch], topics: myTopics(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
+  ob = { step, single, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, horizon0: null, goal: store.get("goal", null), personas: personas(), watch: [...state.watch], topics: myTopics(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
+  ob.horizon0 = ob.horizon;
   renderOnboarding();
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
@@ -140,9 +167,9 @@ function renderOnboarding() {
   const steps = 5, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
-    () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
+    () => `${ob.single ? "" : `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
         <details class="ob-more"><summary>Was macht es besser als Finanzportale und Apps?</summary>${VALUE_HTML}</details>
-        <details class="ob-more"><summary>Welche Quellen, wie oft?</summary>${SOURCES_HTML}</details></div>
+        <details class="ob-more"><summary>Welche Quellen, wie oft?</summary>${SOURCES_HTML}</details></div>`}
       <h2 id="sheetTitle">Wofür nutzt du das Radar?</h2><p class="fine">Dann bekommst du unter „Dein Radar“ eigene Live-Infos. Mehrere möglich, freiwillig.</p>
       <div class="chips-wrap">${PERSONAS.map((p) => chip("pers", p.id, ob.personas.includes(p.id), `${p.icon} ${p.label}`)).join("")}</div>
       <p><b>Welche Bereiche interessieren dich?</b> <span class="fine">Danach richtet sich, was oben steht und was eingeklappt wird.</span></p>
@@ -156,6 +183,8 @@ function renderOnboarding() {
       <p><b>Wie lange willst du das Geld anlegen?</b></p><div class="chips-wrap">${HORIZON.map(([k, l]) => chip("hor", k, ob.horizon === k, l)).join("")}</div>
       <p><b>Stell dir vor, dein Depot verliert in einem Monat 20 %. Was tust du?</b></p><div class="chips-wrap">${DROP.map(([k, l]) => chip("drop", k, ob.drop === k, l)).join("")}</div>
       <p><b>Vorschlag:</b> ${esc(GOALS[sug].label)}. Du kannst frei wählen:</p><div class="chips-wrap">${Object.entries(GOALS).map(([k, v]) => chip("goal", k, g === k, v.label)).join("")}</div>
+      <p class="pf-now">${profileText(g)}</p>
+      <details class="ob-more"><summary>Alle Profile im Vergleich</summary>${profileTable()}</details>
       <p class="fine">Kurzfassung typischer Fragen zur Risikobereitschaft (angelehnt an Grable &amp; Lytton 1999 und die Eignungsprüfung nach MiFID II). Kein Ersatz für eine Beratung.</p>`; },
     () => { const t = ob.sit, val = (x) => (x === null || x === undefined ? "" : esc(x));
       return `<h2 id="sheetTitle">Deine Situation <span class="fine">(freiwillig)</span></h2>
@@ -184,9 +213,10 @@ function renderOnboarding() {
       <p><b>Was möchtest du lernen?</b> <span class="fine">(freiwillig, mehrere möglich)</span></p><div class="chips-wrap">${LEARN.map(([k, l]) => chip("learn", k, ob.learn.includes(k), l)).join("")}</div>`,
     () => `<h2 id="sheetTitle">Dein Depot <span class="fine">(freiwillig)</span></h2><p class="fine">Dann sagt dir das Radar, was zu deinen Anlagen passt und wo du vom Plan abweichst. Bleibt nur auf deinem Gerät. Kannst du auch später unter „Mein Geld“ eintragen.</p>${depotEditor(ob.depot)}`,
   ][s]();
-  $("#sheetBody").innerHTML = `<div class="ob-dots">${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
-    <div class="ob-actions">${s ? '<button type="button" class="btn btn-ghost" data-ob="back">Zurück</button>' : '<button type="button" class="btn btn-ghost" data-ob="skip">Überspringen</button>'}
-      <button type="button" class="btn btn-primary" data-ob="${s === steps - 1 ? "done" : "next"}">${s === steps - 1 ? "Fertig" : "Weiter"}</button></div>`;
+  $("#sheetBody").innerHTML = `<div class="ob-dots" ${ob.single ? "hidden" : ""}>${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
+    <div class="ob-actions">${ob.single ? '<button type="button" class="btn btn-ghost" data-sheet-close>Abbrechen</button><button type="button" class="btn btn-primary" data-ob="done">Speichern</button>'
+      : `${s ? '<button type="button" class="btn btn-ghost" data-ob="back">Zurück</button>' : '<button type="button" class="btn btn-ghost" data-ob="skip">Überspringen</button>'}
+      <button type="button" class="btn btn-primary" data-ob="${s === steps - 1 ? "done" : "next"}">${s === steps - 1 ? "Fertig" : "Weiter"}</button>`}</div>`;
 }
 function readTopics() { const el = $("#obTopics"); if (el) ob.topics = cleanTopics(el.value.split(",")); }
 function readSituation() {
@@ -209,12 +239,13 @@ function finishOnboarding() {
   const goal = ob.goal || suggestGoal(ob.drop, ob.horizon);
   store.set("goal", goal);
   const plan = store.get("plan", {}) || {};
-  store.set("plan", { once: 5000, monthly: 200, ...plan, years: HORIZON.find(([k]) => k === ob.horizon)[2], profile: goal });
+  const years = ob.horizon !== ob.horizon0 || !plan.years ? HORIZON.find(([k]) => k === ob.horizon)[2] : plan.years;
+  store.set("plan", { once: 5000, monthly: 200, ...plan, years, profile: goal });
   store.set("mode", ob.mode === "pro" ? "pro" : "easy");
   store.set("portfolio", ob.depot);
   store.set("onboarded", true);
   navigator.storage?.persist?.().catch(() => {}); // ask the browser not to clear these settings when space runs low
-  closeSheet(); toast("Eingerichtet. Alles jederzeit änderbar über das Menü.");
+  closeSheet(); toast(ob.single ? "Gespeichert" : "Eingerichtet. Alles jederzeit änderbar unter 👤 Mein Profil.");
   setTimeout(() => location.reload(), 700);
 }
 function onboardingClick(e) {
@@ -396,6 +427,9 @@ export function initPersonal({ openPrefs, onGoto }) {
     const g = e.target.closest("[data-goto]");
     if (g) { e.preventDefault(); closeSheet(); const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
     const act = e.target.closest("[data-act]");
+    const ed = e.target.closest("[data-edit]");
+    if (ed) { openOnboarding(Number(ed.dataset.edit) || 0, true); return; }
+    if (e.target.closest("#profileBtn, [data-act='profile']")) { openProfile(openPrefs); return; }
     if (act) { const a = act.dataset.act; if (a === "onboard") openOnboarding(); else if (a === "prefs") { closeSheet(); openPrefs(); } else if (a === "backup") { closeSheet(); openPrefs(); setTimeout(() => $("#backupBox")?.scrollIntoView(), 100); } return; }
     if (e.target.closest("[data-menu]")) { e.preventDefault(); openMenu(); return; }
     if (e.target.closest("#moreSecBtn")) { const v = e.target.closest(".view"); v.classList.toggle("show-folded"); e.target.textContent = v.classList.contains("show-folded") ? "Weitere Bereiche ausblenden" : e.target.textContent.replace("ausblenden", "anzeigen"); return; }
