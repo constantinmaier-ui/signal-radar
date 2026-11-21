@@ -8,7 +8,7 @@ import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
 import { hashFor, applySub, anchorOf } from "./subnav.js";
 import { validRef, quoteOf, positionValue, ensureDatalist, matchAny, suggestCoins, loadCoins, refreshCoinPrices, fmtEur } from "./holdings.js";
-import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine } from "./situation.js";
+import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine, goalsOf } from "./situation.js";
 
 // ---------- Interests ----------
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
@@ -106,7 +106,7 @@ export function openProfile(openPrefs) {
   const pers = personas().map((k) => PERSONAS.find((p) => p.id === k)?.label).filter(Boolean);
   const ints = interests(), themes = (state.data?.themes || []).filter((t) => state.watch.has(t.id)).map((t) => t.short), topics = myTopics();
   const dep = liveDepot(), total = dep.reduce((a, p) => a + p.value, 0), age = ageOf(sit);
-  const goalLabel = GOAL_TYPES.find(([k]) => k === sit.goal)?.[1];
+  const goalLabel = goalsOf(sit).map((x) => (x.type === "eigenes" ? x.name || "Eigenes Ziel" : GOAL_TYPES.find(([k]) => k === x.type)?.[1])).join(", ");
   const row = (title, value, act) => `<div class="pf-row"><div><b>${title}</b><span class="fine">${value || "noch nichts eingetragen"}</span></div>${act}</div>`;
   const edit = (step) => `<button type="button" class="btn btn-ghost btn-sm" data-edit="${step}">Ändern</button>`;
   $("#sheetBody").innerHTML = `<h2 id="sheetTitle">👤 Mein Profil</h2><p class="fine">Alles, was du eingegeben hast. Jeder Teil lässt sich einzeln ändern. Bleibt nur auf diesem Gerät.</p>
@@ -168,7 +168,7 @@ export function openOnboarding(step = 0, single = false) {
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
 function renderOnboarding() {
-  const steps = 5, s = ob.step;
+  const steps = 6, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
     () => `${ob.single ? "" : `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
@@ -197,16 +197,16 @@ function renderOnboarding() {
         <label>Dein Alter<span class="inp"><input id="sitAge" type="number" inputmode="numeric" min="14" max="100" step="1" value="${val(ageOf(t))}"><em>Jahre</em></span></label>
         <label>Rente mit<span class="inp"><input id="sitRetire" type="number" inputmode="numeric" min="50" max="80" step="1" value="${val(t.retireAge)}" placeholder="67"><em>Jahren</em></span></label>
       </div>
-      <p><b>Dein wichtigstes Ziel</b></p><div class="chips-wrap">${GOAL_TYPES.map(([k, l]) => chip("gtype", k, t.goal === k, l)).join("")}</div>
-      ${t.goal && t.goal !== "rente" && t.goal !== "vermoegen" ? `<div class="sit-grid">
-        ${t.goal === "eigenes" ? `<label>Wofür?<input id="sitGoalName" type="text" maxlength="40" value="${val(t.goalName)}" placeholder="z. B. Weltreise"></label>` : ""}
-        <label>Wie viel?<span class="inp"><input id="sitGoalAmount" type="number" inputmode="decimal" min="0" step="1000" value="${val(t.goalAmount)}"><em>€</em></span></label>
-        <label>Bis wann?<span class="inp"><input id="sitGoalYear" type="number" inputmode="numeric" min="${new Date().getFullYear()}" step="1" value="${val(t.goalYear)}"><em>Jahr</em></span></label></div>` : ""}
-      ${t.goal === "rente" ? `<div class="sit-grid">
+      <p><b>Deine Ziele</b> <span class="fine">(mehrere möglich)</span></p><div class="chips-wrap">${GOAL_TYPES.map(([k, l]) => chip("gtype", k, goalsOf(t).some((x) => x.type === k), l)).join("")}</div>
+      ${goalsOf(t).filter((x) => x.type !== "rente" && x.type !== "vermoegen").map((x) => `<div class="sit-grid goal-row"><b class="fine">${esc(x.type === "eigenes" ? "Eigenes Ziel" : GOAL_TYPES.find(([k]) => k === x.type)?.[1])}</b>
+        ${x.type === "eigenes" ? `<label>Wofür?<input data-ob-g="${x.type}" data-k="name" type="text" maxlength="40" value="${val(x.name)}" placeholder="z. B. Weltreise"></label>` : ""}
+        <label>Wie viel?<span class="inp"><input data-ob-g="${x.type}" data-k="amount" type="number" inputmode="decimal" min="0" step="1000" value="${val(x.amount)}"><em>€</em></span></label>
+        <label>Bis wann?<span class="inp"><input data-ob-g="${x.type}" data-k="year" type="number" inputmode="numeric" min="${new Date().getFullYear()}" step="1" value="${val(x.year)}"><em>Jahr</em></span></label></div>`).join("")}
+      ${goalsOf(t).some((x) => x.type === "rente") ? `<div class="sit-grid">
         <label>Netto-Einkommen heute<span class="inp"><input id="sitNet" type="number" inputmode="decimal" min="0" step="100" value="${val(t.net)}"><em>€/Mon.</em></span></label>
         <label>Gesetzliche Rente laut Renteninformation<span class="inp"><input id="sitPension" type="number" inputmode="decimal" min="0" step="50" value="${val(t.pension)}"><em>€/Mon.</em></span></label>
-      </div><p class="fine">Die Renteninformation kommt jährlich per Post von der Deutschen Rentenversicherung. Fehlt sie, rechnet das Radar ohne gesetzliche Rente.</p>` : ""}
-      <p><b>Lebenssituation</b></p><div class="chips-wrap">${FAMILY.map(([k, l]) => chip("fam", k, t.family === k, l)).join("")}${HOME.map(([k, l]) => chip("home", k, t.home === k, l)).join("")}</div>
+        <label>So viel möchte ich im Alter haben<span class="inp"><input id="sitWant" type="number" inputmode="decimal" min="0" step="100" value="${val(t.want)}" placeholder="${t.net ? Math.round(t.net * 0.8) : "z. B. 2.500"}"><em>€/Mon.</em></span></label>
+      </div><p class="fine">Netto zählt, nicht Brutto: Im Alter zählt, was du ausgeben kannst. Die Renteninformation kommt jährlich per Post von der Deutschen Rentenversicherung. Ohne Wunschbetrag rechnet das Radar mit 80 % deines Nettos.</p>` : ""}
       <p><b>Teure Kredite (Dispo, Ratenkredit)?</b></p><div class="chips-wrap">${chip("debt", "1", t.debt === true, "Ja")}${chip("debt", "0", t.debt === false, "Nein")}</div>
       <div class="sit-grid">
         <label>Ausgaben pro Monat (inkl. Miete)<span class="inp"><input id="sitSpend" type="number" inputmode="decimal" min="0" step="50" value="${val(t.spend)}"><em>€</em></span></label>
@@ -216,6 +216,19 @@ function renderOnboarding() {
     () => `<h2 id="sheetTitle">Wie viel Detail?</h2><div class="chips-wrap">${chip("mode", "easy", ob.mode !== "pro", "Einsteiger: das Wichtigste, einfach erklärt")}${chip("mode", "pro", ob.mode === "pro", "Profi: alle Kennzahlen und Tabellen")}</div>
       <p><b>Was möchtest du lernen?</b> <span class="fine">(freiwillig, mehrere möglich)</span></p><div class="chips-wrap">${LEARN.map(([k, l]) => chip("learn", k, ob.learn.includes(k), l)).join("")}</div>`,
     () => `<h2 id="sheetTitle">Dein Depot <span class="fine">(freiwillig)</span></h2><p class="fine">Dann sagt dir das Radar, was zu deinen Anlagen passt und wo du vom Plan abweichst. Bleibt nur auf deinem Gerät. Kannst du auch später unter „Mein Geld“ eintragen.</p>${depotEditor(ob.depot)}`,
+    () => `<h2 id="sheetTitle">🔒 Sichern &amp; Geräte <span class="fine">(empfohlen)</span></h2>
+      <p>Deine Eingaben liegen nur auf diesem Gerät, nicht bei uns. Das ist sicher, aber sie können verloren gehen. Wähle, wie du sie schützen willst:</p>
+      <div class="bk-choose">
+        <details class="ob-more"><summary>📱 Nur auf diesem Gerät (Standard)</summary><p>Nichts zu tun. <b>Risiko:</b> Löschst du die Browserdaten, sind die Eingaben weg. Am iPhone löscht Safari Daten von Webseiten nach 7 Tagen ohne Besuch, außer das Radar ist als App auf dem Home-Bildschirm installiert.</p><p><button type="button" class="link-btn" data-goto="wissen:installieren">So installierst du das Radar als App →</button></p></details>
+        <details class="ob-more"><summary>💾 Verschlüsselte Datei (empfohlen)</summary><p>Das Radar verschlüsselt deine Eingaben mit deinem Passwort (AES-256) und legt sie als Datei ab, am Handy über das Teilen-Menü in „Dateien“, iCloud, Dropbox oder Google Drive. <b>Sicher</b>, weil die Datei ohne Passwort unlesbar ist, auch für Apple, Google oder Dropbox.</p></details>
+        <details class="ob-more"><summary>🔗 Link fürs andere Gerät</summary><p>Ein Link mit deinen verschlüsselten Eingaben. Schick ihn dir selbst, öffne ihn am anderen Gerät, gib das Passwort ein. <b>Nie Link und Passwort in derselben Nachricht verschicken.</b></p></details>
+        <details class="ob-more"><summary>⏱️ Automatisch sichern (Computer)</summary><p>In Chrome oder Edge am Computer: einmal eine Datei im Dropbox-, OneDrive- oder iCloud-Ordner wählen, danach sichert das Radar nach jeder Änderung von selbst, verschlüsselt.</p></details>
+        <details class="ob-more"><summary>☁️ Sync über alle Geräte (Dropbox, in Vorbereitung)</summary><p>Automatisch abgeglichen zwischen Handy und Computer, Ende-zu-Ende-verschlüsselt. Kommt, sobald die Dropbox-Verbindung freigeschaltet ist.</p></details>
+        <details class="ob-more"><summary>🛡️ Was ist ein sicheres Passwort?</summary><p>Lang schlägt kompliziert: ein Satz aus 4–5 Wörtern, den nur du kennst. Am besten im Passwort-Manager speichern (z. B. im iPhone-Schlüsselbund oder Google Passwortmanager). Ohne Passwort kann niemand die Sicherung öffnen, auch wir nicht. Geht es verloren, ist auch die Sicherung verloren.</p>
+          <p><a href="https://www.bsi.bund.de/DE/Themen/Verbraucherinnen-und-Verbraucher/Informationen-und-Empfehlungen/Cyber-Sicherheitsempfehlungen/Accountschutz/Sichere-Passwoerter-erstellen/sichere-passwoerter-erstellen_node.html" target="_blank" rel="noopener">BSI: Sichere Passwörter erstellen ↗</a></p></details>
+      </div>
+      <p><b>Jetzt einrichten?</b></p>
+      <div class="chips-wrap">${chip("bk", "now", ob.backup === "now", "Ja, gleich nach dem Einrichten")}${chip("bk", "later", ob.backup !== "now", "Später (unter 👤 Mein Profil)")}</div>`,
   ][s]();
   $("#sheetBody").innerHTML = `<div class="ob-dots" ${ob.single ? "hidden" : ""}>${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
     <div class="ob-actions">${ob.single ? '<button type="button" class="btn btn-ghost" data-sheet-close>Abbrechen</button><button type="button" class="btn btn-primary" data-ob="done">Speichern</button>'
@@ -225,9 +238,11 @@ function renderOnboarding() {
 function readTopics() { const el = $("#obTopics"); if (el) ob.topics = cleanTopics(el.value.split(",")); }
 function readSituation() {
   const n = (id) => { const el = $(id); if (!el) return undefined; const v = el.value.trim(); return v === "" ? null : Number(v); };
-  for (const [k, id] of [["spend", "#sitSpend"], ["cash", "#sitCash"], ["save", "#sitSave"], ["retireAge", "#sitRetire"], ["goalAmount", "#sitGoalAmount"], ["goalYear", "#sitGoalYear"], ["net", "#sitNet"], ["pension", "#sitPension"]]) { const v = n(id); if (v !== undefined) ob.sit[k] = v; }
+  for (const [k, id] of [["spend", "#sitSpend"], ["cash", "#sitCash"], ["save", "#sitSave"], ["retireAge", "#sitRetire"], ["net", "#sitNet"], ["pension", "#sitPension"], ["want", "#sitWant"]]) { const v = n(id); if (v !== undefined) ob.sit[k] = v; }
+  const goals = goalsOf(ob.sit);
+  for (const el of document.querySelectorAll("#sheet [data-ob-g]")) { const g = goals.find((x) => x.type === el.dataset.obG); if (g) g[el.dataset.k] = el.dataset.k === "name" ? el.value.trim() || null : el.value === "" ? null : Number(el.value); }
+  ob.sit.goals = goals; ob.sit.goal = goals[0]?.type || null;
   const age = n("#sitAge"); if (age !== undefined) ob.sit.birthYear = age ? new Date().getFullYear() - age : null;
-  const gn = $("#sitGoalName"); if (gn) ob.sit.goalName = gn.value.trim() || null;
 }
 function finishOnboarding() {
   readDepotEditor($("#sheet"), (list) => (ob.depot = list));
@@ -248,6 +263,7 @@ function finishOnboarding() {
   store.set("mode", ob.mode === "pro" ? "pro" : "easy");
   store.set("portfolio", ob.depot);
   store.set("onboarded", true);
+  if (ob.backup === "now") store.set("openBackup", true);
   navigator.storage?.persist?.().catch(() => {}); // ask the browser not to clear these settings when space runs low
   closeSheet(); toast(ob.single ? "Gespeichert" : "Eingerichtet. Alles jederzeit änderbar unter 👤 Mein Profil.");
   setTimeout(() => location.reload(), 700);
@@ -264,7 +280,8 @@ function onboardingClick(e) {
   }
   const toggle = (k) => (ob.sit[k] = ob.sit[k] === b.dataset[k === "family" ? "fam" : k] ? null : b.dataset[k === "family" ? "fam" : k]);
   if ((b = pick("[data-wt]"))) { readTopics(); const k = b.dataset.wt; ob.watch = ob.watch.includes(k) ? ob.watch.filter((x) => x !== k) : [...ob.watch, k]; return renderOnboarding(), true; }
-  if ((b = pick("[data-gtype]"))) { readSituation(); ob.sit.goal = ob.sit.goal === b.dataset.gtype ? null : b.dataset.gtype; return renderOnboarding(), true; }
+  if ((b = pick("[data-bk]"))) { ob.backup = b.dataset.bk; return renderOnboarding(), true; }
+  if ((b = pick("[data-gtype]"))) { readSituation(); const k = b.dataset.gtype, list = goalsOf(ob.sit); ob.sit.goals = list.some((x) => x.type === k) ? list.filter((x) => x.type !== k) : [...list, { type: k }]; ob.sit.goal = ob.sit.goals[0]?.type || null; return renderOnboarding(), true; }
   if ((b = pick("[data-fam]"))) { readSituation(); toggle("family"); return renderOnboarding(), true; }
   if ((b = pick("[data-home]"))) { readSituation(); toggle("home"); return renderOnboarding(), true; }
   if ((b = pick("[data-debt]"))) { readSituation(); const v = b.dataset.debt === "1"; ob.sit.debt = ob.sit.debt === v ? null : v; return renderOnboarding(), true; }
@@ -492,6 +509,7 @@ export function initPersonal({ openPrefs, onGoto }) {
     if (hint) hint.textContent = text;
   });
   applyInterests(); smartNav();
+  if (store.get("openBackup", false)) { store.set("openBackup", false); setTimeout(() => { openPrefs?.(); setTimeout(() => $("#backupBox")?.scrollIntoView({ block: "start" }), 150); }, 900); }
   const h = location.hash;
   if (!store.get("onboarded", false) && !h.startsWith("#plan=") && !h.startsWith("#thema=") && !h.startsWith("#import=")) setTimeout(openOnboarding, 400);
 }
