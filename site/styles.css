@@ -967,3 +967,11 @@ details[open]::details-content { height: auto; }
 .bk-opts .btn-primary .fine { color: inherit; opacity: .85; }
 #bkPass.need { outline: 3px solid var(--s2); outline-offset: 1px; }
 #bkMsg:not(:empty) { padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 14px; color: var(--ink); }
+/* Dein nächster Schritt */
+.next-steps { background: color-mix(in srgb, var(--s1) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--s1) 30%, transparent); border-radius: 14px; padding: 12px; margin: 4px 0 12px; }
+.ns-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ns-bar { height: 6px; border-radius: 99px; background: var(--surface-2); margin: 8px 0 10px; overflow: hidden; }
+.ns-bar i { display: block; height: 100%; background: var(--s1); border-radius: 99px; }
+.ns-item { display: grid; grid-template-columns: 1fr 16px; gap: 8px; width: 100%; text-align: left; border: 0; border-radius: 10px; padding: 9px 10px; margin-top: 6px; background: var(--surface); color: var(--ink); font: 14px/1.4 var(--font); cursor: pointer; }
+.ns-item.first { outline: 2px solid var(--s1); outline-offset: -2px; }
+.more-place { margin-top: 12px; }

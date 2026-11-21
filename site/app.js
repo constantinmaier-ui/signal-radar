@@ -7,7 +7,7 @@ import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
-import { initPersonal, renderDepot, renderSummary, goTo, liveDepot, interests } from "./personal.js";
+import { initPersonal, renderDepot, renderSummary, goTo, liveDepot, interests, renderNextSteps } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { initSync } from "./sync.js";
@@ -240,7 +240,7 @@ function renderIpo() {
     <p><b>IPO-Fieber.</b> ${total} Schlagzeilen über Börsengänge und Bewertungen der großen Privatfirmen in 7 Tagen · IPO-ETF 3 Monate <span class="${dirCls(ipoEtf?.chg3m)}">${pct(ipoEtf?.chg3m, 0)}</span>. Je höher, desto später im Zyklus.</p>`;
   $("#ipoGrid").innerHTML = d.ipoWatch.map((w, i) => {
     const mom = w.attention?.mom;
-    return `<article class="ipo ${i === 0 ? "lead" : ""}">
+    return `<article class="ipo ${i === 0 ? "lead" : ""}" id="ipo-${esc(w.id)}">
       <h3><span>${esc(w.name)}</span>${ok(mom) ? `<span class="chip ${dirCls(mom)}" title="Wikipedia-Aufrufe 7 Tage vs. Vormonat">${arrow(mom)}${pct(mom, 0)}</span>` : ""}</h3>
       <div class="kpis"><div><b>${w.ipoNews7d}</b>IPO-News 7 T</div><div><b>${w.news7d}</b>News gesamt</div><div><b>${compact(w.attention?.last7)}</b>Aufrufe/Tag</div></div>
       ${spark(w.attention?.spark, { w: 300, h: 36, color: "var(--s2)", label: `Aufmerksamkeit ${w.name}` })}
@@ -342,7 +342,7 @@ function renderBanner() {
 function goalCard() { renderGoal(liveDepot().reduce((s, p) => s + p.value, 0)); }
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard, renderMeta].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard, renderMeta, renderNextSteps].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -577,6 +577,8 @@ safe(() => initSync({ openPrefs }));
 safe(renderFacts);
 safe(renderReadiness);
 safe(goalCard);
+safe(renderNextSteps);
+addEventListener("radar:store", () => safe(renderNextSteps));
 initGoal(() => [goalCard, renderReadiness, renderSummary].forEach(safe));
 addEventListener("radar:topics", () => state.data && [renderMyRadar, renderChips].forEach(safe));
 safe(renderMyRadar);

@@ -6,7 +6,7 @@ import { BUCKETS, buildPlan, profileFacts } from "./plan.js";
 import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
 import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
-import { hashFor, applySub } from "./subnav.js";
+import { hashFor, applySub, anchorOf } from "./subnav.js";
 import { validRef, quoteOf, positionValue, ensureDatalist, matchAny, suggestCoins, loadCoins, refreshCoinPrices, fmtEur } from "./holdings.js";
 import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine } from "./situation.js";
 
@@ -384,13 +384,7 @@ function depotClick(e) {
 }
 
 // ---------- Executive summary + quick access ----------
-/** Where a signal's details live (view:anchor). */
-export function anchorOf(id = "") {
-  const map = [[/^(quiet|hot|noise)-/, "entdecken:karte"], [/^ipo-/, "entdecken:ipo"], [/^gem-/, "entdecken:perlen"], [/^com-|^power-/, "entdecken:rohstoffe"],
-    [/^mortgage-/, "entdecken:immobilien"], [/^move-|^world-|^crypto-|^stablecoin-/, "entdecken:anlagen"], [/^(curve|credit|sahm)/, "entdecken:frueh"],
-    [/^(cons|insider|voices)-/, "profis:profis"], [/^event-/, "profis:eventsSec"]];
-  return map.find(([re]) => re.test(id))?.[1] || "heute:signals";
-}
+export { anchorOf } from "./subnav.js";
 const QUICK = [["realestate", "🏡 Immobilien-Rechner", "entdecken:immobilien"], ["themes", "🚀 Trend-Radar", "entdecken:trends"], ["commodities", "🛢️ Rohstoffe", "entdecken:rohstoffe"],
   ["stocks", "📈 Anlageklassen", "entdecken:anlagen"], ["crypto", "₿ Krypto", "entdecken:anlagen"], ["macro", "🌡️ Konjunktur", "entdecken:frueh"], ["pros", "👔 Profis & Insider", "profis:profis"],
   ["news", "📰 Nachrichten", "profis:feed"], [null, "🫧 Blasen-Meter", "heute:lage"], [null, "💰 Mein Depot", "plan:depot"], [null, "🧮 Plan-Rechner", "plan:plan"], [null, "📚 Lexikon", "wissen:lexikon"]];
@@ -412,14 +406,40 @@ export function renderSummary() {
     lines.push(["💰", "Dein Depot", a.warnings.length ? a.warnings[0] : `${fmt(a.total)} €, passt gut zu deinem Plan (${GOALS[goal]?.label || ""}).`, "plan:depot"]);
   } else if (!ready) lines.push(["🎯", `Für dich (${GOALS[goal]?.label || "Ausgewogen"})`, v.doList[0], "plan:plan"]);
   const chance = sig.find((s) => s.kind === "chance"), risk = sig.find((s) => s.kind === "warnung");
-  if (chance) lines.push(["🚀", "Chance", chance.title, anchorOf(chance.id)]);
-  if (risk) lines.push(["⚠️", "Risiko", risk.title, anchorOf(risk.id)]);
+  if (chance) lines.push(["🚀", "Chance", chance.title, `detail:sig:${chance.id}`]);
+  if (risk) lines.push(["⚠️", "Risiko", risk.title, `detail:sig:${risk.id}`]);
   const ev = [...(d.events || [])].filter((e) => e.n48h > 0).sort((x, y) => y.n48h - x.n48h)[0];
   if (ev && (all || mine.includes("news") || mine.includes("macro"))) lines.push([ev.icon || "📰", "Nachrichtenlage", `${ev.name}: ${ev.n48h} Meldungen in 48 Stunden`, "profis:eventsSec"]);
-  el.innerHTML = lines.slice(0, 5).map(([i, k, t, g]) => `<li><button type="button" class="sum-item" data-goto="${esc(g)}"><span class="ico">${esc(i)}</span><span><b>${esc(k)}:</b> ${esc(t)}</span><span class="go">›</span></button></li>`).join("");
+  el.innerHTML = lines.slice(0, 5).map(([i, k, t, g]) => `<li><button type="button" class="sum-item" ${g.startsWith("detail:") ? `data-detail="${esc(g.slice(7))}"` : `data-goto="${esc(g)}"`}><span class="ico">${esc(i)}</span><span><b>${esc(k)}:</b> ${esc(t)}</span><span class="go">›</span></button></li>`).join("");
   const chips = [...QUICK.filter(([t]) => t && !all && mine.includes(t)), ...QUICK.filter(([t]) => !t), ...QUICK.filter(([t]) => t && (all || !mine.includes(t)))];
   const seen = new Set();
   $("#quickChips").innerHTML = `<span class="fine">Schnell zu:</span>${chips.filter(([, , g]) => !seen.has(g) && seen.add(g)).slice(0, 9).map(([, l, g]) => `<button type="button" class="chip-btn" data-goto="${esc(g)}">${esc(l)}</button>`).join("")}`;
+}
+
+// ---------- "Dein nächster Schritt": what is missing and where to go next ----------
+/** Open setup steps, most useful first. Pure given the inputs. */
+export function nextSteps({ personas: pers = [], goalSet = false, age = null, depot = 0, backupAt = null, installed = false } = {}) {
+  const all = [
+    { id: "use", done: pers.length > 0, title: "Sag dem Radar, wofür du es nutzt", why: "Dann siehst du oben deine eigenen Live-Infos.", time: "30 Sek.", act: 'data-edit="0"' },
+    { id: "risk", done: goalSet, title: "Risikoprofil wählen", why: "Alle Hinweise richten sich danach, wie mutig du anlegen willst.", time: "1 Min.", act: 'data-edit="1"' },
+    { id: "age", done: age !== null, title: "Alter und Ziel eintragen", why: "Dann rechnet das Radar deine Rentenlücke und ob du bereit bist zu investieren.", time: "1 Min.", act: 'data-edit="2"' },
+    { id: "depot", done: depot > 0, title: "Depot eintragen", why: "Dann siehst du Live-Wert, Klumpenrisiken und Abweichungen vom Plan.", time: "2 Min.", act: 'data-edit="4"' },
+    { id: "backup", done: !!backupAt, title: "Sicherung einrichten", why: "Deine Eingaben liegen nur auf diesem Gerät. Eine Sicherung schützt sie und bringt sie aufs Handy oder den Computer.", time: "1 Min.", act: 'data-act="backup"' },
+    { id: "install", done: installed, title: "Als App installieren", why: "Öffnet schneller, auch offline. Am iPhone bleiben deine Daten nur so dauerhaft gespeichert.", time: "30 Sek.", act: 'data-goto="wissen:installieren"' },
+  ];
+  return { open: all.filter((x) => !x.done), done: all.filter((x) => x.done).length, total: all.length };
+}
+export function renderNextSteps() {
+  const box = $("#nextSteps"); if (!box) return;
+  const installed = typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true);
+  const n = nextSteps({ personas: personas(), goalSet: !!store.get("goal", null), age: ageOf(situation()), depot: depotList().length, backupAt: store.get("backupAt", null) || store.get("autoAt", null), installed });
+  if (!n.open.length) { box.hidden = true; return; }
+  box.hidden = false;
+  const pctDone = Math.round((n.done / n.total) * 100);
+  box.innerHTML = `<div class="ns-head"><b>Dein nächster Schritt</b><span class="fine">Profil zu ${pctDone} % fertig</span></div>
+    <div class="ns-bar" role="progressbar" aria-valuenow="${pctDone}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pctDone}%"></i></div>
+    ${n.open.slice(0, 2).map((x, i) => `<button type="button" class="ns-item ${i === 0 ? "first" : ""}" ${x.act}><span><b>${esc(x.title)}</b> <span class="fine">· ${esc(x.time)}</span><br><span class="fine">${esc(x.why)}</span></span><span class="go">›</span></button>`).join("")}
+    ${n.open.length > 2 ? `<p class="fine">Danach noch ${n.open.length - 2} weitere Schritt${n.open.length - 2 === 1 ? "" : "e"}. Alles freiwillig.</p>` : ""}`;
 }
 
 // ---------- Wiring ----------
@@ -429,7 +449,7 @@ export function initPersonal({ openPrefs, onGoto }) {
     if (depotClick(e)) return;
     if (!$("#sheet").hidden && onboardingClick(e)) return;
     const g = e.target.closest("[data-goto]");
-    if (g) { e.preventDefault(); closeSheet(); const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
+    if (g) { e.preventDefault(); closeSheet(); const dr = $("#drawer"); if (dr && !dr.hidden) { dr.hidden = true; document.body.style.overflow = ""; } const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
     const act = e.target.closest("[data-act]");
     const ed = e.target.closest("[data-edit]");
     if (ed) { openOnboarding(Number(ed.dataset.edit) || 0, true); return; }

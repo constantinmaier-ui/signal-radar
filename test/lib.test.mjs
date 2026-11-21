@@ -595,3 +595,15 @@ test("sub-pages, risk profile facts and what a gauge means now", async () => {
   assert.match(meaningNow("lage", { bubble: { score: 85 } }, "mutig"), /Trend-Anteil begrenzen/);
   assert.equal(meaningNow("lage", {}, "mutig"), "");
 });
+
+test("guidance: next steps in a sensible order, place names for links", async () => {
+  const { nextSteps } = await import("../site/personal.js");
+  const empty = nextSteps({});
+  assert.equal(empty.done, 0); assert.equal(empty.open[0].id, "use");
+  const most = nextSteps({ personas: ["etf"], goalSet: true, age: 40, depot: 2, backupAt: null, installed: false });
+  assert.deepEqual(most.open.map((x) => x.id), ["backup", "install"]);
+  assert.equal(nextSteps({ personas: ["etf"], goalSet: true, age: 40, depot: 1, backupAt: "x", installed: true }).open.length, 0);
+  const { placeName, anchorOf } = await import("../site/subnav.js");
+  assert.equal(placeName("entdecken:immobilien"), "Entdecken → Immobilien");
+  assert.equal(placeName(anchorOf("insider-NVDA")), "Profis & News → Profis & Insider");
+});
