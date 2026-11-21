@@ -384,3 +384,28 @@ test("Backup: new files use 600k PBKDF2 rounds, old v1 files (310k) still open",
   const v1 = JSON.stringify({ app: "signal-radar", v: 1, kdf: "PBKDF2-SHA256-310000", cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
   assert.deepEqual(await decryptBackup(v1, "old password!"), { mode: "pro" });
 });
+
+test("Personal: goal suggestion, interest-based sections, portfolio vs plan", async () => {
+  const { suggestGoal, splitSections, analyzeDepot } = await import("../site/personal.js");
+  assert.equal(suggestGoal(4, "kurz"), "sicherheit"); // short horizon always safe
+  assert.equal(suggestGoal(1, "mittel"), "sicherheit");
+  assert.equal(suggestGoal(3, "mittel"), "ausgewogen");
+  assert.equal(suggestGoal(3, "lang"), "wachstum");
+  assert.equal(suggestGoal(4, "lang"), "mutig");
+  const ids = ["frueh", "anlagen", "rohstoffe", "immobilien", "trends"];
+  assert.deepEqual(splitSections(ids, ["realestate"]), { mine: ["immobilien"], rest: ["frueh", "anlagen", "rohstoffe", "trends"] });
+  assert.deepEqual(splitSections(ids, []).rest, []); // nothing chosen = everything
+  const a = analyzeDepot([{ cat: "world", name: "", value: 6000 }, { cat: "stock", name: "Nvidia", value: 3000 }, { cat: "cash", name: "", value: 1000 }], { world: 60, themes: 5, cash: 10, btc: 0 });
+  assert.equal(a.total, 10000);
+  assert.equal(a.rows.find((r) => r.cat === "themes").share, 0.3);
+  assert.ok(a.warnings.some((w) => w.startsWith("Nvidia macht 30 %")));
+  assert.ok(a.warnings.some((w) => w.includes("Riskante Beimischungen")));
+  assert.equal(analyzeDepot([], {}).total, 0);
+});
+
+test("Backup: portfolio and interests are sanitized", async () => {
+  const { sanitizeBackup } = await import("../site/trust.js");
+  const o = sanitizeBackup({ portfolio: [{ cat: "world", name: "MSCI World", value: 5000 }, { cat: "<x>", name: "<img onerror=1>", value: "9" }, { cat: "gold", value: -5 }, "junk"], interests: ["realestate", "<b>"], onboarded: "yes" });
+  assert.deepEqual(o.portfolio, [{ cat: "world", name: "MSCI World", value: 5000 }, { cat: "other", name: "", value: 9 }]);
+  assert.deepEqual(o.interests, ["realestate"]); assert.equal(o.onboarded, false);
+});

@@ -27,7 +27,15 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] Translate code comments in older files to English
 - [ ] 👤 Optional: secret `ANTHROPIC_API_KEY` for Claude briefing & translations
 
-## Now (version 2.1) – owner requests of 2026-11-19, in priority order
+## Now (version 3.0) – guided, personal UX (owner request 2026-11-21)
+- [x] **Personal start (optional, editable)**: interests, goal + horizon (short risk-tolerance question, Grable & Lytton 1999 / MiFID II style), experience, optional portfolio
+- [x] **Clear path, fewer tabs**: Heute · Mein Geld · Entdecken · Profis & News · Menü; sections outside the user's interests collapsed under "Weitere Bereiche"; bottom navigation adapts to interests
+- [x] **Menu with everything**, grouped, jumps straight to each section
+- [x] **My portfolio (local only)**: allocation vs. plan, concentration warnings, what the radar says about each holding
+- [x] **Everything clickable**: market tiles, asset cards and commodity rows open detail views with chart, key points and related news
+- [ ] Next: every chart point and news item opens context; guided tour for new users
+
+## Done (version 2.1) – owner requests of 2026-11-19, in priority order
 - [x] **App-wide search** (key `/` or Ctrl+K): sections, glossary, themes, prices, signals, rent indices, investors, insiders, AI software, studies, news
 - [x] **"Show all" + ranks** instead of fixed cut-offs (trend radar, AI software with filter, studies, insiders, consensus, voices, prediction markets)
 - [x] **Detail view for every trend item**: key points in plain language, chart, sources, further reading (assets, commodities, AI models/projects, studies)

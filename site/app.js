@@ -7,6 +7,7 @@ import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
+import { initPersonal, renderDepot, goTo } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
@@ -130,7 +131,7 @@ function renderMarket() {
     const live = m.sym === "BTC-USD" && state.liveBtc;
     const last = live ? state.liveBtc.usd : m.last, chg = live ? state.liveBtc.chg / 100 : m.chg1d;
     const col = m.sym === "^VIX" ? "var(--muted)" : chg >= 0 ? "var(--good)" : "var(--crit)";
-    return `<div class="tile" data-tip="${esc(`<b>${esc(m.name)}</b><br>1 Woche ${pct(m.chg1w)} · 1 Monat ${pct(m.chg1m)}<br>3 Monate ${pct(m.chg3m)} · 1 Jahr ${pct(m.chg1y)}`)}">
+    return `<div class="tile" role="button" tabindex="0" data-detail="mkt:${esc(m.sym)}" data-tip="${esc(`<b>${esc(m.name)}</b><br>1 Woche ${pct(m.chg1w)} · 1 Monat ${pct(m.chg1m)}<br>3 Monate ${pct(m.chg3m)} · 1 Jahr ${pct(m.chg1y)}`)}">
       <div class="nm"><span>${esc(m.name)}</span>${live ? '<span class="livebadge">LIVE</span>' : ""}</div>
       <div class="px">${priceFmt(m, last)}</div>
       <div class="ch ${m.sym === "^VIX" ? "flat" : dirCls(chg)}">${arrow(chg)}${pct(chg, 2)} heute</div>
@@ -296,13 +297,13 @@ function renderSources() {
 function renderBanner() {
   const b = $("#banner");
   if (state.data.demo) { b.hidden = false; b.innerHTML = "<b>Demo-Daten.</b> Diese Ansicht zeigt erfundene Beispielwerte. Echte Daten erscheinen, sobald der Sammler (GitHub Action) einmal gelaufen ist."; }
-  else if (Date.now() - Date.parse(state.data.generatedAt) > 2 * 3600e3) { b.hidden = false; b.innerHTML = `<b>Daten sind ${ago(Date.parse(state.data.generatedAt))} alt.</b> Der Sammler (alle 15 Minuten) ist wohl gerade ausgefallen.`; }
+  else if (Date.now() - Date.parse(state.data.generatedAt) > 2 * 3600e3) { b.hidden = false; b.innerHTML = `<b>Stand der Daten: ${ago(Date.parse(state.data.generatedAt))}.</b> GitHub startet den Datensammler bei kostenlosen Konten oft nur alle paar Stunden. Krypto-Kurse und Tech-News oben laufen trotzdem live.`; }
   else b.hidden = true;
 }
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -493,6 +494,7 @@ function bindEvents() {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !$("#drawer").hidden) closeDrawer();
     if ((e.key === "Enter") && e.target.matches(".trow[data-open]")) openTheme(e.target.dataset.open);
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-detail][tabindex]")) { e.preventDefault(); openDetailFor(e.target.dataset.detail); }
   });
   // Tooltips für Elemente mit data-tip (Märkte, Bausteine)
   document.addEventListener("pointerover", (e) => { const t = e.target.closest("[data-tip]"); if (t) showTip(e, t.dataset.tip); });
@@ -519,7 +521,9 @@ safe(renderMeta);
 safe(applyPrefs);
 safe(renderFitness);
 safe(initBackup);
-$("#prefsBtn").addEventListener("click", () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; });
+const openPrefs = () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; };
+$("#prefsBtn").addEventListener("click", openPrefs);
+initPersonal({ openPrefs, onGoto: goTo });
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));
 $("#shareCom").addEventListener("click", () => state.data && share(commodityShareText(state.data, pageUrl())));
@@ -527,7 +531,7 @@ renderSourcesTable();
 renderInstruments();
 renderKpis();
 initMode(() => state.data && [renderPlan, renderRealEstate].forEach(safe));
-const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "maerkte") [renderFng, renderCnn, renderRealEstate].forEach(safe); if (v === "heute") safe(renderGauge); };
+const onShow = (v) => { if (!state.data) return; if (v === "plan") safe(renderPlan); if (v === "entdecken") [renderFng, renderCnn, renderRealEstate].forEach(safe); if (v === "heute") safe(renderGauge); };
 addEventListener("hashchange", () => { if (location.hash.startsWith("#thema=")) { showView(); const id = location.hash.slice(7); if (themeById(id)) openTheme(id, false); return; } showView(onShow); });
 showView();
 renderLexikon();

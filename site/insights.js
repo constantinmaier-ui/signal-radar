@@ -300,7 +300,7 @@ export function renderCommodities() {
   if (!list.length) { $("#commodities").innerHTML = '<div class="empty">Noch keine Rohstoff-Daten.</div>'; return; }
   const groups = [...new Set(list.map((c) => c.group))];
   $("#commodities").innerHTML = `<div class="tscroll"><table class="tick-table com-table"><thead><tr><th>Rohstoff</th><th>Preis</th><th>1 Woche</th><th>1 Monat</th><th>1 Jahr</th><th>Lage im 52-Wochen-Bereich</th><th class="pro-only">Schwankung</th></tr></thead><tbody>
-    ${groups.map((g) => `<tr class="grp"><td colspan="7">${esc(g)}</td></tr>` + list.filter((c) => c.group === g).map((c) => `<tr>
+    ${groups.map((g) => `<tr class="grp"><td colspan="7">${esc(g)}</td></tr>` + list.filter((c) => c.group === g).map((c) => `<tr class="clickable" tabindex="0" data-detail="com:${esc(c.id)}">
       <td><b>${esc(c.name)}</b><div class="fine">${esc(c.unit)}</div></td>
       <td>${fmt(c.last, c.last < 20 ? 2 : c.last < 1000 ? 1 : 0)}</td>
       <td class="${dirCls(c.chg1w)}">${pct(c.chg1w, 1)}</td><td class="${dirCls(c.chg1m)}">${pct(c.chg1m, 0)}</td><td class="${dirCls(c.chg1y)}">${pct(c.chg1y, 0)}</td>

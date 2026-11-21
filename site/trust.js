@@ -59,7 +59,7 @@ export function renderPrefs(onChange) {
     const q = prefs(), t = e.target;
     if (t.dataset.topic) q.off = t.checked ? q.off.filter((x) => x !== t.dataset.topic) : [...new Set([...q.off, t.dataset.topic])];
     if (t.dataset.sec) q.hide = t.checked ? q.hide.filter((x) => x !== t.dataset.sec) : [...new Set([...q.hide, t.dataset.sec])];
-    store.set("prefs", q); applyPrefs(); onChange?.();
+    store.set("prefs", q); store.set("interests", TOPICS.map(([k]) => k).filter((k) => !q.off.includes(k))); applyPrefs(); onChange?.();
   };
 }
 
@@ -182,7 +182,7 @@ function renderQuiz() {
 
 // ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
 // Password → key (PBKDF2-SHA256, 600,000 rounds as recommended by OWASP 2023) → AES-256-GCM. All local in the browser.
-const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal"];
+const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal", "interests", "onboarded", "portfolio"];
 const KDF_ITER = 600000, KDF_ITER_V1 = 310000;
 // A restored backup is untrusted (someone could send a crafted file): keep only known keys with sane values.
 const SAFE_STR = /^[\w\-äöüÄÖÜß .,]{0,60}$/;
@@ -207,6 +207,11 @@ export function sanitizeBackup(obj) {
   if ("mode" in o) out.mode = oneOf(o.mode, ["easy", "pro"], "easy");
   if ("theme" in o) out.theme = oneOf(o.theme, ["light", "dark"], null);
   if ("goal" in o) out.goal = oneOf(o.goal, ["sicherheit", "ausgewogen", "wachstum", "mutig"], "ausgewogen");
+  if ("interests" in o) out.interests = strList(o.interests, 20);
+  if ("onboarded" in o) out.onboarded = o.onboarded === true;
+  if (Array.isArray(o.portfolio)) out.portfolio = o.portfolio.slice(0, 200).filter((p) => p && typeof p === "object")
+    .map((p) => ({ cat: typeof p.cat === "string" && /^[a-z]{2,12}$/.test(p.cat) ? p.cat : "other", name: typeof p.name === "string" && SAFE_STR.test(p.name) ? p.name : "", value: num(p.value, 0, 1e9, 0) }))
+    .filter((p) => p.value > 0);
   for (const k of Object.keys(out)) if (out[k] === null) delete out[k];
   return out;
 }

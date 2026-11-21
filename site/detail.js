@@ -42,17 +42,30 @@ function priceKpis(x) {
     ["Schwankung p. a.", ok(x.vol) ? pct(x.vol, 0).replace("+", "") : "–"], ["Risikoklasse", ok(x.riskClass) ? `${x.riskClass} von 7` : "–"]];
 }
 
-/** key: "asset:<id>", "com:<id>", "repo:<i>", "model:<i>", "paper:<list>:<i>", "study:<i>" */
+/** News of the last days whose title mentions one of the words. */
+export function relatedNews(words, d = state.data || {}) {
+  const w = words.map((x) => String(x || "").toLowerCase()).filter((x) => x.length >= 3);
+  if (!w.length) return [];
+  const seen = new Set();
+  return [...(state.live || []), ...(d.news || []), ...(d.themes || []).flatMap((t) => t.top || [])]
+    .filter((n) => n?.title && w.some((x) => n.title.toLowerCase().includes(x)) && !seen.has(n.title) && seen.add(n.title))
+    .slice(0, 6);
+}
+const newsBlock = (list) => (list.length ? `<h3>Aktuelle Nachrichten dazu</h3><ul class="feed">${list.map((n) => `<li><a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m"><span>${esc(n.source || "")}</span></div></li>`).join("")}</ul>` : "");
+const KEYWORDS = { world: ["MSCI World", "Weltbörse", "global stocks"], sp500: ["S&P 500", "Wall Street"], dax: ["DAX"], europe: ["Stoxx", "Europas Börsen"], em: ["Schwellenländer", "emerging markets", "China"], nasdaq: ["Nasdaq", "Tech-Aktien"], bonds: ["Anleihe", "Rendite", "bond"], gold: ["Gold"], silver: ["Silber", "silver"], oil: ["Öl", "Brent", "oil"], btc: ["Bitcoin"], eth: ["Ethereum"], realestate: ["Immobilien", "REIT"] };
+
+/** key: "asset:<id>", "com:<id>", "mkt:<sym>", "repo:<i>", "model:<i>", "paper:<list>:<i>", "study:<i>" */
 export function openDetailFor(key) {
   const d = state.data; if (!d) return false;
   const [kind, a, b] = key.split(":");
-  if (kind === "asset" || kind === "com") {
-    const x = (kind === "asset" ? d.assets : d.commodities)?.find((v) => v.id === a); if (!x) return false;
+  if (kind === "asset" || kind === "com" || kind === "mkt") {
+    const x = kind === "mkt" ? d.market?.find((v) => v.sym === a) : (kind === "asset" ? d.assets : d.commodities)?.find((v) => v.id === a); if (!x) return false;
+    const words = [...(KEYWORDS[x.id] || []), x.name.split(/[ (]/)[0]];
     show({
-      title: x.name, sub: esc(x.what || `${x.group || "Rohstoff"}${x.unit ? ` · ${x.unit}` : ""} · Kürzel ${x.sym}`),
+      title: x.name, sub: esc(x.what || `${kind === "mkt" ? "Markt-Überblick" : x.group || "Rohstoff"}${x.unit ? ` · ${x.unit}` : ""} · Kürzel ${x.sym}`),
       kpis: priceKpis(x), series: x.spark, end: x.sparkEnd,
       points: pricePoints(x),
-      body: x.examples ? `<p class="fine">${esc(x.examples)}</p>` : "",
+      body: (x.examples ? `<p class="fine">${esc(x.examples)}</p>` : "") + newsBlock(relatedNews(words, d)),
       links: [["Aktuelle Nachrichten", news(x.name)], ["Kurs bei Yahoo Finance", `https://finance.yahoo.com/quote/${encodeURIComponent(x.sym)}`]],
     });
     return true;

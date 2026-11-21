@@ -4,7 +4,7 @@ import { LEX } from "./extras.js";
 import { MIETSPIEGEL } from "./mietspiegel.js";
 import { buildSignals } from "./signals.js";
 
-const VIEW_LABEL = { heute: "Heute", plan: "Mein Plan", maerkte: "Märkte", chancen: "Chancen", profis: "Profis", news: "News", wissen: "Wissen" };
+const VIEW_LABEL = { heute: "Heute", plan: "Mein Geld", entdecken: "Entdecken", profis: "Profis & News", wissen: "Wissen" };
 const GROUPS = [
   ["sec", "Bereiche"], ["lex", "Begriffe erklärt"], ["theme", "Themen"], ["price", "Kurse & Anlagen"], ["sig", "Signale heute"],
   ["city", "Mietspiegel"], ["pro", "Profis & Insider"], ["tech", "KI-Software"], ["paper", "Forschung"], ["news", "Nachrichten"],
@@ -25,7 +25,7 @@ export function buildIndex(d = state.data || {}, doc = typeof document !== "unde
   for (const a of d.assets || []) add("price", a.name, `${a.group || "Anlage"} · ${pct(a.chg1m)} 1 Monat`, { detail: `asset:${a.id}` }, `${a.sym} ${a.alt || ""} ${a.examples || ""}`);
   for (const c of d.commodities || []) add("price", c.name, `Rohstoff · ${pct(c.chg1m)} 1 Monat`, { detail: `com:${c.id}` }, `${c.sym} ${c.group || ""}`);
   for (const a of d.analysts || []) add("price", a.name, `${a.sym} · Kursziel-Potenzial ${pct(a.upside, 0)}`, { view: "profis", anchor: "profis" }, a.sym);
-  for (const w of d.ipoWatch || []) add("theme", w.name, "Börsengang-Radar", { view: "chancen", anchor: "ipo" }, "ipo börsengang");
+  for (const w of d.ipoWatch || []) add("theme", w.name, "Börsengang-Radar", { view: "entdecken", anchor: "ipo" }, "ipo börsengang");
   try { for (const s of buildSignals(d, state.history || [])) add("sig", s.title, s.text, { view: s.view || "heute", anchor: "signals" }); } catch { /* data incomplete */ }
   for (const [k, v] of Object.entries(MIETSPIEGEL)) add("city", `Mietspiegel ${cap(k)}`, v.ed || v.pub || "", { city: k }, "miete mieten wohnung");
   for (const i of d.superinvestors?.investors || []) add("pro", i.person || i.fund, `${i.fund || ""} · ${i.style || ""}`, { view: "profis", anchor: "profis" }, (i.top || []).map((h) => h.name).join(" "));
@@ -78,11 +78,12 @@ function go(it, openDetailFor) {
   const g = it.go;
   if (g.theme) { location.hash = `thema=${g.theme}`; return; }
   if (g.detail) { openDetailFor(g.detail); return; }
-  const view = g.city ? "maerkte" : g.view, anchor = g.city ? "immobilien" : g.anchor;
+  const view = g.city ? "entdecken" : ({ maerkte: "entdecken", chancen: "entdecken", news: "profis" }[g.view] || g.view), anchor = g.city ? "immobilien" : g.anchor;
   if (location.hash !== `#${view}`) location.hash = view;
   setTimeout(() => {
     if (g.city) { const inp = $("#msCity"); if (inp) { inp.value = cap(g.city); inp.dispatchEvent(new Event("input", { bubbles: true })); } }
     const el = document.getElementById(anchor); if (!el) return;
+    if (el.classList.contains("folded")) el.closest(".view")?.classList.add("show-folded");
     el.scrollIntoView({ behavior: "smooth", block: "start" });
     el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600);
   }, 80);

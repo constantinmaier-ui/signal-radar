@@ -72,7 +72,7 @@ export function renderAssets() {
     <div class="rate"><span>Zins 10-jährige US-Staatsanleihe</span><b>${ok(rates.us10y) ? fmt(rates.us10y * 100, 2) + " %" : "–"}</b></div>
     <div class="rate"><span>Inflationsziel der EZB</span><b>2,00 %</b></div>`;
   const list = d.assets || [];
-  $("#assetGrid").innerHTML = list.length ? list.map((a) => a.missing ? "" : `<article class="asset">
+  $("#assetGrid").innerHTML = list.length ? list.map((a) => a.missing ? "" : `<article class="asset" role="button" tabindex="0" data-detail="asset:${esc(a.id)}">
       <header><div><span class="chip">${esc(a.group)}</span><h3>${esc(a.name)}</h3></div>${riskScale(a.riskClass)}</header>
       <div class="asset-px"><b>${priceFmt({ kind: a.sym.includes("=X") ? "fx" : "" }, a.last)}</b> <span class="${dirCls(a.chg1d)}">${arrow(a.chg1d)}${pct(a.chg1d, 2)} heute</span></div>
       ${spark(a.spark, { w: 300, h: 40, color: a.chg3m >= 0 ? "var(--good)" : "var(--crit)", label: `${a.name} 6 Monate` })}
