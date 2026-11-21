@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.2 (in progress)
+Keep your settings safely: automatic end-to-end encrypted backup (after every change into a file in your Dropbox/OneDrive folder on Chrome/Edge desktop; reminder + one-tap backup elsewhere), encrypted transfer link to another device, browser asked to keep the data.
+
 ## 3.0 (in progress)
 Guided, personal UX: optional onboarding (interests, goal with a short risk-tolerance question, experience, portfolio), five tabs (Heute · Mein Geld · Entdecken · Profis & News · Menü) with the 4th tab adapting to interests, sections outside the user's interests folded away, menu with everything, local portfolio compared with the plan (allocation, concentration, deviations, what the radar says per holding), clickable market tiles, asset cards and commodity rows with related news; honest stale-data banner; the first onboarding screen and "Über das Radar" explain which sources are queried how often and what sets the radar apart from portals and apps.
 

@@ -43,6 +43,15 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 3.2) – keep personal data safely (owner request 2026-11-21), by value ÷ effort
+- [x] **Ask the browser to keep the data** (`navigator.storage.persist()` after onboarding / backup setup) – tiny effort
+- [x] **Automatic encrypted backup**: Chrome/Edge desktop write after every change into a chosen file (e.g. in the Dropbox/OneDrive folder → end-to-end encrypted cloud copy); iPhone/Firefox: key kept, reminder + one-tap backup via share sheet
+- [x] **Transfer link to another device**: encrypted settings in the link fragment, password needed to open
+- [ ] **Real two-way sync via Dropbox app folder** (end-to-end encrypted, OAuth PKCE, no server) – high value, larger effort; 👤 owner creates a free Dropbox app (app key is public, no secret)
+- [ ] Google Drive / OneDrive the same way (`drive.file` scope, only files the app created) – after Dropbox
+- [ ] Unlock with passkey instead of password (WebAuthn PRF) – when Safari/Firefox support is solid
+- [ ] Not planned: own sync server, Super Productivity's SuperSync service (see DECISIONS)
+
 ## Done (version 2.1) – owner requests of 2026-11-19, in priority order
 - [x] **App-wide search** (key `/` or Ctrl+K): sections, glossary, themes, prices, signals, rent indices, investors, insiders, AI software, studies, news
 - [x] **"Show all" + ranks** instead of fixed cut-offs (trend radar, AI software with filter, studies, insiders, consensus, voices, prediction markets)
