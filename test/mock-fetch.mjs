@@ -12,6 +12,11 @@ globalThis.fetch = async (url, opts) => {
     return json({ id: "msg_t", type: "message", role: "assistant", model: "claude-opus-5-5", stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({ items }) }], usage: { input_tokens: 1, output_tokens: 1 } });
   }
   if (u.includes("api.anthropic.com")) return json({ id: "msg_test", type: "message", role: "assistant", model: "claude-opus-5-5", stop_reason: "end_turn", content: [{ type: "text", text: "🌡️ **Gesamtlage** Testzeile eins.\n🔥 **Stärkstes Thema** Testzeile zwei." }], usage: { input_tokens: 1, output_tokens: 1 } });
+  if (u.includes("hiring-lab/ai-tracker")) {
+    const rows = ["date,jobcountry,AI_share_postings"];
+    for (let i = 730; i >= 0; i -= 3) { const d = new Date(now - i * 864e5).toISOString().slice(0, 10); rows.push(`${d},DE,${(4 + (730 - i) / 365).toFixed(3)}`, `${d},US,${(5 + (730 - i) / 300).toFixed(3)}`); }
+    return text(rows.join("\n"));
+  }
   if (u.includes("example.invalid")) return new Response("", { status: 404 });
   if (u.includes("fc.yahoo.com")) return text("");
   if (u.includes("getcrumb")) return text("TestCrumb123");

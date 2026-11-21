@@ -10,9 +10,11 @@ export async function fetchSuperinvestors({ get, sleep, status }) {
   const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard signal-radar@users.noreply.github.com"; // SEC requires an e-mail address in the User-Agent
   const sec = (url, type = "json") => get(url, { type, headers: { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" }, timeout: 20000 });
   const out = [];
-  for (const inv of INVESTORS) {
+  for (const [i, inv] of INVESTORS.entries()) {
     try {
-      const sub = await sec(`https://data.sec.gov/submissions/CIK${String(inv.cik).padStart(10, "0")}.json`);
+      const url = `https://data.sec.gov/submissions/CIK${String(inv.cik).padStart(10, "0")}.json`;
+      // the first request is labelled so the log shows the HTTP status if the SEC refuses
+      const sub = i === 0 ? await get(url, { type: "json", headers: { "User-Agent": UA, "Accept-Encoding": "gzip, deflate" }, timeout: 20000, label: "SEC 13F Abruf (erste Anfrage)" }) : await sec(url);
       await sleep(150);
       if (!sub?.filings?.recent) throw new Error("keine Einreichungen");
       if (!String(sub.name || "").toLowerCase().includes(inv.kw)) throw new Error(`Name passt nicht (${sub.name})`);
@@ -208,7 +210,8 @@ export async function fetchInsiders({ get, sleep, status }, symbols, prev, NOW) 
   if (prev?.insiders?.checkedAt && NOW - Date.parse(prev.insiders.checkedAt) < 55 * 60e3) return prev.insiders;
   const UA = process.env.SEC_USER_AGENT || "SignalRadar research-dashboard signal-radar@users.noreply.github.com"; // SEC requires an e-mail address in the User-Agent
   const sec = (url, type = "json") => get(url, { type, headers: { "User-Agent": UA }, timeout: 20000 });
-  const map = await sec("https://www.sec.gov/files/company_tickers.json");
+  // labelled so that the workflow log shows the HTTP status if the SEC refuses (e.g. 403 = User-Agent not accepted)
+  const map = await get("https://www.sec.gov/files/company_tickers.json", { type: "json", headers: { "User-Agent": UA }, timeout: 20000, label: "SEC Ticker-Liste (Insider)" });
   if (!map) { status.push({ source: "SEC Insider-Meldungen", ok: false, error: "Ticker-Liste nicht abrufbar" }); return prev?.insiders || null; }
   const cikOf = new Map(Object.values(map).map((r) => [String(r.ticker).toUpperCase(), r.cik_str]));
   const out = [];

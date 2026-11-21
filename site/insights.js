@@ -86,6 +86,7 @@ const SOURCES = [
   ["Nachrichten", "Google News, tagesschau, Handelsblatt, FAZ, Spiegel, CNBC, MarketWatch, Yahoo, TechCrunch, CoinDesk", "Schlagzeilen, Ereignis-Arten", "alle 15 Min."],
   ["Tech-Szene & Foren", "Hacker News", "Was die Tech-Szene diskutiert", "live jede Minute"],
   ["Aufmerksamkeit", "Wikipedia-Seitenaufrufe (Wikimedia)", "Wie stark ein Thema gesucht wird", "täglich"],
+  ["KI-Stellenanzeigen", "Indeed Hiring Lab (CC BY 4.0)", "Anteil der Jobs, die KI erwähnen (Deutschland, USA): Frühsignal, weil Firmen vor dem Umsatz einstellen", "täglich gemessen, monatlich veröffentlicht"],
   ["Weltpresse", "GDELT-Projekt", "Wie oft über eine Blase berichtet wird", "alle 15 Min."],
   ["Stimmung", "CNN Fear & Greed, alternative.me (Krypto)", "Angst oder Gier", "alle 15 Min. (Index selbst täglich)"],
   ["Wettmärkte", "Polymarket", "Echtgeld-Wahrscheinlichkeiten", "alle 15 Min."],

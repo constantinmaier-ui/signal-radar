@@ -12,7 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS, TOP_JOURNALS } from "./config.mjs";
 import { buildSignals } from "../site/signals.js";
-import { computeEvents, fetchResearch, fetchJournalResearch, fetchRealEstate, fetchMacro, fetchSentimentOfficial, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower } from "./insights.mjs";
+import { computeEvents, fetchResearch, fetchJournalResearch, fetchRealEstate, fetchMacro, fetchSentimentOfficial, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower, fetchAiJobs } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
   parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
@@ -333,6 +333,7 @@ async function main() {
   ]);
   const sentiment = await fetchSentimentOfficial({ get });
   const papers = await fetchJournalResearch({ get }, TOP_JOURNALS, previous.prevData?.papers, NOW);
+  const aiJobs = await fetchAiJobs({ get }, previous.prevData?.aiJobs, NOW);
   const insiders = await fetchInsiders(ctx, UNIVERSE.filter((t) => !t.includes(".") && !t.endsWith("-USD")), previous.prevData, NOW);
   const universePrices = Object.fromEntries(UNIVERSE.filter((t) => prices[t]).map((t) => [t, prices[t]]));
   const gems = findGems({ universePrices, consensus, benchmark3m: prices["^GSPC"]?.chg3m });
@@ -410,7 +411,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, sentiment, research, papers, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, sentiment, research, papers, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power, aiJobs,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),

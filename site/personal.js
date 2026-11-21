@@ -5,6 +5,7 @@ import { TOPICS } from "./trust.js";
 import { BUCKETS, buildPlan } from "./plan.js";
 import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
 import { topicOf } from "./heute.js";
+import { PERSONAS, personas } from "./personas.js";
 
 // ---------- Interests ----------
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
@@ -67,6 +68,7 @@ export function goTo(view, anchor) {
   if (location.hash !== `#${view}`) location.hash = view;
   setTimeout(() => {
     const el = anchor && document.getElementById(anchor); if (!el) return;
+    if (el.tagName === "DETAILS") el.open = true;
     if (el.classList.contains("folded")) el.closest(".view")?.classList.add("show-folded");
     el.scrollIntoView({ behavior: "smooth", block: "start" });
     el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600);
@@ -121,14 +123,14 @@ export const SOURCES_HTML = `<ul>
   <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 9 Nachrichtenportale plus Google News zu jedem der 13 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
   <li><b>Stündlich:</b> Insider-Käufe (US-Börsenaufsicht SEC), weltweite Berichterstattung über „Blase“ (GDELT)</li>
   <li><b>Alle 6 Stunden:</b> Studien aus Top-Fachzeitschriften (OpenAlex)</li>
-  <li><b>Täglich bis monatlich (amtlich):</b> EZB-Zinsen, Hauspreise (Eurostat), Konjunktur und Stimmung (US-Notenbank, EU-Kommission), Wikipedia-Aufrufe</li>
+  <li><b>Täglich bis monatlich (amtlich):</b> EZB-Zinsen, Hauspreise (Eurostat), Konjunktur und Stimmung (US-Notenbank, EU-Kommission), Wikipedia-Aufrufe, KI-Stellenanzeigen (Indeed Hiring Lab)</li>
   <li><b>Vierteljährlich:</b> Depots der Top-Investoren (SEC 13F)</li></ul>
   <p class="fine">Komplette Liste mit allen Quellen: Menü → Wissen → Unsere Quellen.</p>`;
 
 let ob = null;
 export function openOnboarding() {
   const plan = store.get("plan", {}) || {};
-  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), mode: store.get("mode", "easy"), depot: depotList() };
+  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), mode: store.get("mode", "easy"), depot: depotList() };
   renderOnboarding();
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
@@ -139,7 +141,9 @@ function renderOnboarding() {
     () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
         <details class="ob-more"><summary>Was macht es besser als Finanzportale und Apps?</summary>${VALUE_HTML}</details>
         <details class="ob-more"><summary>Welche Quellen, wie oft?</summary>${SOURCES_HTML}</details></div>
-      <h2 id="sheetTitle">Was interessiert dich?</h2><p class="fine">Danach richtet sich, was oben steht und was eingeklappt wird. Mehrere möglich.</p>
+      <h2 id="sheetTitle">Wofür nutzt du das Radar?</h2><p class="fine">Dann bekommst du unter „Dein Radar“ eigene Live-Infos. Mehrere möglich, freiwillig.</p>
+      <div class="chips-wrap">${PERSONAS.map((p) => chip("pers", p.id, ob.personas.includes(p.id), `${p.icon} ${p.label}`)).join("")}</div>
+      <p><b>Welche Bereiche interessieren dich?</b> <span class="fine">Danach richtet sich, was oben steht und was eingeklappt wird.</span></p>
       <div class="chips-wrap">${TOPICS.map(([k, l]) => chip("int", k, ob.interests.includes(k), l)).join("")}</div>`,
     () => { const sug = suggestGoal(ob.drop, ob.horizon), g = ob.goal || sug;
       return `<h2 id="sheetTitle">Dein Ziel</h2>
@@ -158,6 +162,7 @@ function finishOnboarding() {
   readDepotEditor($("#sheet"), (list) => (ob.depot = list));
   const list = ob.interests.length ? ob.interests : ALL;
   store.set("interests", list);
+  store.set("personas", ob.personas);
   store.set("prefs", { ...(store.get("prefs", {}) || {}), off: ALL.filter((k) => !list.includes(k)) });
   const goal = ob.goal || suggestGoal(ob.drop, ob.horizon);
   store.set("goal", goal);
@@ -174,6 +179,12 @@ function onboardingClick(e) {
   const t = e.target;
   const pick = (sel) => t.closest(sel);
   let b;
+  if ((b = pick("[data-pers]"))) {
+    const k = b.dataset.pers, on = !ob.personas.includes(k);
+    ob.personas = on ? [...ob.personas, k] : ob.personas.filter((x) => x !== k);
+    if (on) { const add = PERSONAS.find((p) => p.id === k)?.interests || []; ob.interests = [...new Set([...(isAll(ob.interests) ? [] : ob.interests), ...add])]; }
+    return renderOnboarding(), true;
+  }
   if ((b = pick("[data-int]"))) { const k = b.dataset.int; ob.interests = ob.interests.includes(k) ? ob.interests.filter((x) => x !== k) : [...ob.interests, k]; return renderOnboarding(), true; }
   if ((b = pick("[data-hor]"))) { ob.horizon = b.dataset.hor; ob.goal = null; return renderOnboarding(), true; }
   if ((b = pick("[data-drop]"))) { ob.drop = Number(b.dataset.drop); ob.goal = null; return renderOnboarding(), true; }
