@@ -922,3 +922,11 @@ details[open]::details-content { height: auto; }
 .grow > [hidden] { display: none !important; }
 .grow-btn { margin-top: 6px; }
 #feedOutside a { color: var(--s1); }
+/* how many outlets report a story */
+.echo { font-size: 12px; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); }
+.echo.wide { background: color-mix(in srgb, var(--s1) 18%, transparent); font-weight: 600; }
+.reach { font-size: 12px; color: var(--muted); }
+.wide-box { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; margin: 8px 0 12px; }
+.wide-box h3 { margin: 0 0 6px; font-size: 15px; }
+.wide-row { padding: 6px 0; border-bottom: 1px solid var(--ring); font-size: 14px; }
+.wide-row .m { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }

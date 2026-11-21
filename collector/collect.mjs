@@ -15,7 +15,7 @@ import { buildSignals } from "../site/signals.js";
 import { computeEvents, fetchResearch, fetchJournalResearch, fetchRealEstate, fetchMacro, fetchSentimentOfficial, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower, fetchAiJobs } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
 import {
-  parseFeed, makeMatcher, dedupe, priceStats, attentionStats, themeScores,
+  parseFeed, makeMatcher, dedupe, clusterStories, priceStats, attentionStats, themeScores,
   scale, blend, zoneLabel, mean,
 } from "./lib.mjs";
 
@@ -355,9 +355,10 @@ async function main() {
   }
   for (const it of newsRaw.hnItems) all.push({ ...it, themes: tagThemes(it.title), signals: tagSignals(it.title) });
   all = all.filter((n) => !n.published || n.published > NOW - 8 * DAY);
-  const news = dedupe(all)
+  // exact duplicates first, then the same story under different headlines (counts distinct outlets)
+  const news = clusterStories(dedupe(all)
     .map((n) => ({ ...n, signals: [...new Set(n.signals)] }))
-    .sort((a, b) => (b.published || 0) - (a.published || 0));
+    .sort((a, b) => (b.published || 0) - (a.published || 0)));
 
   const within = (n, days) => n.published && n.published > NOW - days * DAY;
   const themes = THEMES.map((th) => {

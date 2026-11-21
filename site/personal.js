@@ -121,7 +121,7 @@ export const VALUE_HTML = `<ul>
   <li><b>Was es nicht ist:</b> keine Anlageberatung, keine Kursprognose, kein Echtzeit-Werkzeug für Daytrader.</li></ul>`;
 export const SOURCES_HTML = `<ul>
   <li><b>Jede Minute live, solange die App offen ist:</b> Bitcoin und Ethereum (CoinGecko, Binance), Tech-News (Hacker News)</li>
-  <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 9 Nachrichtenportale plus Google News zu jedem der 16 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
+  <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 21 Nachrichtenportale und Pressemitteilungen von EZB und Fed, plus Google News zu jedem der 16 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
   <li><b>Stündlich:</b> Insider-Käufe (US-Börsenaufsicht SEC), weltweite Berichterstattung über „Blase“ (GDELT)</li>
   <li><b>Alle 6 Stunden:</b> Studien aus Top-Fachzeitschriften (OpenAlex)</li>
   <li><b>Täglich bis monatlich (amtlich):</b> EZB-Zinsen, Hauspreise (Eurostat), Konjunktur und Stimmung (US-Notenbank, EU-Kommission), Wikipedia-Aufrufe, KI-Stellenanzeigen (Indeed Hiring Lab)</li>
