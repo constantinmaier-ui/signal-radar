@@ -1,5 +1,5 @@
 // Nachrichten-Wirkung, Forschung, Immobilien (+ Rechner), Quellen-Übersicht, Einsteiger/Profi-Modus.
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, lineChart, dirCls, arrow, spark, limitList, moreBtn, growList } from "./ui.js";
 
 const DIR = { up: ["↑", "up", "steigt eher"], down: ["↓", "down", "fällt eher"], mixed: ["↕", "flat", "gemischt"], flat: ["–", "flat", "kaum Wirkung"] };
 const CLASSES = [["aktien", "Aktien"], ["anleihen", "Anleihen"], ["gold", "Gold"], ["immobilien", "Immobilien"], ["krypto", "Krypto"]];
@@ -17,7 +17,7 @@ function eventCard(e, compact) {
     <div class="imps" aria-label="Typische Wirkung">${impacts}</div>
     <p>${esc(e.why)}</p>
     ${compact ? "" : `<details class="evid"><summary>Was sagt die Forschung?</summary><p>${esc(e.evidence)}</p></details>`}
-    ${e.top.slice(0, compact ? 1 : 3).map((n) => `<a class="ev-news" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)} <span class="fine">${esc(n.source)} · ${ago(n.published)}</span></a>`).join("")}
+    ${growList(e.top.map((n) => `<a class="ev-news" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)} <span class="fine">${esc(n.source)} · ${ago(n.published)}</span></a>`), { n: compact ? 1 : 3, step: 5, tag: "div", cls: "ev-list" })}
   </article>`;
 }
 export function renderEvents() {

@@ -17,7 +17,7 @@ export function computeEvents(news, now = Date.now(), events = EVENTS) {
       id: ev.id, name: ev.name, icon: ev.icon, impact: ev.impact, why: ev.why, evidence: ev.evidence,
       n48h: in2.length, n7d: in7.length, accel,
       bull: tones.filter((t) => t === "bullish").length, bear: tones.filter((t) => t === "bearish").length,
-      top: in7.sort((a, b) => (b.echo || 1) - (a.echo || 1) || b.published - a.published).slice(0, 3)
+      top: in7.sort((a, b) => (b.echo || 1) - (a.echo || 1) || b.published - a.published).slice(0, 12)
         .map((n) => ({ title: n.title, url: n.url, source: n.source, published: n.published })),
     };
   }).sort((a, b) => b.n48h * 2 + b.n7d - (a.n48h * 2 + a.n7d));

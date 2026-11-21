@@ -1,7 +1,7 @@
 # Changelog
 
 ## 4.1 (in progress)
-One guided path: optional situation step (age, family, home, debts, spending, cash, savings, learning wishes) and a personal readiness check "Bist du bereit zu investieren?" that puts basics (expensive debt, emergency fund, short horizon) before any investing line; smoother expand/collapse and tab transitions.
+One guided path: optional situation step (age, family, home, debts, spending, cash, savings, learning wishes) and a personal readiness check "Bist du bereit zu investieren?" that puts basics (expensive debt, emergency fund, short horizon) before any investing line; smoother expand/collapse and tab transitions. "Mehr laden" everywhere: the news feed loads while scrolling and ends with a Google News link; theme, detail, IPO, event and superinvestor lists grow in place; the collector keeps 800 headlines.
 
 ## 4.0 (in progress)
 Real added value per investor type: profiles (ETF, crypto, AI trends, commodities/procurement, real estate entry/owner) with a personal "Dein Radar" card of live lines; "Was die wenigsten wissen" with 15 cited research facts; search understands synonyms, plain questions and typos and can hand a question plus context to the user's own AI; new early signal: share of AI job postings (Indeed Hiring Lab); commodity moves in euro. Strategy in docs/STRATEGY.md.

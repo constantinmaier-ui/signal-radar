@@ -150,3 +150,23 @@ export const toggleMore = (key) => (expanded.has(key) ? expanded.delete(key) : e
 /** Text normalisation for search: lower case, umlauts folded (ä→a, ae→a), accents removed. */
 export const fold = (s) => String(s ?? "").toLowerCase().replace(/ß/g, "ss").replace(/ae/g, "a").replace(/oe/g, "o").replace(/ue/g, "u")
   .normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9.%&+ -]/g, " ").replace(/\s+/g, " ").trim();
+
+// ---------- "Mehr laden" for any list, in place (no re-render, works inside drawers) ----------
+/** Renders item HTML strings; shows `n`, the button reveals `step` more per click. Each item must start with an element tag. */
+export function growList(items, { n = 6, step = 10, tag = "ul", cls = "feed", label = "Mehr laden" } = {}) {
+  if (!items.length) return "";
+  const body = items.map((h, i) => (i < n ? h : h.replace(/^\s*<([a-z0-9]+)/i, "<$1 hidden"))).join("");
+  const rest = items.length - n;
+  return `<${tag} class="${cls} grow" data-step="${step}">${body}</${tag}>${rest > 0 ? `<button type="button" class="btn btn-ghost btn-sm grow-btn" data-label="${esc(label)}">${esc(label)} (${rest} weitere)</button>` : ""}`;
+}
+/** Reveals the next batch of a growList. Returns true if the click was handled. */
+export function growClick(e) {
+  const b = e.target.closest(".grow-btn"); if (!b) return false;
+  const list = b.previousElementSibling; if (!list?.classList.contains("grow")) return false;
+  const hidden = [...list.children].filter((c) => c.hidden);
+  hidden.slice(0, Number(list.dataset.step) || 10).forEach((c) => (c.hidden = false));
+  const left = hidden.length - (Number(list.dataset.step) || 10);
+  if (left > 0) b.textContent = `${b.dataset.label} (${left} weitere)`; else b.remove();
+  return true;
+}
+export const googleNews = (q) => `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;

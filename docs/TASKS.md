@@ -47,6 +47,7 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **Situation step in onboarding** (optional): age, family, rent/own, expensive debts, monthly spending, cash, monthly savings; plus "what do you want to learn"
 - [x] **"Bist du bereit zu investieren?"**: personal readiness check (expensive debts first, emergency fund 3–6 months, horizon, savings, life cycle, family); if basics are missing it leads "Das Wichtigste heute" and no "invest" line is shown
 - [x] **Less text at once**: short line first, details on tap; smooth open/close and tab transitions (View Transitions, `interpolate-size`)
+- [x] **Load more everywhere** (owner request): news feed loads on scroll and links to Google News at the end; theme, detail, IPO, event and superinvestor lists grow in place; the collector keeps 800 headlines, 12 per theme and event
 - [ ] 👤 **SEC_USER_AGENT secret with a real e-mail** (owner provided an address on 2026-11-21; it goes only into the secret, never into the repo) – the SEC answers HTTP 403 to the noreply address (insider buys, superinvestors are empty until then)
 - [ ] **Guided setup wizard** for every connection (Dropbox, own AI key, later X): one button, ≤3 steps, deep links, copy buttons, "Verbindung testen" with ✓
 - [ ] **Sync across devices via Dropbox** (end-to-end encrypted, PKCE, no server) – 👤 owner creates a free Dropbox app and sends the app key

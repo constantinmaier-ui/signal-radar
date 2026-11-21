@@ -371,7 +371,7 @@ async function main() {
       price, attention: att, news7d: n7, news48h: n2, newsAccel, hn: hnRatios[th.id] || null,
       tickers: th.tickers.map((t) => ({ sym: t, ...(prices[t] ? { last: prices[t].last, chg1d: prices[t].chg1d, chg3m: prices[t].chg3m, ext200: prices[t].ext200, currency: prices[t].currency } : {}) })),
       scores,
-      top: mine.slice(0, 6).map((n) => ({ title: n.title, url: n.url, source: n.source, published: n.published })),
+      top: mine.slice(0, 12).map((n) => ({ title: n.title, url: n.url, source: n.source, published: n.published })),
     };
   });
 
@@ -415,7 +415,7 @@ async function main() {
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),
-    news: news.slice(0, 400).map(({ summary, ipoHint, ...n }) => n),
+    news: news.slice(0, 800).map(({ summary, ipoHint, ...n }) => n),
     sources: status.sort((a, b) => Number(a.ok) - Number(b.ok)),
     // Schlagwörter, damit die Seite live nachgeladene Meldungen selbst zuordnen kann
     keywords: { themes: Object.fromEntries(THEMES.map((t) => [t.id, t.kw])), signals: Object.fromEntries(SIGNAL_WORDS.map((s) => [s.tag, s.kw])) },

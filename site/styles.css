@@ -919,3 +919,6 @@ details[open]::details-content { height: auto; }
 .sit-grid input[type=number] { width: 100%; font: inherit; font-size: 16px; padding: 9px 30px 9px 12px; border-radius: 10px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); }
 .sit-grid .inp em { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--muted); }
 .sit-grid label { font-weight: 600; align-content: end; }
+.grow > [hidden] { display: none !important; }
+.grow-btn { margin-top: 6px; }
+#feedOutside a { color: var(--s1); }
