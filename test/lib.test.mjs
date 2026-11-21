@@ -506,3 +506,13 @@ test("readiness check: debts and missing emergency fund come first, open items a
   assert.deepEqual(sanitizeBackup({ situation: { age: "35", spend: "1800" }, learn: ["krypto", "<b>"] }).learn, ["krypto"]);
   assert.equal(sanitizeBackup({ situation: { age: "35", spend: "1800" } }).situation.spend, 1800);
 });
+
+test("load more: growList shows n items, hides the rest, counts what is left", async () => {
+  const { growList } = await import("../site/ui.js");
+  const html = growList(Array.from({ length: 9 }, (_, i) => `<li>${i}</li>`), { n: 3, step: 4 });
+  assert.equal((html.match(/<li hidden>/g) || []).length, 6);
+  assert.match(html, /Mehr laden \(6 weitere\)/);
+  assert.match(html, /data-step="4"/);
+  assert.equal(growList([], {}), "");
+  assert.doesNotMatch(growList(["<li>a</li>"], { n: 3 }), /grow-btn/);
+});

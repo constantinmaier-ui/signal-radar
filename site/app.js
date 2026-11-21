@@ -1,6 +1,6 @@
 // Signal-Radar – Oberfläche. Keine Abhängigkeiten, alles inline-SVG.
 
-import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore } from "./ui.js";
+import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
@@ -244,7 +244,7 @@ function renderIpo() {
       <div class="kpis"><div><b>${w.ipoNews7d}</b>IPO-News 7 T</div><div><b>${w.news7d}</b>News gesamt</div><div><b>${compact(w.attention?.last7)}</b>Aufrufe/Tag</div></div>
       ${spark(w.attention?.spark, { w: 300, h: 36, color: "var(--s2)", label: `Aufmerksamkeit ${w.name}` })}
       ${(w.markets || []).map((m) => `<div class="odds" title="${esc(m.question)}"><span>${fmt(m.prob * 100)} %</span><span class="bar"><i style="width:${m.prob * 100}%;background:var(--s1)"></i></span></div><div class="meta"><a href="${safeUrl(m.url)}" target="_blank" rel="noopener">${esc(m.question)}</a></div>`).join("")}
-      ${(w.top || []).slice(0, 2).map((n) => `<div><a href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="meta">${esc(n.source)} · ${ago(n.published)}</div></div>`).join("") || '<div class="empty">Gerade keine Meldungen.</div>'}
+      ${growList(ipoNews(w).map((n) => `<div><a href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="meta">${esc(n.source)} · ${ago(n.published)}</div></div>`), { n: 2, step: 5, tag: "div", cls: "ipo-news" }) || '<div class="empty">Gerade keine Meldungen.</div>'}
     </article>`;
   }).join("");
 }
@@ -266,6 +266,17 @@ function renderFng() {
   $("#trending").innerHTML = tr.map((c) => `<li class="chip" title="Marktkapitalisierungs-Rang ${c.rank ?? "–"}">🔎 ${esc(c.name)} <span class="${dirCls(c.chg24h)}">${ok(c.chg24h) ? pct(c.chg24h / 100, 0) : ""}</span></li>`).join("");
 }
 
+/** All headlines of a theme: live + collected feed (newest first), the collector's picks as fallback. */
+function themeNews(t) {
+  const seen = new Set();
+  return [...state.live, ...(state.data.news || []), ...(t.top || [])].filter((n) => n?.title && (n.themes?.includes(t.id) || t.top?.includes(n)) && !seen.has(n.title) && seen.add(n.title));
+}
+/** All headlines about one IPO candidate: the collector's picks plus every match in the full feed. */
+function ipoNews(w) {
+  const word = String(w.name || "").split(/[ (]/)[0].toLowerCase(), seen = new Set();
+  return [...(w.top || []), ...state.live, ...(state.data.news || [])]
+    .filter((n) => n?.title && (w.top?.includes(n) || (word.length >= 3 && n.title.toLowerCase().includes(word))) && !seen.has(n.title) && seen.add(n.title));
+}
 function feedItems() {
   const all = [...state.live, ...state.data.news];
   const q = state.q.trim().toLowerCase();
@@ -287,7 +298,11 @@ function renderFeed(freshKeys = new Set()) {
       <button class="share" type="button" data-share="${esc(n.title)}" data-url="${esc(n.url)}" aria-label="Meldung in WhatsApp teilen">${WA_ICON}</button>
       <div class="m">${n.live ? '<span class="live-tag">LIVE</span>' : ""}<span>${esc(n.source)}</span><span>${ago(n.published)}</span>${n.echo > 1 ? `<span title="So viele Quellen melden das">×${n.echo}</span>` : ""}${n.points ? `<span>▲ ${fmt(Number(n.points))}</span>` : ""}
       ${(n.signals || []).map((s) => `<span class="sig ${esc(s)}">${esc(s)}</span>`).join("")}${(n.themes || []).slice(0, 3).map((t) => `<span class="tt">${esc(short[t] || t)}</span>`).join("")}</div></li>`).join("") || '<li class="empty">Keine Treffer.</li>';
-  $("#moreBtn").hidden = items.length <= state.shown;
+  const rest = items.length - state.shown;
+  $("#moreBtn").hidden = rest <= 0;
+  $("#moreBtn").textContent = `Mehr laden (${rest} weitere)`;
+  const q = state.q.trim() || (state.theme !== "all" && state.theme !== "watch" ? state.data.themes.find((t) => t.id === state.theme)?.name : "") || "Börse Wirtschaft";
+  $("#feedOutside").innerHTML = rest <= 0 ? `Alle ${items.length} Meldungen geladen. <a href="${googleNews(q)}" target="_blank" rel="noopener">Noch mehr zu „${esc(q)}“ bei Google News ↗</a>` : "";
 }
 
 function renderSources() {
@@ -333,7 +348,8 @@ function openTheme(id, push = true) {
     ${t.tickers?.length ? `<h3>Bekannte Werte</h3><table class="tick-table"><thead><tr><th>Wert</th><th>Kurs</th><th>Heute</th><th>3 M</th><th>vs. 200 T</th></tr></thead><tbody>
       ${t.tickers.map((k) => `<tr><td>${esc(k.sym)}</td><td>${ok(k.last) ? fmt(k.last, 2) : "–"}</td><td class="${dirCls(k.chg1d)}">${pct(k.chg1d)}</td><td class="${dirCls(k.chg3m)}">${pct(k.chg3m, 0)}</td><td class="${dirCls(k.ext200)}">${pct(k.ext200, 0)}</td></tr>`).join("")}</tbody></table>` : ""}
     <h3>Aktuelle Schlagzeilen</h3>
-    <ul class="feed">${(t.top || []).map((n) => `<li><a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m"><span>${esc(n.source)}</span><span>${ago(n.published)}</span></div></li>`).join("") || '<li class="empty">Keine.</li>'}</ul>
+    ${growList(themeNews(t).map((n) => `<li><a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m"><span>${esc(n.source)}</span><span>${ago(n.published)}</span></div></li>`), { n: 6, step: 10 }) || '<ul class="feed"><li class="empty">Keine.</li></ul>'}
+    <a class="btn btn-ghost btn-sm" href="${googleNews(t.name)}" target="_blank" rel="noopener">Noch mehr bei Google News ↗</a>
     <button class="btn btn-wa btn-wide" type="button" id="shareTheme" style="margin-top:12px">${WA_ICON}<span>Thema in WhatsApp teilen</span></button>`;
   $("#drawer").hidden = false;
   document.body.style.overflow = "hidden";
@@ -475,6 +491,7 @@ function bindEvents() {
     }
     const det = e.target.closest("[data-detail]");
     if (det) { openDetailFor(det.dataset.detail); return; }
+    if (growClick(e)) return;
     const mb = e.target.closest("[data-more]");
     if (mb) {
       const k = mb.dataset.more; toggleMore(k);
@@ -508,6 +525,8 @@ function bindEvents() {
   $("#search").addEventListener("input", (e) => { clearTimeout(st); st = setTimeout(() => { state.q = e.target.value; state.shown = 40; renderFeed(); }, 150); });
   $("#onlySignals").addEventListener("change", (e) => { state.onlySignals = e.target.checked; renderFeed(); });
   $("#moreBtn").addEventListener("click", () => { state.shown += 40; renderFeed(); });
+  // load the next 40 automatically when the user scrolls to the end of the list
+  if ("IntersectionObserver" in window) new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting) && !$("#moreBtn").hidden) { state.shown += 40; renderFeed(); } }, { rootMargin: "300px" }).observe($("#moreBtn"));
   let rt, lastW = innerWidth; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (!state.data || Math.abs(innerWidth - lastW) < 40) return; lastW = innerWidth; [renderGauge, renderFng, renderCnn, renderPlan].forEach(safe); }, 250); });
 }
 

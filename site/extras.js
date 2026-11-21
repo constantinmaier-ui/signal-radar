@@ -1,5 +1,5 @@
 // Zusatzbereiche: Markt-Ampel, Anlageklassen, versteckte Perlen, Profis, Lexikon, Bild-Teilen.
-import { $, esc, fmt, pct, ok, ago, dirCls, arrow, compact, spark, lineChart, dayLabels, safeUrl, state, priceFmt, toast, limitList, moreBtn } from "./ui.js";
+import { $, esc, fmt, pct, ok, ago, dirCls, arrow, compact, spark, lineChart, dayLabels, safeUrl, state, priceFmt, toast, limitList, moreBtn, growList } from "./ui.js";
 import { riskScale } from "./plan.js";
 
 // ---------- Lexikon ----------
@@ -108,8 +108,8 @@ export function renderProfis() {
   $("#investorGrid").innerHTML = si.investors.length ? si.investors.map((v) => `<article class="investor">
       <header><div><h3>${esc(v.person)}</h3><span class="fine">${esc(v.fund)} · ${quarterLabel(v.quarter)}, gemeldet ${new Date(v.filed).toLocaleDateString("de-DE")}</span></div><a class="fine" href="${safeUrl(v.url)}" target="_blank" rel="noopener" title="Original bei der SEC">SEC ↗</a></header>
       <p class="style">${esc(v.style)}</p>
-      <div class="holdings">${v.top.slice(0, 5).map((h) => `<div class="hold"><span>${esc(pretty(h.name))}</span><span class="bar"><i style="width:${Math.min(100, h.weight * 100 * 2)}%;background:var(--s1)"></i></span><b>${fmt(h.weight * 100, 1)} %</b></div>`).join("")}</div>
-      <div class="moves">${v.moves.slice(0, 6).map((m) => `<span class="move ${m.type}" title="${MOVE[m.type][1]}">${MOVE[m.type][0]} ${esc(pretty(m.name))}${m.type === "aufgestockt" ? (m.change >= 1 ? ` ×${fmt(1 + m.change, m.change < 4 ? 1 : 0)}` : ` ${pct(m.change, 0)}`) : m.type === "reduziert" ? ` ${pct(m.change, 0)}` : ""}</span>`).join("") || '<span class="fine">Kaum Veränderungen.</span>'}</div>
+      ${growList(v.top.map((h) => `<div class="hold"><span>${esc(pretty(h.name))}</span><span class="bar"><i style="width:${Math.min(100, h.weight * 100 * 2)}%;background:var(--s1)"></i></span><b>${fmt(h.weight * 100, 1)} %</b></div>`), { n: 5, step: 10, tag: "div", cls: "holdings", label: "Mehr Positionen" })}
+      ${growList(v.moves.map((m) => `<span class="move ${m.type}" title="${MOVE[m.type][1]}">${MOVE[m.type][0]} ${esc(pretty(m.name))}${m.type === "aufgestockt" ? (m.change >= 1 ? ` ×${fmt(1 + m.change, m.change < 4 ? 1 : 0)}` : ` ${pct(m.change, 0)}`) : m.type === "reduziert" ? ` ${pct(m.change, 0)}` : ""}</span>`), { n: 6, step: 12, tag: "div", cls: "moves", label: "Mehr Käufe & Verkäufe" }) || '<span class="fine">Kaum Veränderungen.</span>'}
       <div class="fine">${v.positions} Positionen · ${compact(v.total)} $ gemeldet</div>
     </article>`).join("") : '<div class="empty">Die SEC-Daten sind gerade nicht abrufbar.</div>';
 

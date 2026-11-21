@@ -1,5 +1,5 @@
 // Detail view for any item (asset, commodity, AI project, study): key points, chart, sources, further reading.
-import { $, esc, fmt, pct, ok, dirCls, safeUrl, lineChart, dayLabels, state, compact } from "./ui.js";
+import { $, esc, fmt, pct, ok, dirCls, safeUrl, lineChart, dayLabels, state, compact, growList } from "./ui.js";
 
 const news = (q) => `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;
 const scholar = (q) => `https://scholar.google.com/scholar?q=${encodeURIComponent(q)}`;
@@ -49,9 +49,9 @@ export function relatedNews(words, d = state.data || {}) {
   const seen = new Set();
   return [...(state.live || []), ...(d.news || []), ...(d.themes || []).flatMap((t) => t.top || [])]
     .filter((n) => n?.title && w.some((x) => n.title.toLowerCase().includes(x)) && !seen.has(n.title) && seen.add(n.title))
-    .slice(0, 6);
+    .slice(0, 60);
 }
-const newsBlock = (list) => (list.length ? `<h3>Aktuelle Nachrichten dazu</h3><ul class="feed">${list.map((n) => `<li><a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m"><span>${esc(n.source || "")}</span></div></li>`).join("")}</ul>` : "");
+const newsBlock = (list) => (list.length ? `<h3>Aktuelle Nachrichten dazu</h3>${growList(list.map((n) => `<li><a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m"><span>${esc(n.source || "")}</span></div></li>`), { n: 6, step: 10 })}` : "");
 const KEYWORDS = { world: ["MSCI World", "Weltbörse", "global stocks"], sp500: ["S&P 500", "Wall Street"], dax: ["DAX"], europe: ["Stoxx", "Europas Börsen"], em: ["Schwellenländer", "emerging markets", "China"], nasdaq: ["Nasdaq", "Tech-Aktien"], bonds: ["Anleihe", "Rendite", "bond"], gold: ["Gold"], silver: ["Silber", "silver"], oil: ["Öl", "Brent", "oil"], btc: ["Bitcoin"], eth: ["Ethereum"], realestate: ["Immobilien", "REIT"] };
 
 /** key: "asset:<id>", "com:<id>", "mkt:<sym>", "repo:<i>", "model:<i>", "paper:<list>:<i>", "study:<i>" */
