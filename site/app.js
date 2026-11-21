@@ -14,6 +14,8 @@ import { initSync } from "./sync.js";
 import { initSubnav } from "./subnav.js";
 import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
 import { renderReadiness, renderGoal, initGoal } from "./situation.js";
+import { renderForYou } from "./foryou.js";
+import { renderEarly, initEarly } from "./early.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -362,7 +364,7 @@ function renderBanner() {
 function goalCard() { renderGoal(liveDepot().reduce((s, p) => s + p.value, 0)); }
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard, renderMeta, renderNextSteps].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard, renderMeta, renderNextSteps, renderForYou, renderEarly].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -607,7 +609,11 @@ safe(goalCard);
 safe(renderNextSteps);
 safe(renderInstallMine);
 addEventListener("radar:store", () => safe(renderNextSteps));
-document.addEventListener("radar:goal", () => state.data && [renderCheck, renderSignals, renderPlan, renderMyRadar, renderReadiness, goalCard, renderMeta, renderDepot, renderSummary].forEach(safe));
+document.addEventListener("radar:goal", () => state.data && [renderCheck, renderSignals, renderPlan, renderMyRadar, renderReadiness, goalCard, renderMeta, renderDepot, renderSummary, renderForYou].forEach(safe));
+// Any change to the user's inputs (depot, goals, situation, topics) re-checks "Für dich" and the early signals
+let fyTimer = 0;
+addEventListener("radar:store", () => { clearTimeout(fyTimer); fyTimer = setTimeout(() => state.data && [renderForYou, renderEarly, renderSignals].forEach(safe), 300); });
+initEarly(() => [renderEarly, renderForYou].forEach(safe));
 initGoal(() => [goalCard, renderReadiness, renderSummary].forEach(safe));
 addEventListener("radar:topics", () => state.data && [renderMyRadar, renderChips].forEach(safe));
 safe(renderMyRadar);

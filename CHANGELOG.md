@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.6 (in progress)
+The app adapts to your situation: "Für dich geprüft" shows whether you reach your goals, rule-checks every holding (concentration, run-up, downtrend, profile fit, emergency fund) with rule, source and next step, shows where your plan has room and what each input changes. Signals that touch your holdings come first. New "Frühsignale": what only a few have noticed yet (rising attention with a flat price, specialist-only news, cluster insider buys, new positions of single top investors) and a life-cycle view of all themes.
+
 ## 5.5 (in progress)
 Every detail ends with concrete actions ("Lohnt sich das für mich?", follow the theme, remember as topic, add to portfolio, ask your AI); startups and business angels explained; install guide for the device in use; setup can be repeated with previous answers; deep links straight to forms and entries.
 

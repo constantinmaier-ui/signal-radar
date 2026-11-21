@@ -5,14 +5,14 @@ import { $, $$, esc, store } from "./ui.js";
 export const SUBS = {
   entdecken: [
     ["anlagen", "📈 Anlagen", ["anlagen", "weitere"]],
-    ["trends", "🚀 Trends & Chancen", ["trends", "karte", "themen", "perlen", "ipo"]],
+    ["trends", "🚀 Trends & Chancen", ["fruehsignale", "trends", "karte", "themen", "perlen", "ipo"]],
     ["rohstoffe", "🛢️ Rohstoffe", ["rohstoffe"]],
     ["immobilien", "🏡 Immobilien", ["immobilien"]],
     ["konjunktur", "🌡️ Konjunktur & Stimmung", ["frueh", "offiziell", "stimmung"]],
   ],
   plan: [
     ["start", "🎯 Ziel & Start", ["bereit", "ziel"]],
-    ["depot", "💼 Depot", ["depot"]],
+    ["depot", "💼 Depot", ["depot", "depotCheck"]],
     ["plan", "🧮 Plan", ["plan", "hebel", "howto"]],
     ["fitness", "💪 Fitness", ["fitness"]],
   ],

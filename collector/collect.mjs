@@ -84,12 +84,14 @@ async function fetchSeries(sym, stooqSym) {
 async function fetchInstruments(prices) {
   const res = await pool(INSTRUMENTS, 6, async (it) => {
     const p = prices[it.sym];
-    if (p) return { ...it, last: p.last, chg1d: p.chg1d, currency: p.currency || "" };
-    const y = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(it.sym)}?range=5d&interval=1d`, { type: "json" });
+    // Trend data (1 and 3 months, distance to the 200-day average) lets the app check each holding
+    const trend = (x) => ({ chg1m: Number.isFinite(x?.chg1m) ? x.chg1m : null, chg3m: Number.isFinite(x?.chg3m) ? x.chg3m : null, ext200: Number.isFinite(x?.ext200) ? x.ext200 : null });
+    if (p) return { ...it, last: p.last, chg1d: p.chg1d, currency: p.currency || "", ...trend(p) };
+    const y = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(it.sym)}?range=1y&interval=1d`, { type: "json" });
     const r = y?.chart?.result?.[0], closes = (r?.indicators?.quote?.[0]?.close || []).filter(Number.isFinite);
     const last = Number.isFinite(r?.meta?.regularMarketPrice) ? r.meta.regularMarketPrice : closes.at(-1);
-    const prev = Number.isFinite(r?.meta?.chartPreviousClose) && closes.length < 2 ? r.meta.chartPreviousClose : closes.at(-2);
-    return Number.isFinite(last) ? { ...it, last, chg1d: Number.isFinite(prev) && prev > 0 ? last / prev - 1 : null, currency: r?.meta?.currency || "" } : { ...it, last: null };
+    const prev = closes.length >= 2 ? closes.at(-2) : r?.meta?.chartPreviousClose;
+    return Number.isFinite(last) ? { ...it, last, chg1d: Number.isFinite(prev) && prev > 0 ? last / prev - 1 : null, currency: r?.meta?.currency || "", ...trend(priceStats(closes)) } : { ...it, last: null };
   });
   const okN = res.filter((x) => Number.isFinite(x.last)).length;
   status.push({ source: `Depot-Kurse ETFs & Aktien (${okN}/${INSTRUMENTS.length})`, ok: okN > INSTRUMENTS.length / 2 });

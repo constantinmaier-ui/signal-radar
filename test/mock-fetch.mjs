@@ -76,8 +76,9 @@ globalThis.fetch = async (url, opts) => {
   if (u.includes("data-api.ecb.europa.eu")) return json({ dataSets: [{ series: { "0:0:0:0:0:0:0": { observations: { "0": [2.0] } } } }] });
   if (u.includes("finance.yahoo.com/v8")) {
     if (u.includes("HAG.DE")) return new Response("", { status: 404 }); // Ausfall simulieren
-    const n = 252; let p = 100; const closes = [];
-    for (let i = 0; i < n; i++) { p *= 1 + (rnd() - 0.47) * 0.03; closes.push(p); }
+    // Currencies get a realistic level and small moves (EUR/USD around 1.08), everything else starts at 100
+    const fx = /EURUSD|%3DX|=X/i.test(u), n = 252; let p = fx ? 1.08 : 100; const closes = [];
+    for (let i = 0; i < n; i++) { p *= 1 + (rnd() - (fx ? 0.5 : 0.47)) * (fx ? 0.004 : 0.03); closes.push(p); }
     return json({ chart: { result: [{ meta: { currency: "USD", regularMarketPrice: p }, timestamp: closes.map((_, i) => Math.floor((now - (n - i) * DAY) / 1000)), indicators: { quote: [{ close: closes }] } }] } });
   }
   if (u.includes("stooq.com")) return text("Keine Daten");

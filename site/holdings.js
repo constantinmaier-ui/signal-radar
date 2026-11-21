@@ -15,14 +15,14 @@ export function toEur(price, currency, eurusd) {
 
 /** Everything with a price the user can pick: popular ETFs, DAX and US stocks, theme stocks, asset classes. */
 export function catalog(d = state.data || {}) {
-  const out = new Map(), add = (sym, name, kind, cat, last, currency, chg1d, isin = "") => {
+  const out = new Map(), add = (sym, name, kind, cat, last, currency, chg1d, isin = "", tr = {}) => {
     if (!sym || out.has(sym)) return;
-    out.set(sym, { ref: `y:${sym}`, sym, name: name || sym, kind, cat, last, currency, chg1d, isin });
+    out.set(sym, { ref: `y:${sym}`, sym, name: name || sym, kind, cat, last, currency, chg1d, isin, chg1m: tr.chg1m ?? null, chg3m: tr.chg3m ?? null, ext200: tr.ext200 ?? null });
   };
-  for (const i of d.instruments || []) add(i.sym, i.name, i.kind, i.cat, i.last, i.currency, i.chg1d, i.isin);
+  for (const i of d.instruments || []) add(i.sym, i.name, i.kind, i.cat, i.last, i.currency, i.chg1d, i.isin, i);
   for (const t of d.themes || []) {
-    add(t.etf, `${t.name} (ETF)`, "etf", "themes", t.price?.last, t.price?.currency, t.price?.chg1d);
-    for (const k of t.tickers || []) add(k.sym, (d.analysts || []).find((a) => a.sym === k.sym)?.name || k.sym, "stock", "themes", k.last, k.currency, k.chg1d);
+    add(t.etf, `${t.name} (ETF)`, "etf", "themes", t.price?.last, t.price?.currency, t.price?.chg1d, "", t.price);
+    for (const k of t.tickers || []) add(k.sym, (d.analysts || []).find((a) => a.sym === k.sym)?.name || k.sym, "stock", "themes", k.last, k.currency, k.chg1d, "", k);
   }
   for (const a of d.analysts || []) add(a.sym, a.name, "stock", "themes", a.price, a.currency, null);
   return [...out.values()];
@@ -69,7 +69,7 @@ export function quoteOf(ref, d = state.data || {}) {
   const i = catalog(d).find((x) => x.ref === ref); if (!i) return null;
   const eurusd = (d.market || []).find((m) => m.sym === "EURUSD=X")?.last;
   const last = toEur(i.last, i.currency, eurusd);
-  return ok(last) ? { last, chg1d: i.chg1d } : null;
+  return ok(last) ? { last, chg1d: i.chg1d, chg1m: i.chg1m, chg3m: i.chg3m, ext200: i.ext200, sym: i.sym } : null;
 }
 /** Value in euro: units × live price when both are known, otherwise the entered value. Pure given the quote. */
 export function positionValue(p, quote) {

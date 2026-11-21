@@ -4,6 +4,7 @@ import { $, $$, esc, fmt, state, store } from "./ui.js";
 import { buildSignals, dailyVerdict, ideasFor, GOALS } from "./signals.js";
 import { renderPlan } from "./plan.js";
 import { prefs, renderAskAi } from "./trust.js";
+import { myKeys, touches } from "./foryou.js";
 
 const KIND = {
   chance: { icon: "↗", label: "Chance", cls: "k-chance" },
@@ -53,7 +54,10 @@ export function renderCheck() {
 let sigFilter = "all", sigAll = false;
 export function renderSignals() {
   const off = prefs().off;
-  const all = buildSignals(state.data, state.history).filter((s) => !off.includes(topicOf(s.id)));
+  // Signals that touch the user's holdings or topics come first and are marked
+  const keys = myKeys(state.data);
+  const all = buildSignals(state.data, state.history).filter((s) => !off.includes(topicOf(s.id)))
+    .map((s) => ({ ...s, mine: touches(s.id, keys) })).sort((a, b) => b.mine - a.mine);
   renderAskAi(all);
   const list = all.filter((s) => sigFilter === "all" || s.kind === sigFilter);
   const show = sigAll ? list : list.slice(0, 5);
@@ -62,7 +66,7 @@ export function renderSignals() {
     return `<article class="sig ${k.cls}">
       <div class="sig-ico" aria-hidden="true">${k.icon}</div>
       <div class="sig-body">
-        <div class="sig-meta"><span class="sig-kind">${k.label}</span><span>${esc(s.source)}</span></div>
+        <div class="sig-meta"><span class="sig-kind">${k.label}</span>${s.mine ? '<span class="sig-mine">🎯 betrifft dich</span>' : ""}<span>${esc(s.source)}</span></div>
         <h3>${esc(s.title)}${s.hype ? ' <span class="hype">⚡ Hype</span>' : ""}</h3>
         ${s.hype ? `<p class="hype-why"><b>Warum Hype:</b> ${esc(s.hype)}</p>` : ""}
         <p>${esc(s.text)}</p>
