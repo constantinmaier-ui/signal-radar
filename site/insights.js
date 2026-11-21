@@ -80,28 +80,29 @@ export function renderKpis() {
 
 // ---------- Quellen-Übersicht ----------
 const SOURCES = [
-  ["Kurse & Indizes", "Yahoo Finance (Ersatz: Stooq)", "Schlusskurse, Trends, Schwankung"],
-  ["Analysten", "Yahoo-Finance-Konsens + Google News", "Kursziele, Noten, Zitate"],
-  ["Große Investoren", "US-Börsenaufsicht SEC (EDGAR, 13F)", "Offizielle Pflichtmeldungen"],
-  ["Nachrichten", "Google News, tagesschau, Handelsblatt, FAZ, Spiegel, CNBC, MarketWatch, Yahoo, TechCrunch, CoinDesk", "Schlagzeilen, Ereignis-Arten"],
-  ["Tech-Szene & Foren", "Hacker News, Reddit", "Was Insider und Privatanleger diskutieren"],
-  ["Aufmerksamkeit", "Wikipedia-Seitenaufrufe (Wikimedia)", "Wie stark ein Thema gesucht wird"],
-  ["Weltpresse", "GDELT-Projekt", "Wie oft über eine Blase berichtet wird"],
-  ["Stimmung", "CNN Fear & Greed, alternative.me (Krypto)", "Angst oder Gier"],
-  ["Wettmärkte", "Polymarket", "Echtgeld-Wahrscheinlichkeiten"],
-  ["Zinsen & Immobilien", "Europäische Zentralbank, Eurostat", "Leitzins, Bauzinsen, Hauspreise"],
-  ["Konjunktur-Frühwarnung", "FRED (US-Notenbank St. Louis)", "Zinskurve, Kredit-Risikoaufschläge, Sahm-Regel"],
-  ["Rohstoffe", "Terminbörsen (über Yahoo Finance)", "18 Rohstoffe: Preis, Trend, Lage in der Jahresspanne"],
-  ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen"],
-  ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs minütlich"],
-  ["Forschung", "OpenAlex (12 Top-Journals: JF, JFE, RFS, AER, QJE, Econometrica u. a.), NBER, EZB, BIZ, US-Notenbank, arXiv", "Begutachtete Studien mit Zitierzahl und DOI, dazu frische Arbeitspapiere"],
-  ["KI-Trends", "GitHub, Hugging Face, PyPI, npm", "Was Entwickler gerade nutzen und einbauen"],
-  ["Krypto-Geldfluss", "DefiLlama", "Stablecoins, Kapital in DeFi-Anwendungen"],
-  ["Strompreis", "Energy-Charts (Fraunhofer ISE)", "Börsenstrompreis Deutschland"],
-  ["Einordnung (optional)", "Claude (Anthropic)", "Tagesbriefing und Übersetzungen ins Deutsche"],
+  ["Kurse & Indizes", "Yahoo Finance (Ersatz: Stooq)", "Schlusskurse, Trends, Schwankung", "alle 15 Min."],
+  ["Analysten", "Yahoo-Finance-Konsens + Google News", "Kursziele, Noten, Zitate", "alle 15 Min."],
+  ["Große Investoren", "US-Börsenaufsicht SEC (EDGAR, 13F)", "Offizielle Pflichtmeldungen", "geprüft alle 15 Min., Meldungen vierteljährlich"],
+  ["Nachrichten", "Google News, tagesschau, Handelsblatt, FAZ, Spiegel, CNBC, MarketWatch, Yahoo, TechCrunch, CoinDesk", "Schlagzeilen, Ereignis-Arten", "alle 15 Min."],
+  ["Tech-Szene & Foren", "Hacker News", "Was die Tech-Szene diskutiert", "live jede Minute"],
+  ["Aufmerksamkeit", "Wikipedia-Seitenaufrufe (Wikimedia)", "Wie stark ein Thema gesucht wird", "täglich"],
+  ["Weltpresse", "GDELT-Projekt", "Wie oft über eine Blase berichtet wird", "alle 15 Min."],
+  ["Stimmung", "CNN Fear & Greed, alternative.me (Krypto)", "Angst oder Gier", "alle 15 Min. (Index selbst täglich)"],
+  ["Wettmärkte", "Polymarket", "Echtgeld-Wahrscheinlichkeiten", "alle 15 Min."],
+  ["Zinsen & Immobilien", "Europäische Zentralbank, Eurostat", "Leitzins, Bauzinsen, Hauspreise", "monatlich bzw. vierteljährlich (amtlich)"],
+  ["Offizielle Stimmung", "EU-Kommission (Eurostat), Uni Michigan (FRED), US-Notenbank", "Wirtschaftsstimmung, Verbrauchervertrauen, Stress am Anleihemarkt", "monatlich (amtlich)"],
+  ["Konjunktur-Frühwarnung", "FRED (US-Notenbank St. Louis)", "Zinskurve, Kredit-Risikoaufschläge, Sahm-Regel", "täglich bzw. monatlich"],
+  ["Rohstoffe", "Terminbörsen (über Yahoo Finance)", "18 Rohstoffe: Preis, Trend, Lage in der Jahresspanne", "alle 15 Min."],
+  ["Insider-Käufe", "US-Börsenaufsicht SEC (Form 4)", "Wenn Vorstände eigene Aktien kaufen", "stündlich"],
+  ["Krypto live", "CoinGecko (Ersatz: Binance)", "Bitcoin- und Ethereum-Kurs", "live jede Minute"],
+  ["Forschung", "OpenAlex (12 Top-Journals: JF, JFE, RFS, AER, QJE, Econometrica u. a.), NBER, EZB, BIZ, US-Notenbank, arXiv", "Begutachtete Studien mit Zitierzahl und DOI, dazu frische Arbeitspapiere", "alle 6 Std. bzw. 15 Min."],
+  ["KI-Trends", "GitHub, Hugging Face, PyPI, npm", "Was Entwickler gerade nutzen und einbauen", "alle 15 Min."],
+  ["Krypto-Geldfluss", "DefiLlama", "Stablecoins, Kapital in DeFi-Anwendungen", "alle 15 Min."],
+  ["Strompreis", "Energy-Charts (Fraunhofer ISE)", "Börsenstrompreis Deutschland", "alle 15 Min. (Preise täglich)"],
+  ["Einordnung (optional)", "Claude (Anthropic)", "Tagesbriefing und Übersetzungen ins Deutsche", "alle 6 Std., nur mit Schlüssel"],
 ];
 export function renderSourcesTable() {
-  $("#sourceTable").innerHTML = `<table class="tick-table"><thead><tr><th>Wofür</th><th>Quelle</th><th>Was wir daraus nehmen</th></tr></thead><tbody>${SOURCES.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  $("#sourceTable").innerHTML = `<table class="tick-table"><thead><tr><th>Wofür</th><th>Quelle</th><th>Was wir daraus nehmen</th><th>Wie oft</th></tr></thead><tbody>${SOURCES.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
 // ---------- Immobilien ----------

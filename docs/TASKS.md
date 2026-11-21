@@ -33,7 +33,12 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **Menu with everything**, grouped, jumps straight to each section
 - [x] **My portfolio (local only)**: allocation vs. plan, concentration warnings, what the radar says about each holding
 - [x] **Everything clickable**: market tiles, asset cards and commodity rows open detail views with chart, key points and related news
-- [ ] Next: every chart point and news item opens context; guided tour for new users
+- [x] **Executive summary "Das Wichtigste heute"**: situation, what fits you / your portfolio, top chance, top risk, news situation; every line links to its details; quick-access chips ordered by interests
+- [x] **Value made clear**: short intro on the first onboarding screen
+- [x] **Data every 15 minutes**: each workflow run starts the next one (~15 min), the schedule restarts the chain; failing sources are listed in the workflow log (audit)
+- [x] **Faster start**: first view from the stored copy, fresh data right after
+- [x] **Transparency**: source table shows how often each source updates
+- [ ] Next: fix failing sources found in the audit log; every chart point and news item opens context; guided tour
 
 ## Done (version 2.1) – owner requests of 2026-11-19, in priority order
 - [x] **App-wide search** (key `/` or Ctrl+K): sections, glossary, themes, prices, signals, rent indices, investors, insiders, AI software, studies, news

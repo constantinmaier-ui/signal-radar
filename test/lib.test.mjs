@@ -409,3 +409,10 @@ test("Backup: portfolio and interests are sanitized", async () => {
   assert.deepEqual(o.portfolio, [{ cat: "world", name: "MSCI World", value: 5000 }, { cat: "other", name: "", value: 9 }]);
   assert.deepEqual(o.interests, ["realestate"]); assert.equal(o.onboarded, false);
 });
+
+test("Executive summary: every signal type links to its details", async () => {
+  const { anchorOf } = await import("../site/personal.js");
+  assert.equal(anchorOf("quiet-ai"), "entdecken:karte"); assert.equal(anchorOf("mortgage-move"), "entdecken:immobilien");
+  assert.equal(anchorOf("insider-NVDA"), "profis:profis"); assert.equal(anchorOf("sahm"), "entdecken:frueh");
+  assert.equal(anchorOf("bubble-high"), "heute:signals");
+});

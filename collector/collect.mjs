@@ -437,6 +437,8 @@ async function main() {
   await writeFile(path.join(OUT_DIR, "history.json"), JSON.stringify(history));
   const okCount = status.filter((s) => s.ok).length;
   console.log(`Signal-Radar: ${news.length} Meldungen, ${Object.keys(prices).length} Kurse, Quellen ${okCount}/${status.length} ok, Blasen-Meter ${data.bubble.score} (${data.bubble.zone}).`);
+  // Audit trail: every failing source with its error, readable in the workflow log
+  for (const s of status.filter((x) => !x.ok)) console.log(`  FAILED  ${s.source}: ${s.error || "no data"}`);
   if (okCount === 0) { console.error("Keine einzige Quelle erreichbar – breche ab, damit die alte Seite stehen bleibt."); process.exit(1); }
 }
 
