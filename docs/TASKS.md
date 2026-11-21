@@ -48,6 +48,10 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **"Bist du bereit zu investieren?"**: personal readiness check (expensive debts first, emergency fund 3–6 months, horizon, savings, life cycle, family); if basics are missing it leads "Das Wichtigste heute" and no "invest" line is shown
 - [x] **Less text at once**: short line first, details on tap; smooth open/close and tab transitions (View Transitions, `interpolate-size`)
 - [x] **Load more everywhere** (owner request): news feed loads on scroll and links to Google News at the end; theme, detail, IPO, event and superinvestor lists grow in place; the collector keeps 800 headlines, 12 per theme and event
+- [x] **Niche themes** (owner request): rare earths & critical minerals (REMX), batteries & lithium (LIT), gene editing (ARKG) in the theme/hype radar
+- [x] **Google News 429s**: 5 requests at a time instead of 8, one retry after a short pause
+- [ ] **Own "Nischen-Scanner"**: ranks niche themes by early signals (hiring, developer adoption, insider buys, attention) against hype and valuation; honest historical check before it is shown as a signal
+- [ ] **Next sources, by value ÷ effort**: SEC filings (13D stakes, S-1 IPO filings, 8-K) once the SEC secret is set · CFTC positioning · nowcasts (NY Fed WEI, Atlanta Fed GDPNow, Chicago Fed NFCI) · Shiller CAPE · hyperscaler capex (SEC XBRL) · TSMC monthly revenue · Bundesbank/Destatis (regional house prices) · ECB/Fed speeches · Kalshi · Bluesky · crypto derivatives (funding, open interest) · Bundeskartellamt merger list · arXiv counts
 - [ ] 👤 **SEC_USER_AGENT secret with a real e-mail** (owner provided an address on 2026-11-21; it goes only into the secret, never into the repo) – the SEC answers HTTP 403 to the noreply address (insider buys, superinvestors are empty until then)
 - [ ] **Guided setup wizard** for every connection (Dropbox, own AI key, later X): one button, ≤3 steps, deep links, copy buttons, "Verbindung testen" with ✓
 - [ ] **Sync across devices via Dropbox** (end-to-end encrypted, PKCE, no server) – 👤 owner creates a free Dropbox app and sends the app key

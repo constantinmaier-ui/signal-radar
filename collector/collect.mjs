@@ -131,8 +131,11 @@ async function fetchNews() {
   for (const ev of EVENTS) ev.q.forEach((q, i) => jobs.push({ kind: "event", url: gnewsUrl(q, i === 0 ? "de" : "en"), label: `Google News: ${ev.name} ${i === 0 ? "DE" : "EN"}` }));
   for (const f of FEEDS) jobs.push({ kind: "feed", feed: f, url: f.url, label: f.name });
 
-  const results = await pool(jobs, 8, async (j) => {
-    const xml = await get(j.url, { label: j.label, timeout: 12000 });
+  // Google News answers bursts from shared cloud IPs with HTTP 429: fewer requests at once, one retry after a pause
+  const results = await pool(jobs, 5, async (j) => {
+    let xml = await get(j.url, { timeout: 12000 });
+    if (!xml) { await sleep(2500 + Math.random() * 2500); xml = await get(j.url, { label: j.label, timeout: 12000 }); }
+    else status.push({ source: j.label, ok: true });
     return { job: j, items: xml ? parseFeed(xml, j.feed?.name || "") : [] };
   });
 
