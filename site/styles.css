@@ -873,3 +873,7 @@ tr.clickable:hover td { background: var(--surface-2); }
 .quick .chip-btn { padding: 6px 11px; font-size: 13px; }
 .ob-intro { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; margin-bottom: 14px; }
 .ob-intro ul { margin: 6px 0; padding-left: 18px; }
+.ob-more { margin-top: 8px; }
+.ob-more summary { cursor: pointer; font-weight: 600; color: var(--accent, inherit); }
+.ob-more ul { margin: 6px 0; padding-left: 18px; }
+.ob-more li { margin: 3px 0; }

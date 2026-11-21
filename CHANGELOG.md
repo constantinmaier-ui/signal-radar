@@ -1,7 +1,7 @@
 # Changelog
 
 ## 3.0 (in progress)
-Guided, personal UX: optional onboarding (interests, goal with a short risk-tolerance question, experience, portfolio), five tabs (Heute · Mein Geld · Entdecken · Profis & News · Menü) with the 4th tab adapting to interests, sections outside the user's interests folded away, menu with everything, local portfolio compared with the plan (allocation, concentration, deviations, what the radar says per holding), clickable market tiles, asset cards and commodity rows with related news; honest stale-data banner.
+Guided, personal UX: optional onboarding (interests, goal with a short risk-tolerance question, experience, portfolio), five tabs (Heute · Mein Geld · Entdecken · Profis & News · Menü) with the 4th tab adapting to interests, sections outside the user's interests folded away, menu with everything, local portfolio compared with the plan (allocation, concentration, deviations, what the radar says per holding), clickable market tiles, asset cards and commodity rows with related news; honest stale-data banner; the first onboarding screen and "Über das Radar" explain which sources are queried how often and what sets the radar apart from portals and apps.
 
 ## 2.2
 Independent KPI review applied: KPI catalog with method, research, evidence and limits; corrected advice and citations; one lump-sum rule; honest plan (costs, rough tax, realistic crash test, median); 12-1 momentum, "overheated" only after a 2-year doubling, EU PRIIPs risk classes, robust attention measure, no double counting; 13F split adjustment; dividend-adjusted prices; official sentiment measures; shareable plan link.

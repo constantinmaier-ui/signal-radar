@@ -38,6 +38,7 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **Data every 15 minutes**: each workflow run starts the next one (~15 min), the schedule restarts the chain; failing sources are listed in the workflow log (audit)
 - [x] **Faster start**: first view from the stored copy, fresh data right after
 - [x] **Transparency**: source table shows how often each source updates
+- [x] **Start screen explains sources, update frequency and the edge over other portals/apps** (expandable, also under Wissen → Über das Radar; honest limits included)
 - [x] **Source audit 2026-11-21** (109/128 ok): SEC (13F + insiders) rejected the User-Agent without e-mail → fixed default; Reddit blocks cloud servers → removed; Yahoo RSS moved (404) → removed; GDELT rate limit → hourly refresh + retry + last value kept
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
