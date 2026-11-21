@@ -607,3 +607,45 @@ test("guidance: next steps in a sensible order, place names for links", async ()
   assert.equal(placeName("entdecken:immobilien"), "Entdecken → Immobilien");
   assert.equal(placeName(anchorOf("insider-NVDA")), "Profis & News → Profis & Insider");
 });
+
+test("news filters: area and theme never contradict, counts are consistent", async () => {
+  const { filterNews } = await import("../site/ui.js");
+  const news = [
+    { title: "Nvidia Rekord", themes: ["chips"], areas: ["tech"] },
+    { title: "Uran-Aktien springen", themes: ["nuclear"], areas: ["energie"] },
+    { title: "EZB senkt Zinsen", themes: [], areas: ["amtlich"] },
+    { title: "Bitcoin fällt", themes: ["crypto"], areas: ["wirtschaft"] },
+  ];
+  assert.equal(filterNews(news, {}).items.length, 4);
+  assert.deepEqual(filterNews(news, { area: "tech" }).items.map((n) => n.title), ["Nvidia Rekord"]);
+  assert.deepEqual(filterNews(news, { area: "krypto" }).items.map((n) => n.title), ["Bitcoin fällt"], "a theme's area counts even if the source was a general portal");
+  assert.equal(filterNews(news, { area: "energie", theme: "nuclear" }).items.length, 1);
+  assert.equal(filterNews(news, { q: "zinsen" }).items.length, 1);
+});
+
+test("news pulse per area: last 24 h vs. average of the days before", async () => {
+  const { newsPulse } = await import("../site/ui.js");
+  const now = Date.parse("2026-11-21T12:00:00Z"), h = 3600e3;
+  const news = [
+    ...Array.from({ length: 6 }, (_, i) => ({ areas: ["tech"], published: now - (i + 1) * h })),
+    ...Array.from({ length: 6 }, (_, i) => ({ areas: ["tech"], published: now - (30 + i * 20) * h })),
+    { themes: ["crypto"], published: now - 2 * h },
+    { areas: ["tech"], published: now - 9 * 24 * h },
+  ];
+  const p = newsPulse(news, now);
+  const tech = p.find((x) => x.id === "tech");
+  assert.equal(tech.d1, 6); assert.equal(tech.avg, 1); assert.equal(tech.ratio, 6);
+  assert.equal(p.find((x) => x.id === "krypto").d1, 1, "a theme counts for its area");
+});
+
+test("quick answers: 'Lohnt sich Gold?' gets a direct, profile-based answer", async () => {
+  const { quickAnswer, questionTarget } = await import("../site/answers.js");
+  const d = { assets: [{ id: "gold", name: "Gold", chg1y: 0.35, ext200: 0.18, fromHigh: -0.01, rsi: 72 }, { id: "world", name: "Welt-Aktien", chg1y: 0.1, ext200: 0.03, fromHigh: -0.05 }], themes: [{ id: "nuclear", name: "Kernkraft & Uran", short: "Uran", tickers: [{ sym: "CCJ" }], price: { chg1y: 0.5, ext200: 0.3 }, scores: { quadrant: "overheated" } }] };
+  const g = quickAnswer("Lohnt es sich in Gold zu investieren?", d, "wachstum");
+  assert.equal(g.level, "klein"); assert.match(g.fit, /6 %/); assert.match(g.now, /Rekordhoch/); assert.match(g.timing, /nicht hinterherjagen/); assert.match(g.research, /Erb & Harvey/);
+  assert.equal(quickAnswer("Lohnt sich MSCI World?", d, "ausgewogen").level, "gut");
+  const u = quickAnswer("lohnt sich uran", d, "mutig");
+  assert.match(u.now, /überhitzt/); assert.equal(u.open, "nuclear");
+  assert.equal(quickAnswer("Gold", d, "wachstum", true).level, "vorsicht", "basics first");
+  assert.equal(questionTarget("Wie wird das Wetter?", d), null);
+});

@@ -65,6 +65,7 @@
     <div class="view" data-view="heute">
     <section id="summary" class="card summary" aria-live="polite">
       <div class="card-head"><div><h2>Das Wichtigste heute</h2><p class="sub">In 30 Sekunden: Lage, was zu dir passt, Chance, Risiko. Antippen führt zu den Details.</p></div></div>
+      <div id="profilePill" class="profile-pill"></div>
       <div id="nextSteps" class="next-steps" hidden></div>
       <ul id="summaryList" class="sum-list"></ul>
       <div id="quickChips" class="quick" aria-label="Schnellzugriff"></div>
@@ -120,6 +121,7 @@
     </section>
 
     <section aria-label="Märkte" class="market-strip" id="market"></section>
+    <p class="legend" id="arrowLegend"><span class="up">▲ grün</span> = gestiegen, <span class="down">▼ rot</span> = gefallen. Die Prozentzahl ist die Veränderung seit dem letzten Börsenschluss (bei Bitcoin: seit gestern, gleiche Uhrzeit). Kurse bis 15 Min. verzögert. Kachel antippen für Verlauf und Erklärung.</p>
     </div>
 
     <div class="view" data-view="plan" hidden>
@@ -395,6 +397,7 @@
           <p class="sub">28 Nachrichtenportale (Leitmedien und Fachpresse), amtliche Mitteilungen, Google News und Hacker News. Gleiche Geschichten werden zusammengefasst, auch bei anderer Überschrift. „📰 5 Portale“ = so viele verschiedene Medien berichten darüber.</p>
         </div>
       </div>
+      <div id="newsMap"></div>
       <div id="wideStories"></div>
       <div class="feed-controls">
         <input id="search" type="search" placeholder="Suchen: Nvidia, Börsengang, Gold …" aria-label="Meldungen durchsuchen">

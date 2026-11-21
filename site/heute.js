@@ -120,12 +120,13 @@ export function topicOf(id) {
 // Choosing a goal on "Heute" also updates the plan (same profile everywhere)
 export function initGoalPicker(onChange) {
   document.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-goal]"); if (!b) return;
+    const b = e.target.closest("[data-goal]"); if (!b || b.closest("#sheet")) return; // onboarding saves on "Speichern", not on tap
     const g = b.dataset.goal;
     store.set("goal", g);
     const plan = store.get("plan", {}); plan.profile = g; store.set("plan", plan);
     const sel = document.querySelector('#planForm select[name="profile"]'); if (sel) sel.value = g;
     try { renderPlan(); } catch { /* plan view not ready */ }
     onChange?.();
+    document.dispatchEvent(new CustomEvent("radar:goal", { detail: g }));
   });
 }

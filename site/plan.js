@@ -43,6 +43,8 @@ function readForm() {
 }
 
 /** Ermittelt Profil, Gewichte und Begründungen aus Eingaben + aktueller Marktlage. */
+/** Planned share (0–1) of a bucket for a risk profile, e.g. profileWeight("wachstum", "gold") = 0.06. Pure. */
+export const profileWeight = (k, bucket) => (PROFILES[k]?.[bucket] ?? 0) / 100;
 /** Share in stocks/trends/crypto, in safe assets, and the loss in a crash (stocks −50 %), from the profile's allocation. Pure. */
 export function profileFacts(k) {
   const pr = PROFILES[k]; if (!pr) return null;
