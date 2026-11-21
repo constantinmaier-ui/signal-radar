@@ -26,3 +26,6 @@ Every important decision with its reason, so it stays traceable.
 | 2026-11-21 | Profiles instead of one dashboard for all | A crypto investor, an AI-trend hunter, a commodity buyer and a homeowner need different first lines; interests alone only sorted sections |
 | 2026-11-21 | "Ask your AI" hands search + context to the user's own Claude/ChatGPT | Dynamic answers without an API key in the browser and without storing questions |
 | 2026-11-21 | Only free, official or openly licensed early signals | Paid alternative data (card spending, satellites) is out of reach; Google Trends API is still a limited alpha; X only via the official paid API |
+| 2026-11-21 | Readiness before returns: expensive debt and a missing emergency fund are shown before any "invest" line | Paying off a 10 %+ loan is a certain return; without a cash buffer people sell in a crash. This is the clearest "when not to invest" signal that is well founded |
+| 2026-11-21 | Situation data (age, spending, cash) optional and local only | Customization without collecting personal data; the app works without it |
+| 2026-11-21 | Not using the SuperSync token | SuperSync is Super Productivity's private service with its own data format; using it for another app is unsupported, could break any time and means sharing an account token |

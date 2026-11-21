@@ -92,7 +92,11 @@ export function currentView() {
 }
 export function showView(onShow) {
   const v = currentView();
-  $$(".view").forEach((el) => (el.hidden = el.dataset.view !== v));
+  const swap = () => $$(".view").forEach((el) => (el.hidden = el.dataset.view !== v));
+  // smooth cross-fade between tabs where the browser supports View Transitions (and the user allows motion)
+  const motion = typeof matchMedia === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (document.startViewTransition && motion && $$(".view").some((el) => !el.hidden && el.dataset.view !== v)) document.startViewTransition(swap);
+  else swap();
   $$("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === v));
   document.title = v === "heute" ? "Signal-Radar" : `${VIEW_LABEL[v]} · Signal-Radar`;
   if (!location.hash.startsWith("#thema=")) window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });

@@ -488,3 +488,21 @@ test("search 2.0: synonyms, filler words, short words as whole words, one typo",
   assert.equal(oneEdit("kupfer", "kpfre"), false);
   assert.match(askAiPrompt("Lohnt sich Gold?", [{ title: "Gold", sub: "+3 % 1 Monat" }], {}), /Meine Frage: Lohnt sich Gold\?[\s\S]*- Gold: \+3 %/);
 });
+
+test("readiness check: debts and missing emergency fund come first, open items are named, input is sanitized", async () => {
+  const { readiness, cleanSituation } = await import("../site/situation.js");
+  const { sanitizeBackup } = await import("../site/trust.js");
+  const r1 = readiness(cleanSituation({ debt: true, spend: 2000, cash: 1000, save: 300, age: "25" }), 20);
+  assert.equal(r1.verdict.level, "rot");
+  assert.match(r1.verdict.head, /Kredite/);
+  assert.match(r1.items.find((i) => i.id === "cash").title, /5\.000 €/);
+  const r2 = readiness(cleanSituation({ debt: false, spend: 2000, cash: 9000 }), 15);
+  assert.equal(r2.verdict.level, "grün");
+  const r3 = readiness(cleanSituation({}), 15);
+  assert.equal(r3.verdict.level, "gelb");
+  assert.ok(r3.items.some((i) => i.state === "open"));
+  assert.equal(readiness(cleanSituation({ debt: false, spend: 1, cash: 9 }), 2).verdict.level, "rot", "money needed within 3 years");
+  assert.deepEqual(cleanSituation({ age: "<script>", spend: -5, cash: "1e99", debt: "yes", family: "kinder" }), { age: null, family: "kinder", home: null, spend: null, cash: 1e9, save: null, debt: null });
+  assert.deepEqual(sanitizeBackup({ situation: { age: "35", spend: "1800" }, learn: ["krypto", "<b>"] }).learn, ["krypto"]);
+  assert.equal(sanitizeBackup({ situation: { age: "35", spend: "1800" } }).situation.spend, 1800);
+});

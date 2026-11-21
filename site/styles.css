@@ -898,3 +898,24 @@ tr.clickable:hover td { background: var(--surface-2); }
 /* search: ask AI */
 .sr-ai { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
 .sr-ai .bk-btns { margin-top: 6px; }
+/* Readiness check */
+.rd-head { padding: 10px 12px; border-radius: 10px; margin: 4px 0 8px; font-size: 15px; }
+.rd-rot { background: color-mix(in srgb, #d64545 14%, transparent); }
+.rd-gelb { background: color-mix(in srgb, #e0a100 16%, transparent); }
+.rd-grün { background: color-mix(in srgb, #1baf7a 16%, transparent); }
+.rd-list { list-style: none; margin: 0; padding: 0; }
+.rd-list li { border-bottom: 1px solid var(--ring); }
+.rd-list summary { cursor: pointer; padding: 9px 0; font-size: 14.5px; }
+.rd-list details p { margin: 4px 0 8px; font-size: 14px; }
+.sit-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: 10px; }
+.sit-grid label { display: grid; gap: 4px; font-size: 13px; }
+/* Smooth open/close for all expandable sections (progressive disclosure), where supported */
+:root { interpolate-size: allow-keywords; }
+details::details-content { transition: height .25s ease, content-visibility .25s allow-discrete; height: 0; overflow: clip; }
+details[open]::details-content { height: auto; }
+@media (prefers-reduced-motion: reduce) { details::details-content { transition: none; } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+.sit-grid .inp { position: relative; display: block; }
+.sit-grid input[type=number] { width: 100%; font: inherit; font-size: 16px; padding: 9px 30px 9px 12px; border-radius: 10px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); }
+.sit-grid .inp em { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--muted); }
+.sit-grid label { font-weight: 600; align-content: end; }

@@ -6,6 +6,7 @@ import { BUCKETS, buildPlan } from "./plan.js";
 import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
 import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
+import { AGES, FAMILY, HOME, LEARN, situation, cleanSituation, readinessLine } from "./situation.js";
 
 // ---------- Interests ----------
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
@@ -130,12 +131,12 @@ export const SOURCES_HTML = `<ul>
 let ob = null;
 export function openOnboarding() {
   const plan = store.get("plan", {}) || {};
-  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), mode: store.get("mode", "easy"), depot: depotList() };
+  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
   renderOnboarding();
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
 function renderOnboarding() {
-  const steps = 4, s = ob.step;
+  const steps = 5, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
     () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
@@ -151,18 +152,37 @@ function renderOnboarding() {
       <p><b>Stell dir vor, dein Depot verliert in einem Monat 20 %. Was tust du?</b></p><div class="chips-wrap">${DROP.map(([k, l]) => chip("drop", k, ob.drop === k, l)).join("")}</div>
       <p><b>Vorschlag:</b> ${esc(GOALS[sug].label)}. Du kannst frei wählen:</p><div class="chips-wrap">${Object.entries(GOALS).map(([k, v]) => chip("goal", k, g === k, v.label)).join("")}</div>
       <p class="fine">Kurzfassung typischer Fragen zur Risikobereitschaft (angelehnt an Grable &amp; Lytton 1999 und die Eignungsprüfung nach MiFID II). Kein Ersatz für eine Beratung.</p>`; },
-    () => `<h2 id="sheetTitle">Wie viel Detail?</h2><div class="chips-wrap">${chip("mode", "easy", ob.mode !== "pro", "Einsteiger: das Wichtigste, einfach erklärt")}${chip("mode", "pro", ob.mode === "pro", "Profi: alle Kennzahlen und Tabellen")}</div>`,
+    () => { const t = ob.sit, val = (x) => (x === null || x === undefined ? "" : esc(x));
+      return `<h2 id="sheetTitle">Deine Situation <span class="fine">(freiwillig)</span></h2>
+      <p class="fine">Damit das Radar sagt, ob du bereit bist zu investieren. Alles optional, bleibt auf deinem Gerät.</p>
+      <p><b>Alter</b></p><div class="chips-wrap">${AGES.map(([k, l]) => chip("age", k, t.age === k, l)).join("")}</div>
+      <p><b>Lebenssituation</b></p><div class="chips-wrap">${FAMILY.map(([k, l]) => chip("fam", k, t.family === k, l)).join("")}${HOME.map(([k, l]) => chip("home", k, t.home === k, l)).join("")}</div>
+      <p><b>Teure Kredite (Dispo, Ratenkredit)?</b></p><div class="chips-wrap">${chip("debt", "1", t.debt === true, "Ja")}${chip("debt", "0", t.debt === false, "Nein")}</div>
+      <div class="sit-grid">
+        <label>Ausgaben pro Monat (inkl. Miete)<span class="inp"><input id="sitSpend" type="number" inputmode="decimal" min="0" step="50" value="${val(t.spend)}"><em>€</em></span></label>
+        <label>Auf Tagesgeld / Konto<span class="inp"><input id="sitCash" type="number" inputmode="decimal" min="0" step="500" value="${val(t.cash)}"><em>€</em></span></label>
+        <label>Davon sparbar pro Monat<span class="inp"><input id="sitSave" type="number" inputmode="decimal" min="0" step="25" value="${val(t.save)}"><em>€</em></span></label>
+      </div>`; },
+    () => `<h2 id="sheetTitle">Wie viel Detail?</h2><div class="chips-wrap">${chip("mode", "easy", ob.mode !== "pro", "Einsteiger: das Wichtigste, einfach erklärt")}${chip("mode", "pro", ob.mode === "pro", "Profi: alle Kennzahlen und Tabellen")}</div>
+      <p><b>Was möchtest du lernen?</b> <span class="fine">(freiwillig, mehrere möglich)</span></p><div class="chips-wrap">${LEARN.map(([k, l]) => chip("learn", k, ob.learn.includes(k), l)).join("")}</div>`,
     () => `<h2 id="sheetTitle">Dein Depot <span class="fine">(freiwillig)</span></h2><p class="fine">Dann sagt dir das Radar, was zu deinen Anlagen passt und wo du vom Plan abweichst. Bleibt nur auf deinem Gerät. Kannst du auch später unter „Mein Geld“ eintragen.</p>${depotEditor(ob.depot)}`,
   ][s]();
   $("#sheetBody").innerHTML = `<div class="ob-dots">${Array.from({ length: steps }, (_, i) => `<i class="${i === s ? "on" : i < s ? "done" : ""}"></i>`).join("")}</div>${body}
     <div class="ob-actions">${s ? '<button type="button" class="btn btn-ghost" data-ob="back">Zurück</button>' : '<button type="button" class="btn btn-ghost" data-ob="skip">Überspringen</button>'}
       <button type="button" class="btn btn-primary" data-ob="${s === steps - 1 ? "done" : "next"}">${s === steps - 1 ? "Fertig" : "Weiter"}</button></div>`;
 }
+function readSituation() {
+  const n = (id) => { const el = $(id); if (!el) return undefined; const v = el.value.trim(); return v === "" ? null : Number(v); };
+  for (const [k, id] of [["spend", "#sitSpend"], ["cash", "#sitCash"], ["save", "#sitSave"]]) { const v = n(id); if (v !== undefined) ob.sit[k] = v; }
+}
 function finishOnboarding() {
   readDepotEditor($("#sheet"), (list) => (ob.depot = list));
+  readSituation();
   const list = ob.interests.length ? ob.interests : ALL;
   store.set("interests", list);
   store.set("personas", ob.personas);
+  store.set("situation", cleanSituation(ob.sit));
+  store.set("learn", ob.learn);
   store.set("prefs", { ...(store.get("prefs", {}) || {}), off: ALL.filter((k) => !list.includes(k)) });
   const goal = ob.goal || suggestGoal(ob.drop, ob.horizon);
   store.set("goal", goal);
@@ -185,6 +205,12 @@ function onboardingClick(e) {
     if (on) { const add = PERSONAS.find((p) => p.id === k)?.interests || []; ob.interests = [...new Set([...(isAll(ob.interests) ? [] : ob.interests), ...add])]; }
     return renderOnboarding(), true;
   }
+  const toggle = (k) => (ob.sit[k] = ob.sit[k] === b.dataset[k === "family" ? "fam" : k] ? null : b.dataset[k === "family" ? "fam" : k]);
+  if ((b = pick("[data-age]"))) { readSituation(); toggle("age"); return renderOnboarding(), true; }
+  if ((b = pick("[data-fam]"))) { readSituation(); toggle("family"); return renderOnboarding(), true; }
+  if ((b = pick("[data-home]"))) { readSituation(); toggle("home"); return renderOnboarding(), true; }
+  if ((b = pick("[data-debt]"))) { readSituation(); const v = b.dataset.debt === "1"; ob.sit.debt = ob.sit.debt === v ? null : v; return renderOnboarding(), true; }
+  if ((b = pick("[data-learn]"))) { const k = b.dataset.learn; ob.learn = ob.learn.includes(k) ? ob.learn.filter((x) => x !== k) : [...ob.learn, k]; return renderOnboarding(), true; }
   if ((b = pick("[data-int]"))) { const k = b.dataset.int; ob.interests = ob.interests.includes(k) ? ob.interests.filter((x) => x !== k) : [...ob.interests, k]; return renderOnboarding(), true; }
   if ((b = pick("[data-hor]"))) { ob.horizon = b.dataset.hor; ob.goal = null; return renderOnboarding(), true; }
   if ((b = pick("[data-drop]"))) { ob.drop = Number(b.dataset.drop); ob.goal = null; return renderOnboarding(), true; }
@@ -193,8 +219,8 @@ function onboardingClick(e) {
   if ((b = pick("[data-ob]"))) {
     const a = b.dataset.ob;
     if (a === "skip") { store.set("onboarded", true); closeSheet(); }
-    else if (a === "back") { readDepotEditor($("#sheet"), (l) => (ob.depot = l)); ob.step--; renderOnboarding(); }
-    else if (a === "next") { ob.step++; renderOnboarding(); }
+    else if (a === "back") { readDepotEditor($("#sheet"), (l) => (ob.depot = l)); readSituation(); ob.step--; renderOnboarding(); }
+    else if (a === "next") { readSituation(); ob.step++; renderOnboarding(); }
     else if (a === "done") finishOnboarding();
     return true;
   }
@@ -302,13 +328,15 @@ export function renderSummary() {
   const plan = store.get("plan", {}) || {}, goal = store.get("goal", "ausgewogen");
   const v = dailyVerdict(d, GOALS[goal] ? goal : "ausgewogen", plan.years || 15);
   const word = { "grün": "🟢 Grün", gelb: "🟡 Gelb", rot: "🔴 Rot" }[v.level] || "🟡 Gelb";
-  const lines = [["🚦", "Lage", `${word}: ${v.head}`, "heute:check"]];
+  // Basics first: if the personal check says "not yet", that line leads and no "invest now" line follows
+  const ready = readinessLine();
+  const lines = ready ? [["⛔", "Für dich zuerst", ready, "plan:bereit"], ["🚦", "Markt", `${word}`, "heute:check"]] : [["🚦", "Lage", `${word}: ${v.head}`, "heute:check"]];
   const dep = depotList();
   if (dep.length) {
     let targets = {}; try { targets = buildPlan({ once: 5000, monthly: 200, years: 15, profile: goal, ...plan }, d).weights || {}; } catch { /* ignore */ }
     const a = analyzeDepot(dep, targets);
     lines.push(["💰", "Dein Depot", a.warnings.length ? a.warnings[0] : `${fmt(a.total)} €, passt gut zu deinem Plan (${GOALS[goal]?.label || ""}).`, "plan:depot"]);
-  } else lines.push(["🎯", `Für dich (${GOALS[goal]?.label || "Ausgewogen"})`, v.doList[0], "plan:plan"]);
+  } else if (!ready) lines.push(["🎯", `Für dich (${GOALS[goal]?.label || "Ausgewogen"})`, v.doList[0], "plan:plan"]);
   const chance = sig.find((s) => s.kind === "chance"), risk = sig.find((s) => s.kind === "warnung");
   if (chance) lines.push(["🚀", "Chance", chance.title, anchorOf(chance.id)]);
   if (risk) lines.push(["⚠️", "Risiko", risk.title, anchorOf(risk.id)]);
