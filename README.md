@@ -1,6 +1,6 @@
 # 📡 Signal-Radar
 
-A free, open-source investment dashboard for private investors. It reads ~40 public data sources and translates them into plain-language signals: what is going on, what it means, and what you could do next. Every section states its **source** and how strong the **scientific evidence** behind it is.
+A free, open-source investment dashboard for private investors. It reads 100+ public data sources and translates them into plain-language signals: what is going on, what it means, and what you could do next. Every section states its **source** and how strong the **scientific evidence** behind it is.
 
 **The app itself is in German** (target audience: German-speaking retail investors). Code and documentation are in English.
 

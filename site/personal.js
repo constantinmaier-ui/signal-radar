@@ -108,6 +108,23 @@ export function suggestGoal(drop, horizon) {
   const s = (Number(drop) || 2) + (horizon === "lang" ? 2 : 1);
   return s <= 3 ? "sicherheit" : s === 4 ? "ausgewogen" : s === 5 ? "wachstum" : "mutig";
 }
+// Value proposition and data freshness, shown at the start and in "Über das Radar"
+export const VALUE_HTML = `<ul>
+  <li><b>Alles an einem Ort:</b> Börse, Notenbanken, Forschung, Immobilien, Rohstoffe, Krypto und Profis. Sonst braucht man dafür viele Apps und Portale.</li>
+  <li><b>Übersetzt statt nur Zahlen:</b> Portale zeigen Kurse, das Radar sagt, was sie für <i>dein</i> Ziel und <i>dein</i> Depot bedeuten.</li>
+  <li><b>Ehrlich:</b> Bei jeder Zahl stehen Quelle und Beweislage, Studien aus Top-Fachzeitschriften, Hype wird als Hype markiert.</li>
+  <li><b>Früher dran:</b> Insider-Käufe, was Entwickler gerade herunterladen, Wettmärkte und Aufmerksamkeit zeigen Trends oft vor den Schlagzeilen.</li>
+  <li><b>Unabhängig:</b> kein Broker, keine Provision, keine Werbung, kein Konto, offener Code.</li>
+  <li><b>Was es nicht ist:</b> keine Anlageberatung, keine Kursprognose, kein Echtzeit-Werkzeug für Daytrader.</li></ul>`;
+export const SOURCES_HTML = `<ul>
+  <li><b>Jede Minute live, solange die App offen ist:</b> Bitcoin und Ethereum (CoinGecko, Binance), Tech-News (Hacker News)</li>
+  <li><b>Alle 15 Minuten:</b> Kurse von Indizes, ETFs, Aktien und 18 Rohstoffen (Yahoo Finance), Analysten-Konsens, 9 Nachrichtenportale plus Google News zu jedem der 13 Themen, Stimmung (CNN, Krypto), Wettmärkte (Polymarket), KI-Trends (GitHub, Hugging Face, PyPI, npm), Krypto-Geldflüsse, Strompreis</li>
+  <li><b>Stündlich:</b> Insider-Käufe (US-Börsenaufsicht SEC), weltweite Berichterstattung über „Blase“ (GDELT)</li>
+  <li><b>Alle 6 Stunden:</b> Studien aus Top-Fachzeitschriften (OpenAlex)</li>
+  <li><b>Täglich bis monatlich (amtlich):</b> EZB-Zinsen, Hauspreise (Eurostat), Konjunktur und Stimmung (US-Notenbank, EU-Kommission), Wikipedia-Aufrufe</li>
+  <li><b>Vierteljährlich:</b> Depots der Top-Investoren (SEC 13F)</li></ul>
+  <p class="fine">Komplette Liste mit allen Quellen: Menü → Wissen → Unsere Quellen.</p>`;
+
 let ob = null;
 export function openOnboarding() {
   const plan = store.get("plan", {}) || {};
@@ -119,7 +136,9 @@ function renderOnboarding() {
   const steps = 4, s = ob.step;
   const chip = (attr, val, on, label) => `<button type="button" class="chip-btn ${on ? "on" : ""}" data-${attr}="${esc(val)}">${esc(label)}</button>`;
   const body = [
-    () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.</div>
+    () => `<div class="ob-intro"><b>Willkommen beim Signal-Radar.</b> Es liest alle 15 Minuten über 100 Quellen (Börsen, Notenbanken, Studien, Nachrichten) und sagt dir in einfachen Worten:<ul><li>was heute an den Märkten los ist,</li><li>was zu deinem Ziel und deinem Depot passt,</li><li>wo Hype ist und wo echte Chancen,</li></ul>jeweils mit Quelle und wie gut das belegt ist. Kostenlos, ohne Anmeldung, deine Daten bleiben auf deinem Gerät.
+        <details class="ob-more"><summary>Was macht es besser als Finanzportale und Apps?</summary>${VALUE_HTML}</details>
+        <details class="ob-more"><summary>Welche Quellen, wie oft?</summary>${SOURCES_HTML}</details></div>
       <h2 id="sheetTitle">Was interessiert dich?</h2><p class="fine">Danach richtet sich, was oben steht und was eingeklappt wird. Mehrere möglich.</p>
       <div class="chips-wrap">${TOPICS.map(([k, l]) => chip("int", k, ob.interests.includes(k), l)).join("")}</div>`,
     () => { const sug = suggestGoal(ob.drop, ob.horizon), g = ob.goal || sug;
@@ -291,6 +310,7 @@ export function renderSummary() {
 
 // ---------- Wiring ----------
 export function initPersonal({ openPrefs, onGoto }) {
+  for (const el of document.querySelectorAll("[data-fill]")) el.innerHTML = { value: VALUE_HTML, sources: SOURCES_HTML }[el.dataset.fill] || "";
   document.addEventListener("click", (e) => {
     if (depotClick(e)) return;
     if (!$("#sheet").hidden && onboardingClick(e)) return;
