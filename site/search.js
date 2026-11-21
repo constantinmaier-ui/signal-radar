@@ -161,10 +161,10 @@ function go(it, openDetailFor) {
 
 function open() {
   if (Date.now() - built > 30000) { index = buildIndex(); built = Date.now(); }
-  $("#searchBox").hidden = false; document.body.style.overflow = "hidden";
+  $("#searchBox").hidden = false;
   const inp = $("#searchInput"); inp.focus(); inp.select(); render(inp.value);
 }
-function close() { $("#searchBox").hidden = true; document.body.style.overflow = ""; }
+function close() { $("#searchBox").hidden = true; }
 
 export function initSearch(openDetailFor) {
   $("#searchBtn").addEventListener("click", open);

@@ -1,7 +1,7 @@
 // Service Worker: macht die App installierbar und offline nutzbar.
 // Strategie: App-Dateien aus dem Speicher (schnell), Daten immer zuerst frisch aus dem Netz.
-const VERSION = "radar-v5.7"; // bump on every release
-const SHELL = ["./", "index.html", "styles.css", "app.js", "ui.js", "plan.js", "extras.js", "heute.js", "signals.js", "insights.js", "trust.js", "mietspiegel.js", "search.js", "detail.js", "personal.js", "sync.js", "personas.js", "situation.js", "holdings.js", "subnav.js", "answers.js", "foryou.js", "early.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const VERSION = "radar-v5.8"; // bump on every release
+const SHELL = ["./", "index.html", "styles.css", "app.js", "ui.js", "plan.js", "extras.js", "heute.js", "signals.js", "insights.js", "trust.js", "mietspiegel.js", "search.js", "detail.js", "personal.js", "sync.js", "personas.js", "situation.js", "holdings.js", "subnav.js", "answers.js", "foryou.js", "early.js", "drafts.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

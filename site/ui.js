@@ -200,3 +200,33 @@ export function newsPulse(news, now = Date.now()) {
   }
   return AREAS.slice(1).map(([id, label]) => { const o = out[id], avg = o.prev / 6; return { id, label, d1: o.d1, avg, ratio: avg > 0 ? o.d1 / avg : null }; }).filter((x) => x.d1 + x.avg > 0);
 }
+
+// ---------- Overlays (detail drawer, sheet, search, settings) ----------
+// One place decides about page scrolling: the page is locked only while an overlay is open, so a
+// forgotten unlock can never leave the page unscrollable. The back button / swipe-back closes the
+// overlay instead of leaving the page, like in a native app.
+const OVERLAYS = ["#drawer", "#sheet", "#searchBox", "#prefsPanel"];
+const openOverlays = () => OVERLAYS.map((s) => document.querySelector(s)).filter((el) => el && !el.hidden);
+export function initOverlays() {
+  if (typeof MutationObserver !== "function") return;
+  // The app scrolls itself (top on page change, to the target on links); the browser must not restore
+  // an old position when our overlay entry is dropped
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  let wasOpen = false;
+  const sync = () => {
+    const open = openOverlays().length > 0;
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open && !wasOpen && !history.state?.overlay) history.pushState({ overlay: true }, "", location.href);
+    if (!open && wasOpen && history.state?.overlay) history.back(); // closed by ✕, Escape or a link: drop our history entry
+    wasOpen = open;
+  };
+  const mo = new MutationObserver(sync);
+  for (const s of OVERLAYS) { const el = document.querySelector(s); if (el) mo.observe(el, { attributes: true, attributeFilter: ["hidden"] }); }
+  addEventListener("popstate", () => {
+    const open = openOverlays(); if (!open.length) return;
+    wasOpen = false; // the entry is already gone, do not go back twice
+    for (const el of open) el.hidden = true;
+  });
+  sync();
+}

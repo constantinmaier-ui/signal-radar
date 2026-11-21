@@ -1,5 +1,6 @@
 // Signal-Radar – Oberfläche. Keine Abhängigkeiten, alles inline-SVG.
 
+import { initOverlays } from "./ui.js";
 import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews, myTopics, matchesTopic, filterNews, THEME_AREA, AREAS, newsPulse } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
@@ -16,6 +17,7 @@ import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
 import { renderReadiness, renderGoal, initGoal } from "./situation.js";
 import { renderForYou } from "./foryou.js";
 import { renderEarly, initEarly } from "./early.js";
+import { initFormDrafts, isDraftKey } from "./drafts.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -395,17 +397,17 @@ function openTheme(id, push = true) {
     <a class="btn btn-ghost btn-sm" href="${googleNews(t.name)}" target="_blank" rel="noopener">Noch mehr bei Google News ↗</a>
     <button class="btn btn-wa btn-wide" type="button" id="shareTheme" style="margin-top:12px">${WA_ICON}<span>Thema in WhatsApp teilen</span></button>`;
   $("#drawer").hidden = false;
-  document.body.style.overflow = "hidden";
+ 
   const end = p.sparkEnd || Date.now();
   if (p.spark) lineChart($("#dPrice"), p.spark, { labels: dayLabels(p.spark.length, end, 2), fmtV: (v) => fmt(v, 2) });
   if (t.attention?.spark) lineChart($("#dAttn"), t.attention.spark, { labels: dayLabels(t.attention.spark.length, Date.now() - 86400000), fmtV: (v) => `${fmt(v)} Aufrufe`, color: "var(--s2)" });
   $("#shareTheme").addEventListener("click", () => share(`📡 *${t.name}* – ${qd.icon} ${qd.label}\nHype ${fmt(t.scores.hype)} · Momentum ${fmt(t.scores.momentum)} · Überhitzung ${fmt(t.scores.heat)}\n${t.etf} 3 Monate ${pct(p.chg3m, 0)}\n\n👉 ${pageUrl()}#thema=${t.id}\n_Keine Anlageberatung._`));
-  if (push) history.replaceState(null, "", `#thema=${t.id}`);
+  // A shared link "#thema=…" becomes the trends page underneath; the back button then closes the drawer
+  if (location.hash.startsWith("#thema=")) history.replaceState(history.state, "", "#entdecken/trends");
   $(".drawer-close").focus();
 }
 function closeDrawer() {
-  $("#drawer").hidden = true; document.body.style.overflow = "";
-  if (location.hash.startsWith("#thema=")) history.replaceState(null, "", location.pathname + location.search);
+  $("#drawer").hidden = true;
 }
 
 // ---------- Daten laden & Live ----------
@@ -594,6 +596,8 @@ initSignalControls();
 initGoalPicker(() => state.data && [renderCheck, renderSignals].forEach(safe));
 initRealEstateForm();
 initMietspiegel();
+safe(() => initFormDrafts(["reForm", "msForm"])); // calculators keep their last inputs
+safe(initOverlays);
 safe(renderMeta);
 safe(applyPrefs);
 safe(renderFitness);
@@ -608,11 +612,11 @@ safe(renderReadiness);
 safe(goalCard);
 safe(renderNextSteps);
 safe(renderInstallMine);
-addEventListener("radar:store", () => safe(renderNextSteps));
+addEventListener("radar:store", (e) => { if (!isDraftKey(e.detail) || e.detail === "draft:onboarding") safe(renderNextSteps); });
 document.addEventListener("radar:goal", () => state.data && [renderCheck, renderSignals, renderPlan, renderMyRadar, renderReadiness, goalCard, renderMeta, renderDepot, renderSummary, renderForYou].forEach(safe));
 // Any change to the user's inputs (depot, goals, situation, topics) re-checks "Für dich" and the early signals
 let fyTimer = 0;
-addEventListener("radar:store", () => { clearTimeout(fyTimer); fyTimer = setTimeout(() => state.data && [renderForYou, renderEarly, renderSignals].forEach(safe), 300); });
+addEventListener("radar:store", (e) => { if (isDraftKey(e.detail)) return; clearTimeout(fyTimer); fyTimer = setTimeout(() => state.data && [renderForYou, renderEarly, renderSignals].forEach(safe), 300); });
 initEarly(() => [renderEarly, renderForYou].forEach(safe));
 initGoal(() => [goalCard, renderReadiness, renderSummary].forEach(safe));
 addEventListener("radar:topics", () => state.data && [renderMyRadar, renderChips].forEach(safe));

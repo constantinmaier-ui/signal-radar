@@ -49,7 +49,7 @@ function show({ title, badge = "", sub = "", kpis = [], series = null, end = Dat
     ${more ? `<button type="button" class="btn btn-ghost btn-wide more-place" data-goto="${esc(more)}">Mehr dazu: ${esc(placeName(more))} →</button>` : ""}
     <p class="fine">Regelbasiert zusammengefasst aus den Daten der letzten Aktualisierung. Keine Anlageberatung.</p>`;
   $("#drawer").hidden = false;
-  document.body.style.overflow = "hidden";
+ 
   if (series) lineChart($("#dSeries"), series, { labels: dayLabels(series.length, end, step), fmtV });
   $(".drawer-close").focus();
 }

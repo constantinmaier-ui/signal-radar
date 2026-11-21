@@ -716,3 +716,18 @@ test("position checks: concentration, overheated, downtrend and profile fit", as
   assert.ok(touches("quiet-ai", new Set(["ai"])) && touches("crypto-greed", new Set(["btc"])) && touches("insider-NVDA", new Set(["NVDA"])));
   assert.equal(touches("bubble-high", new Set(["ai"])), false);
 });
+
+test("drafts: age in words, unfinished setup comes first in the next steps", async () => {
+  const { draftAge, loadDraft, isDraftKey } = await import("../site/drafts.js");
+  const now = Date.parse("2026-11-21T12:00:00Z");
+  assert.equal(draftAge(now - 30e3, now), "gerade eben");
+  assert.equal(draftAge(now - 5 * 6e4, now), "vor 5 Minuten");
+  assert.equal(draftAge(now - 3 * 36e5, now), "vor 3 Stunden");
+  assert.equal(draftAge(now - 26 * 36e5, now), "gestern");
+  assert.equal(loadDraft("nothing-here"), null, "no storage, no draft");
+  assert.ok(isDraftKey("draft:onboarding") && !isDraftKey("portfolio"));
+  const { nextSteps } = await import("../site/personal.js");
+  const n = nextSteps({ draftStep: 2 });
+  assert.equal(n.open[0].id, "draft"); assert.match(n.open[0].why, /Schritt 3 von 6/);
+  assert.notEqual(nextSteps({}).open[0].id, "draft");
+});
