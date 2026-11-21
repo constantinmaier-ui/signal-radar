@@ -430,3 +430,31 @@ export const ADOPTION = [
   { id: "transformers", name: "Hugging Face Transformers", pypi: "transformers", npm: null, owner: "Hugging Face (privat)", listed: null },
   { id: "torch", name: "PyTorch (KI-Training)", pypi: "torch", npm: null, owner: "Linux Foundation, von Meta gestartet", listed: "META" },
 ];
+
+// Instruments users can pick for their portfolio (owner request 2026-11-21): popular ETFs on Xetra, DAX and US large caps.
+// cat = bucket in the plan (world, em, bonds, gold, cash, themes = single stocks/sectors). Prices via Yahoo, light 5-day quote.
+export const INSTRUMENTS = [
+  { sym: "EUNL.DE", name: "iShares Core MSCI World", isin: "IE00B4L5Y983", kind: "etf", cat: "world" },
+  { sym: "XDWD.DE", name: "Xtrackers MSCI World", isin: "IE00BJ0KDQ92", kind: "etf", cat: "world" },
+  { sym: "VWCE.DE", name: "Vanguard FTSE All-World (thesaurierend)", isin: "IE00BK5BQT80", kind: "etf", cat: "world" },
+  { sym: "VGWL.DE", name: "Vanguard FTSE All-World (ausschüttend)", isin: "IE00B3RBWM25", kind: "etf", cat: "world" },
+  { sym: "SXR8.DE", name: "iShares Core S&P 500", isin: "IE00B5BMR087", kind: "etf", cat: "world" },
+  { sym: "SXRV.DE", name: "iShares Nasdaq 100", isin: "IE00B53SZB19", kind: "etf", cat: "themes" },
+  { sym: "EXSA.DE", name: "iShares STOXX Europe 600", isin: "DE0002635307", kind: "etf", cat: "world" },
+  { sym: "EXS1.DE", name: "iShares Core DAX", isin: "DE0005933931", kind: "etf", cat: "world" },
+  { sym: "IS3N.DE", name: "iShares Core MSCI Emerging Markets IMI", isin: "IE00BKM4GZ66", kind: "etf", cat: "em" },
+  { sym: "XEON.DE", name: "Xtrackers EUR Overnight Rate Swap (Geldmarkt)", isin: "LU0290358497", kind: "etf", cat: "cash" },
+  { sym: "4GLD.DE", name: "Xetra-Gold", isin: "DE000A0S9GB0", kind: "etc", cat: "gold" },
+  { sym: "SAP.DE", name: "SAP", kind: "stock", cat: "themes" }, { sym: "SIE.DE", name: "Siemens", kind: "stock", cat: "themes" },
+  { sym: "ALV.DE", name: "Allianz", kind: "stock", cat: "themes" }, { sym: "DTE.DE", name: "Deutsche Telekom", kind: "stock", cat: "themes" },
+  { sym: "MUV2.DE", name: "Münchener Rück", kind: "stock", cat: "themes" }, { sym: "MBG.DE", name: "Mercedes-Benz", kind: "stock", cat: "themes" },
+  { sym: "BMW.DE", name: "BMW", kind: "stock", cat: "themes" }, { sym: "VOW3.DE", name: "Volkswagen Vz.", kind: "stock", cat: "themes" },
+  { sym: "BAS.DE", name: "BASF", kind: "stock", cat: "themes" }, { sym: "BAYN.DE", name: "Bayer", kind: "stock", cat: "themes" },
+  { sym: "IFX.DE", name: "Infineon", kind: "stock", cat: "themes" }, { sym: "DBK.DE", name: "Deutsche Bank", kind: "stock", cat: "themes" },
+  { sym: "ADS.DE", name: "Adidas", kind: "stock", cat: "themes" }, { sym: "AIR.DE", name: "Airbus", kind: "stock", cat: "themes" },
+  { sym: "DHL.DE", name: "DHL Group", kind: "stock", cat: "themes" }, { sym: "EOAN.DE", name: "E.ON", kind: "stock", cat: "themes" },
+  { sym: "RWE.DE", name: "RWE", kind: "stock", cat: "themes" }, { sym: "MRK.DE", name: "Merck KGaA", kind: "stock", cat: "themes" },
+  { sym: "AAPL", name: "Apple", kind: "stock", cat: "themes" }, { sym: "AMZN", name: "Amazon", kind: "stock", cat: "themes" },
+  { sym: "JPM", name: "JPMorgan Chase", kind: "stock", cat: "themes" }, { sym: "V", name: "Visa", kind: "stock", cat: "themes" },
+  { sym: "BRK-B", name: "Berkshire Hathaway (Buffett)", kind: "stock", cat: "themes" }, { sym: "NFLX", name: "Netflix", kind: "stock", cat: "themes" },
+];

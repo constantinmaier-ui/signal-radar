@@ -1,7 +1,8 @@
 // Vertrauen & Persönliches: Quellen/Beweislage je Bereich, Anpassen, eigene KI, Trend-Radar,
 // Was nachweislich Geld vermehrt (Kosten-Rechner), Finanz-Fitness-Check & Quiz.
 import { cleanSituation } from "./situation.js";
-import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark, compact, limitList, moreBtn } from "./ui.js";
+import { validRef } from "./holdings.js";
+import { $, $$, esc, fmt, pct, ok, ago, safeUrl, state, store, toast, spark, compact, limitList, moreBtn, cleanTopics } from "./ui.js";
 import { LEX } from "./extras.js";
 import { hypeInfo } from "./signals.js";
 
@@ -183,10 +184,10 @@ function renderQuiz() {
 
 // ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
 // Password → key (PBKDF2-SHA256, 600,000 rounds as recommended by OWASP 2023) → AES-256-GCM. All local in the browser.
-export const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal", "interests", "onboarded", "portfolio", "personas", "situation", "learn"];
+export const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal", "interests", "onboarded", "portfolio", "personas", "situation", "learn", "mytopics"];
 const KDF_ITER = 600000, KDF_ITER_V1 = 310000;
 // A restored backup is untrusted (someone could send a crafted file): keep only known keys with sane values.
-const SAFE_STR = /^[\w\-äöüÄÖÜß .,]{0,60}$/;
+const SAFE_STR = /^[\w\-äöüÄÖÜß .,()&+/'’]{0,60}$/;
 const num = (x, lo, hi, d) => { const v = Number(x); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
 const strList = (a, max = 100) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && /^[\w-]{1,40}$/.test(x)).slice(0, max) : []);
 const oneOf = (x, list, d) => (list.includes(x) ? x : d);
@@ -211,11 +212,13 @@ export function sanitizeBackup(obj) {
   if ("interests" in o) out.interests = strList(o.interests, 20);
   if ("personas" in o) out.personas = strList(o.personas, 10);
   if ("learn" in o) out.learn = strList(o.learn, 10);
+  if ("mytopics" in o) out.mytopics = cleanTopics(o.mytopics);
   if (o.situation && typeof o.situation === "object") out.situation = cleanSituation(o.situation);
   if ("onboarded" in o) out.onboarded = o.onboarded === true;
   if (Array.isArray(o.portfolio)) out.portfolio = o.portfolio.slice(0, 200).filter((p) => p && typeof p === "object")
-    .map((p) => ({ cat: typeof p.cat === "string" && /^[a-z]{2,12}$/.test(p.cat) ? p.cat : "other", name: typeof p.name === "string" && SAFE_STR.test(p.name) ? p.name : "", value: num(p.value, 0, 1e9, 0) }))
-    .filter((p) => p.value > 0);
+    .map((p) => ({ cat: typeof p.cat === "string" && /^[a-z]{2,12}$/.test(p.cat) ? p.cat : "other", name: typeof p.name === "string" && SAFE_STR.test(p.name) ? p.name : "", value: num(p.value, 0, 1e9, 0),
+      ...(validRef(p.ref) ? { ref: p.ref } : {}), ...(num(p.qty, 0, 1e12, 0) > 0 ? { qty: num(p.qty, 0, 1e12, 0) } : {}) }))
+    .filter((p) => p.value > 0 || (p.qty > 0 && p.ref));
   for (const k of Object.keys(out)) if (out[k] === null) delete out[k];
   return out;
 }

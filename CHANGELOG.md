@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.0 (in progress)
+Fully personal: exact age and retirement age, a main goal, a pension-gap and goal calculator that can be edited in place; detailed portfolio with real ETFs (search by name, ticker or ISIN), stocks and every crypto coin, units and live values; all trend themes and free-text own topics selectable at the start and from search.
+
 ## 4.1 (in progress)
 One guided path: optional situation step (age, family, home, debts, spending, cash, savings, learning wishes) and a personal readiness check "Bist du bereit zu investieren?" that puts basics (expensive debt, emergency fund, short horizon) before any investing line; smoother expand/collapse and tab transitions. "Mehr laden" everywhere: the news feed loads while scrolling and ends with a Google News link; theme, detail, IPO, event and superinvestor lists grow in place; the collector keeps 800 headlines. New niche themes: rare earths & critical minerals, batteries & lithium, gene editing; Google News requests throttled with one retry. 21 news portals plus ECB/Fed press releases; the same story under different headlines is grouped and shows how many outlets report it and how far it has spread.
 

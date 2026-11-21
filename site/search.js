@@ -1,5 +1,5 @@
 // App-wide search: sections, themes, prices, signals, news, studies, glossary, rent indices, investors.
-import { $, $$, esc, fold, pct, ago, safeUrl, state } from "./ui.js";
+import { $, $$, esc, fold, pct, ago, safeUrl, state, store, myTopics, cleanTopics, toast } from "./ui.js";
 import { LEX } from "./extras.js";
 import { MIETSPIEGEL } from "./mietspiegel.js";
 import { buildSignals } from "./signals.js";
@@ -123,7 +123,9 @@ function render(q) {
   }
   const hits = search(index, q);
   const enc = encodeURIComponent(askAiPrompt(q, hits));
-  const ai = `<div class="sr-ai">🤖 <b>Frag deine KI:</b> „${esc(q)}“, zusammen mit dem, was das Radar dazu weiß. Öffnet dein eigenes Konto, das Radar sieht nichts davon.
+  const canKeep = cleanTopics([q]).length && !myTopics().some((t) => fold(t) === fold(q));
+  const keep = canKeep ? `<button type="button" class="btn btn-ghost btn-sm" data-keep-topic="${esc(q.trim())}">＋ „${esc(q.trim())}“ als eigenes Thema merken</button>` : "";
+  const ai = `${keep}<div class="sr-ai">🤖 <b>Frag deine KI:</b> „${esc(q)}“, zusammen mit dem, was das Radar dazu weiß. Öffnet dein eigenes Konto, das Radar sieht nichts davon.
     <div class="bk-btns"><a class="btn btn-ghost" href="https://claude.ai/new?q=${enc}" target="_blank" rel="noopener">Claude fragen ↗</a><a class="btn btn-ghost" href="https://chatgpt.com/?q=${enc}" target="_blank" rel="noopener">ChatGPT fragen ↗</a></div></div>`;
   if (!hits.length) { box.innerHTML = `<div class="empty">Nichts gefunden für „${esc(q)}“. Versuch ein kürzeres Wort oder frag die KI.</div>${ai}`; return; }
   box.innerHTML = GROUPS.map(([g, label]) => {
@@ -164,6 +166,8 @@ export function initSearch(openDetailFor) {
   $("#searchClose").addEventListener("click", close);
   $("#searchBox").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) { close(); return; }
+    const kt = e.target.closest("[data-keep-topic]");
+    if (kt) { store.set("mytopics", cleanTopics([...myTopics(), kt.dataset.keepTopic])); kt.remove(); toast(`„${kt.dataset.keepTopic}“ gemerkt: erscheint unter „Dein Radar“ und im Feed`); window.dispatchEvent(new Event("radar:topics")); return; }
     const s = e.target.closest("[data-suggest]"); if (s) { $("#searchInput").value = s.dataset.suggest; render(s.dataset.suggest); return; }
     const r = e.target.closest("[data-sr]"); if (r) { go(index[+r.dataset.sr], openDetailFor); return; }
     if (e.target.closest("a.sr-item")) close();

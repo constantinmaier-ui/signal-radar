@@ -1,18 +1,18 @@
 // Signal-Radar – Oberfläche. Keine Abhängigkeiten, alles inline-SVG.
 
-import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews } from "./ui.js";
+import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews, myTopics, matchesTopic } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
-import { initPersonal, renderDepot, renderSummary, goTo } from "./personal.js";
+import { initPersonal, renderDepot, renderSummary, goTo, liveDepot } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { initSync } from "./sync.js";
 import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
-import { renderReadiness } from "./situation.js";
+import { renderReadiness, renderGoal, initGoal } from "./situation.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -280,13 +280,14 @@ function ipoNews(w) {
 function feedItems() {
   const all = [...state.live, ...state.data.news];
   const q = state.q.trim().toLowerCase();
-  return all.filter((n) => (state.theme === "all" || (state.theme === "watch" ? n.themes.some((t) => state.watch.has(t)) : n.themes.includes(state.theme)))
+  const mine = state.theme === "mine" ? myTopics() : null;
+  return all.filter((n) => (state.theme === "all" || (mine ? matchesTopic(n.title, mine) : state.theme === "watch" ? n.themes.some((t) => state.watch.has(t)) : n.themes.includes(state.theme)))
     && (!state.onlySignals || n.signals?.length)
     && (!q || `${n.title} ${n.source}`.toLowerCase().includes(q)));
 }
 function renderChips() {
   const d = state.data;
-  const opts = [["all", "Alle"], ...(state.watch.size ? [["watch", "★ Merkliste"]] : []), ...d.themes.map((t) => [t.id, t.short])];
+  const opts = [["all", "Alle"], ...(myTopics().length ? [["mine", "🔎 Meine Themen"]] : []), ...(state.watch.size ? [["watch", "★ Merkliste"]] : []), ...d.themes.map((t) => [t.id, t.short])];
   $("#themeChips").innerHTML = opts.map(([id, l]) => `<button type="button" data-chip="${id}" class="${state.theme === id ? "on" : ""}">${esc(l)}</button>`).join("");
 }
 const REACH = { both: ["Fach- und Leitmedien", "Erst Fachpresse, jetzt auch große Medien: Die Geschichte ist in der breiten Öffentlichkeit angekommen."], official: ["Amtlich", "Kommt direkt von einer Behörde oder Notenbank."], specialist: ["nur Fachpresse", "Bisher nur in Fachmedien: früh dran, aber noch unbestätigt in der breiten Presse."] };
@@ -335,9 +336,10 @@ function renderBanner() {
   else b.hidden = true;
 }
 
+function goalCard() { renderGoal(liveDepot().reduce((s, p) => s + p.value, 0)); }
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -508,6 +510,8 @@ function bindEvents() {
     const det = e.target.closest("[data-detail]");
     if (det) { openDetailFor(det.dataset.detail); return; }
     if (growClick(e)) return;
+    const tp = e.target.closest("[data-topic]");
+    if (tp) { state.theme = "all"; state.q = tp.dataset.topic; state.shown = 40; const si = $("#search"); if (si) si.value = tp.dataset.topic; renderChips(); renderFeed(); goTo("profis", "feed"); return; }
     const mb = e.target.closest("[data-more]");
     if (mb) {
       const k = mb.dataset.more; toggleMore(k);
@@ -566,6 +570,9 @@ initPersonal({ openPrefs, onGoto: goTo });
 safe(() => initSync({ openPrefs }));
 safe(renderFacts);
 safe(renderReadiness);
+safe(goalCard);
+initGoal(() => [goalCard, renderReadiness, renderSummary].forEach(safe));
+addEventListener("radar:topics", () => state.data && [renderMyRadar, renderChips].forEach(safe));
 safe(renderMyRadar);
 initPersonas(() => safe(renderSummary));
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });

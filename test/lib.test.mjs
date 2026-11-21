@@ -502,9 +502,25 @@ test("readiness check: debts and missing emergency fund come first, open items a
   assert.equal(r3.verdict.level, "gelb");
   assert.ok(r3.items.some((i) => i.state === "open"));
   assert.equal(readiness(cleanSituation({ debt: false, spend: 1, cash: 9 }), 2).verdict.level, "rot", "money needed within 3 years");
-  assert.deepEqual(cleanSituation({ age: "<script>", spend: -5, cash: "1e99", debt: "yes", family: "kinder" }), { age: null, family: "kinder", home: null, spend: null, cash: 1e9, save: null, debt: null });
-  assert.deepEqual(sanitizeBackup({ situation: { age: "35", spend: "1800" }, learn: ["krypto", "<b>"] }).learn, ["krypto"]);
-  assert.equal(sanitizeBackup({ situation: { age: "35", spend: "1800" } }).situation.spend, 1800);
+  const c = cleanSituation({ birthYear: "<script>", spend: -5, cash: "1e99", debt: "yes", family: "kinder", goalName: '<img src=x onerror="1">' });
+  assert.equal(c.birthYear, null); assert.equal(c.spend, null); assert.equal(c.cash, 1e9); assert.equal(c.debt, null); assert.equal(c.family, "kinder");
+  assert.doesNotMatch(c.goalName, /[<>"]/);
+  assert.deepEqual(sanitizeBackup({ situation: { spend: "1800" }, learn: ["krypto", "<b>"] }).learn, ["krypto"]);
+  assert.equal(sanitizeBackup({ situation: { spend: "1800" } }).situation.spend, 1800);
+});
+
+test("retirement: exact age, years to retirement, pension gap and monthly saving", async () => {
+  const { cleanSituation, ageOf, pensionGap, monthlyNeeded, readiness } = await import("../site/situation.js");
+  const y = new Date().getFullYear();
+  const s = cleanSituation({ birthYear: y - 37, net: 3000, pension: 1400 });
+  assert.equal(ageOf(s), 37);
+  const g = pensionGap(s, 0.03);
+  assert.equal(g.years, 30); assert.equal(g.want, 2400); assert.equal(g.gap, 1000); assert.equal(g.capital, 300000);
+  assert.ok(g.monthly > 450 && g.monthly < 550, `monthly ${g.monthly}`);
+  assert.ok(pensionGap(s, 0.03, 100000).monthly < g.monthly, "existing savings lower the monthly need");
+  assert.equal(pensionGap(cleanSituation({ net: 3000 }), 0.03), null, "no age, no calculation");
+  assert.equal(Math.round(monthlyNeeded(12000, 1, 0)), 1000);
+  assert.match(readiness(s, 30).items.find((i) => i.id === "age").title, /37 Jahre: noch 30 Jahre/);
 });
 
 test("load more: growList shows n items, hides the rest, counts what is left", async () => {
@@ -538,4 +554,27 @@ test("same story under different headlines: clustered, distinct outlets counted,
   assert.equal(outletKind("Cointelegraph"), "specialist");
   assert.equal(storyReach(["Decrypt", "CoinDesk"]), "specialist");
   assert.equal(clusterStories([{ title: "Kurz", source: "x" }, { title: "Kurz", source: "y" }]).length, 2, "too few words: never merged by similarity");
+});
+
+test("portfolio positions: euro conversion, live value from units, instrument search by name, ticker or ISIN", async () => {
+  const { toEur, positionValue, catalog, matchInstrument, validRef } = await import("../site/holdings.js");
+  assert.ok(Math.abs(toEur(110, "USD", 1.1) - 100) < 1e-9);
+  assert.equal(toEur(50, "EUR", 1.1), 50);
+  assert.equal(toEur(50, "GBp", 1.1), null);
+  assert.equal(positionValue({ qty: 3, value: 10 }, { last: 100 }), 300);
+  assert.equal(positionValue({ value: 10 }, { last: 100 }), 10, "no units: entered value");
+  assert.equal(positionValue({ qty: 3, value: 10 }, null), 10, "no price: entered value");
+  const d = { instruments: [{ sym: "EUNL.DE", name: "iShares Core MSCI World", isin: "IE00B4L5Y983", kind: "etf", cat: "world", last: 100, currency: "EUR" }],
+    themes: [{ etf: "SMH", name: "Chips", price: { last: 300, currency: "USD" }, tickers: [{ sym: "NVDA", last: 150, currency: "USD" }] }], analysts: [{ sym: "NVDA", name: "Nvidia" }] };
+  const cat = catalog(d);
+  assert.ok(cat.some((i) => i.sym === "NVDA" && i.name === "Nvidia"));
+  assert.ok(validRef("y:EUNL.DE") && validRef("cg:bitcoin") && !validRef("y:<x>") && !validRef("javascript:1"));
+});
+
+test("own topics: cleaned, matched umlaut-insensitively", async () => {
+  const { cleanTopics, matchesTopic } = await import("../site/ui.js");
+  assert.deepEqual(cleanTopics([" Wasserstoff ", "Rheinmetall", "<script>", "x", "Wasserstoff", "S&P 500"]), ["Wasserstoff", "Rheinmetall", "S&P 500"]);
+  assert.equal(matchesTopic("Rheinmetall erhält Großauftrag", ["rheinmetall"]), true);
+  assert.equal(matchesTopic("Großauftrag für Rüstung", ["Grossauftrag"]), true);
+  assert.equal(matchesTopic("Gold steigt", ["Wasserstoff"]), false);
 });

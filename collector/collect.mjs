@@ -10,7 +10,7 @@
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS, TOP_JOURNALS } from "./config.mjs";
+import { THEMES, IPO_WATCH, MARKETS, BUBBLE_TICKERS, FEEDS, SIGNAL_WORDS, UNIVERSE, EVENTS, TOP_JOURNALS, INSTRUMENTS } from "./config.mjs";
 import { buildSignals } from "../site/signals.js";
 import { computeEvents, fetchResearch, fetchJournalResearch, fetchRealEstate, fetchMacro, fetchSentimentOfficial, fetchCommodities, fetchTechTrends, fetchAdoption, fetchCryptoFlows, fetchPower, fetchAiJobs } from "./insights.mjs";
 import { fetchSuperinvestors, fetchConsensus, fetchAnalystVoices, fetchCnnFearGreed, fetchEcbRate, fetchAssets, marketRisk, findGems, fetchInsiders } from "./extra.mjs";
@@ -78,6 +78,22 @@ async function fetchSeries(sym, stooqSym) {
     }
   }
   return null;
+}
+
+/** Light quote (last price, change today, currency) for the portfolio instrument list; reuses prices already fetched. */
+async function fetchInstruments(prices) {
+  const res = await pool(INSTRUMENTS, 6, async (it) => {
+    const p = prices[it.sym];
+    if (p) return { ...it, last: p.last, chg1d: p.chg1d, currency: p.currency || "" };
+    const y = await get(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(it.sym)}?range=5d&interval=1d`, { type: "json" });
+    const r = y?.chart?.result?.[0], closes = (r?.indicators?.quote?.[0]?.close || []).filter(Number.isFinite);
+    const last = Number.isFinite(r?.meta?.regularMarketPrice) ? r.meta.regularMarketPrice : closes.at(-1);
+    const prev = Number.isFinite(r?.meta?.chartPreviousClose) && closes.length < 2 ? r.meta.chartPreviousClose : closes.at(-2);
+    return Number.isFinite(last) ? { ...it, last, chg1d: Number.isFinite(prev) && prev > 0 ? last / prev - 1 : null, currency: r?.meta?.currency || "" } : { ...it, last: null };
+  });
+  const okN = res.filter((x) => Number.isFinite(x.last)).length;
+  status.push({ source: `Depot-Kurse ETFs & Aktien (${okN}/${INSTRUMENTS.length})`, ok: okN > INSTRUMENTS.length / 2 });
+  return res;
 }
 
 async function fetchAllPrices() {
@@ -337,6 +353,7 @@ async function main() {
   const sentiment = await fetchSentimentOfficial({ get });
   const papers = await fetchJournalResearch({ get }, TOP_JOURNALS, previous.prevData?.papers, NOW);
   const aiJobs = await fetchAiJobs({ get }, previous.prevData?.aiJobs, NOW);
+  const instruments = await fetchInstruments(prices);
   const insiders = await fetchInsiders(ctx, UNIVERSE.filter((t) => !t.includes(".") && !t.endsWith("-USD")), previous.prevData, NOW);
   const universePrices = Object.fromEntries(UNIVERSE.filter((t) => prices[t]).map((t) => [t, prices[t]]));
   const gems = findGems({ universePrices, consensus, benchmark3m: prices["^GSPC"]?.chg3m });
@@ -415,7 +432,7 @@ async function main() {
     bubble: { score: Number.isFinite(bubbleScore) ? bubbleScore : null, zone: zoneLabel(bubbleScore), components, chatter },
     market, fearGreed, cryptoTrending, polymarket,
     themes, ipoWatch,
-    assets, superinvestors, voices, analysts, gems, cnnFearGreed, sentiment, research, papers, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power, aiJobs,
+    assets, superinvestors, voices, analysts, gems, cnnFearGreed, sentiment, research, papers, realEstate, insiders, macro, commodities, tech, adoption, cryptoFlows, power, aiJobs, instruments,
     events: computeEvents(news, NOW),
     rates: { ecb: ecbRate, us10y: prices["^TNX"]?.last > 0 && prices["^TNX"].last < 20 ? prices["^TNX"].last / 100 : null },
     risk: marketRisk({ bubble: bubbleScore, prices, cnn: cnnFearGreed, universePrices }),

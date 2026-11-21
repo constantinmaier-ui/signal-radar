@@ -930,3 +930,13 @@ details[open]::details-content { height: auto; }
 .wide-box h3 { margin: 0 0 6px; font-size: 15px; }
 .wide-row { padding: 6px 0; border-bottom: 1px solid var(--ring); font-size: 14px; }
 .wide-row .m { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+/* detailed positions: kind · which instrument · units · value */
+.dp-row { grid-template-columns: minmax(110px, .9fr) minmax(160px, 1.6fr) minmax(70px, .5fr) minmax(90px, .7fr) auto; }
+.dp-row .dp-hint { grid-column: 1 / -1; font-size: 12px; color: var(--muted); margin-top: -2px; }
+@media (max-width: 620px) { .dp-row { grid-template-columns: 1fr 1fr; } .dp-row .dp-name { grid-column: 1 / -1; } }
+.dp-pos { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 7px 0; border-bottom: 1px solid var(--ring); font-size: 14px; }
+.dp-pos .fine { grid-column: 1 / -1; }
+.goal-big { font-size: 18px; margin: 6px 0 2px; }
+.goal-edit summary { cursor: pointer; font-weight: 600; margin-top: 8px; }
+.ob-topics { display: grid; gap: 4px; margin-top: 10px; font-size: 14px; }
+.ob-topics input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); font: 16px var(--font); }

@@ -1,12 +1,13 @@
 // Personal layer: optional onboarding, interests, smart navigation, menu with everything, portfolio.
 // Everything stays in the browser (localStorage) and can be changed at any time.
-import { $, $$, esc, fmt, pct, ok, store, state, dirCls, toast } from "./ui.js";
+import { $, $$, esc, fmt, pct, ok, store, state, dirCls, toast, cleanTopics, myTopics } from "./ui.js";
 import { TOPICS } from "./trust.js";
 import { BUCKETS, buildPlan } from "./plan.js";
 import { GOALS, buildSignals, dailyVerdict } from "./signals.js";
 import { topicOf } from "./heute.js";
 import { PERSONAS, personas } from "./personas.js";
-import { AGES, FAMILY, HOME, LEARN, situation, cleanSituation, readinessLine } from "./situation.js";
+import { validRef, quoteOf, positionValue, ensureDatalist, matchAny, suggestCoins, loadCoins, refreshCoinPrices, fmtEur } from "./holdings.js";
+import { FAMILY, HOME, LEARN, GOAL_TYPES, ageOf, situation, cleanSituation, readinessLine } from "./situation.js";
 
 // ---------- Interests ----------
 // Which interest topic each "Entdecken" section belongs to (a section can serve several)
@@ -131,7 +132,7 @@ export const SOURCES_HTML = `<ul>
 let ob = null;
 export function openOnboarding() {
   const plan = store.get("plan", {}) || {};
-  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
+  ob = { step: 0, interests: interests(), horizon: plan.years ? (plan.years < 3 ? "kurz" : plan.years <= 10 ? "mittel" : "lang") : "lang", drop: 3, goal: store.get("goal", null), personas: personas(), watch: [...state.watch], topics: myTopics(), sit: situation(), learn: (store.get("learn", []) || []).filter((k) => LEARN.some(([x]) => x === k)), mode: store.get("mode", "easy"), depot: depotList() };
   renderOnboarding();
   $("#sheet").hidden = false; document.body.style.overflow = "hidden";
 }
@@ -145,7 +146,11 @@ function renderOnboarding() {
       <h2 id="sheetTitle">Wofür nutzt du das Radar?</h2><p class="fine">Dann bekommst du unter „Dein Radar“ eigene Live-Infos. Mehrere möglich, freiwillig.</p>
       <div class="chips-wrap">${PERSONAS.map((p) => chip("pers", p.id, ob.personas.includes(p.id), `${p.icon} ${p.label}`)).join("")}</div>
       <p><b>Welche Bereiche interessieren dich?</b> <span class="fine">Danach richtet sich, was oben steht und was eingeklappt wird.</span></p>
-      <div class="chips-wrap">${TOPICS.map(([k, l]) => chip("int", k, ob.interests.includes(k), l)).join("")}</div>`,
+      <div class="chips-wrap">${TOPICS.map(([k, l]) => chip("int", k, ob.interests.includes(k), l)).join("")}</div>
+      ${(state.data?.themes || []).length ? `<p><b>Welche Trends willst du verfolgen?</b> <span class="fine">(landen auf deiner Merkliste)</span></p>
+      <div class="chips-wrap">${state.data.themes.map((t) => chip("wt", t.id, ob.watch.includes(t.id), t.short)).join("")}</div>` : ""}
+      <label class="ob-topics"><b>Eigene Themen</b> <span class="fine">mit Komma trennen, z. B. Wasserstoff, Rheinmetall, Indien</span>
+        <input id="obTopics" type="text" maxlength="300" value="${esc(ob.topics.join(", "))}" placeholder="Was dich sonst interessiert"></label>`,
     () => { const sug = suggestGoal(ob.drop, ob.horizon), g = ob.goal || sug;
       return `<h2 id="sheetTitle">Dein Ziel</h2>
       <p><b>Wie lange willst du das Geld anlegen?</b></p><div class="chips-wrap">${HORIZON.map(([k, l]) => chip("hor", k, ob.horizon === k, l)).join("")}</div>
@@ -155,7 +160,19 @@ function renderOnboarding() {
     () => { const t = ob.sit, val = (x) => (x === null || x === undefined ? "" : esc(x));
       return `<h2 id="sheetTitle">Deine Situation <span class="fine">(freiwillig)</span></h2>
       <p class="fine">Damit das Radar sagt, ob du bereit bist zu investieren. Alles optional, bleibt auf deinem Gerät.</p>
-      <p><b>Alter</b></p><div class="chips-wrap">${AGES.map(([k, l]) => chip("age", k, t.age === k, l)).join("")}</div>
+      <div class="sit-grid">
+        <label>Dein Alter<span class="inp"><input id="sitAge" type="number" inputmode="numeric" min="14" max="100" step="1" value="${val(ageOf(t))}"><em>Jahre</em></span></label>
+        <label>Rente mit<span class="inp"><input id="sitRetire" type="number" inputmode="numeric" min="50" max="80" step="1" value="${val(t.retireAge)}" placeholder="67"><em>Jahren</em></span></label>
+      </div>
+      <p><b>Dein wichtigstes Ziel</b></p><div class="chips-wrap">${GOAL_TYPES.map(([k, l]) => chip("gtype", k, t.goal === k, l)).join("")}</div>
+      ${t.goal && t.goal !== "rente" && t.goal !== "vermoegen" ? `<div class="sit-grid">
+        ${t.goal === "eigenes" ? `<label>Wofür?<input id="sitGoalName" type="text" maxlength="40" value="${val(t.goalName)}" placeholder="z. B. Weltreise"></label>` : ""}
+        <label>Wie viel?<span class="inp"><input id="sitGoalAmount" type="number" inputmode="decimal" min="0" step="1000" value="${val(t.goalAmount)}"><em>€</em></span></label>
+        <label>Bis wann?<span class="inp"><input id="sitGoalYear" type="number" inputmode="numeric" min="${new Date().getFullYear()}" step="1" value="${val(t.goalYear)}"><em>Jahr</em></span></label></div>` : ""}
+      ${t.goal === "rente" ? `<div class="sit-grid">
+        <label>Netto-Einkommen heute<span class="inp"><input id="sitNet" type="number" inputmode="decimal" min="0" step="100" value="${val(t.net)}"><em>€/Mon.</em></span></label>
+        <label>Gesetzliche Rente laut Renteninformation<span class="inp"><input id="sitPension" type="number" inputmode="decimal" min="0" step="50" value="${val(t.pension)}"><em>€/Mon.</em></span></label>
+      </div><p class="fine">Die Renteninformation kommt jährlich per Post von der Deutschen Rentenversicherung. Fehlt sie, rechnet das Radar ohne gesetzliche Rente.</p>` : ""}
       <p><b>Lebenssituation</b></p><div class="chips-wrap">${FAMILY.map(([k, l]) => chip("fam", k, t.family === k, l)).join("")}${HOME.map(([k, l]) => chip("home", k, t.home === k, l)).join("")}</div>
       <p><b>Teure Kredite (Dispo, Ratenkredit)?</b></p><div class="chips-wrap">${chip("debt", "1", t.debt === true, "Ja")}${chip("debt", "0", t.debt === false, "Nein")}</div>
       <div class="sit-grid">
@@ -171,9 +188,12 @@ function renderOnboarding() {
     <div class="ob-actions">${s ? '<button type="button" class="btn btn-ghost" data-ob="back">Zurück</button>' : '<button type="button" class="btn btn-ghost" data-ob="skip">Überspringen</button>'}
       <button type="button" class="btn btn-primary" data-ob="${s === steps - 1 ? "done" : "next"}">${s === steps - 1 ? "Fertig" : "Weiter"}</button></div>`;
 }
+function readTopics() { const el = $("#obTopics"); if (el) ob.topics = cleanTopics(el.value.split(",")); }
 function readSituation() {
   const n = (id) => { const el = $(id); if (!el) return undefined; const v = el.value.trim(); return v === "" ? null : Number(v); };
-  for (const [k, id] of [["spend", "#sitSpend"], ["cash", "#sitCash"], ["save", "#sitSave"]]) { const v = n(id); if (v !== undefined) ob.sit[k] = v; }
+  for (const [k, id] of [["spend", "#sitSpend"], ["cash", "#sitCash"], ["save", "#sitSave"], ["retireAge", "#sitRetire"], ["goalAmount", "#sitGoalAmount"], ["goalYear", "#sitGoalYear"], ["net", "#sitNet"], ["pension", "#sitPension"]]) { const v = n(id); if (v !== undefined) ob.sit[k] = v; }
+  const age = n("#sitAge"); if (age !== undefined) ob.sit.birthYear = age ? new Date().getFullYear() - age : null;
+  const gn = $("#sitGoalName"); if (gn) ob.sit.goalName = gn.value.trim() || null;
 }
 function finishOnboarding() {
   readDepotEditor($("#sheet"), (list) => (ob.depot = list));
@@ -181,6 +201,8 @@ function finishOnboarding() {
   const list = ob.interests.length ? ob.interests : ALL;
   store.set("interests", list);
   store.set("personas", ob.personas);
+  readTopics(); store.set("mytopics", ob.topics);
+  state.watch = new Set(ob.watch); store.set("watch", ob.watch);
   store.set("situation", cleanSituation(ob.sit));
   store.set("learn", ob.learn);
   store.set("prefs", { ...(store.get("prefs", {}) || {}), off: ALL.filter((k) => !list.includes(k)) });
@@ -199,19 +221,20 @@ function onboardingClick(e) {
   const t = e.target;
   const pick = (sel) => t.closest(sel);
   let b;
-  if ((b = pick("[data-pers]"))) {
+  if ((b = pick("[data-pers]"))) { readTopics();
     const k = b.dataset.pers, on = !ob.personas.includes(k);
     ob.personas = on ? [...ob.personas, k] : ob.personas.filter((x) => x !== k);
     if (on) { const add = PERSONAS.find((p) => p.id === k)?.interests || []; ob.interests = [...new Set([...(isAll(ob.interests) ? [] : ob.interests), ...add])]; }
     return renderOnboarding(), true;
   }
   const toggle = (k) => (ob.sit[k] = ob.sit[k] === b.dataset[k === "family" ? "fam" : k] ? null : b.dataset[k === "family" ? "fam" : k]);
-  if ((b = pick("[data-age]"))) { readSituation(); toggle("age"); return renderOnboarding(), true; }
+  if ((b = pick("[data-wt]"))) { readTopics(); const k = b.dataset.wt; ob.watch = ob.watch.includes(k) ? ob.watch.filter((x) => x !== k) : [...ob.watch, k]; return renderOnboarding(), true; }
+  if ((b = pick("[data-gtype]"))) { readSituation(); ob.sit.goal = ob.sit.goal === b.dataset.gtype ? null : b.dataset.gtype; return renderOnboarding(), true; }
   if ((b = pick("[data-fam]"))) { readSituation(); toggle("family"); return renderOnboarding(), true; }
   if ((b = pick("[data-home]"))) { readSituation(); toggle("home"); return renderOnboarding(), true; }
   if ((b = pick("[data-debt]"))) { readSituation(); const v = b.dataset.debt === "1"; ob.sit.debt = ob.sit.debt === v ? null : v; return renderOnboarding(), true; }
   if ((b = pick("[data-learn]"))) { const k = b.dataset.learn; ob.learn = ob.learn.includes(k) ? ob.learn.filter((x) => x !== k) : [...ob.learn, k]; return renderOnboarding(), true; }
-  if ((b = pick("[data-int]"))) { const k = b.dataset.int; ob.interests = ob.interests.includes(k) ? ob.interests.filter((x) => x !== k) : [...ob.interests, k]; return renderOnboarding(), true; }
+  if ((b = pick("[data-int]"))) { readTopics(); const k = b.dataset.int; ob.interests = ob.interests.includes(k) ? ob.interests.filter((x) => x !== k) : [...ob.interests, k]; return renderOnboarding(), true; }
   if ((b = pick("[data-hor]"))) { ob.horizon = b.dataset.hor; ob.goal = null; return renderOnboarding(), true; }
   if ((b = pick("[data-drop]"))) { ob.drop = Number(b.dataset.drop); ob.goal = null; return renderOnboarding(), true; }
   if ((b = pick("[data-goal]"))) { ob.goal = b.dataset.goal; return renderOnboarding(), true; }
@@ -220,7 +243,7 @@ function onboardingClick(e) {
     const a = b.dataset.ob;
     if (a === "skip") { store.set("onboarded", true); closeSheet(); }
     else if (a === "back") { readDepotEditor($("#sheet"), (l) => (ob.depot = l)); readSituation(); ob.step--; renderOnboarding(); }
-    else if (a === "next") { readSituation(); ob.step++; renderOnboarding(); }
+    else if (a === "next") { readSituation(); readTopics(); ob.step++; renderOnboarding(); }
     else if (a === "done") finishOnboarding();
     return true;
   }
@@ -232,20 +255,30 @@ export const CATS = [...BUCKETS.map((b) => [b.id, b.label]), ["stock", "Einzelak
 const CAT_IDS = CATS.map(([k]) => k);
 export function depotList() {
   const v = store.get("portfolio", []);
-  return Array.isArray(v) ? v.filter((p) => p && CAT_IDS.includes(p.cat) && Number(p.value) > 0).map((p) => ({ cat: p.cat, name: String(p.name || "").slice(0, 60), value: Math.min(1e9, Number(p.value)) })) : [];
+  return Array.isArray(v) ? v.filter((p) => p && CAT_IDS.includes(p.cat) && (Number(p.value) > 0 || Number(p.qty) > 0))
+    .map((p) => ({ cat: p.cat, name: String(p.name || "").slice(0, 60), value: Math.min(1e9, Number(p.value) || 0), ...(validRef(p.ref) ? { ref: p.ref } : {}), ...(Number(p.qty) > 0 ? { qty: Math.min(1e12, Number(p.qty)) } : {}) })) : [];
+}
+/** Positions with their live euro value (units × price where known). */
+export function liveDepot(list = depotList()) {
+  return list.map((p) => { const q = quoteOf(p.ref); return { ...p, quote: q, value: positionValue(p, q) || 0 }; }).filter((p) => p.value > 0);
 }
 function depotEditor(list) {
   const rows = (list.length ? list : [{ cat: "world", name: "", value: "" }]).map((p) => `<div class="dp-row">
       <select class="dp-cat" aria-label="Art">${CATS.map(([k, l]) => `<option value="${k}" ${p.cat === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>
-      <input class="dp-name" type="text" maxlength="60" placeholder="Name (optional), z. B. Apple" value="${esc(p.name || "")}" aria-label="Name">
-      <span class="inp"><input class="dp-val" type="number" inputmode="decimal" min="0" step="100" placeholder="Wert" value="${esc(p.value ?? "")}" aria-label="Wert in Euro"><em>€</em></span>
+      <input class="dp-name" type="text" maxlength="90" list="dpInstr" placeholder="Name, Kürzel oder ISIN, z. B. MSCI World, SAP, Bitcoin" value="${esc(p.name || "")}" data-ref="${esc(p.ref || "")}" aria-label="Welche Anlage">
+      <span class="inp"><input class="dp-qty" type="number" inputmode="decimal" min="0" step="any" placeholder="Stück" value="${esc(p.qty ?? "")}" aria-label="Anzahl Stück (optional)"></span>
+      <span class="inp"><input class="dp-val" type="number" inputmode="decimal" min="0" step="100" placeholder="Wert" value="${esc(p.qty && p.ref ? "" : p.value || "")}" aria-label="Wert in Euro"><em>€</em></span>
       <button type="button" class="btn btn-icon dp-del" aria-label="Position entfernen">✕</button></div>`).join("");
   return `<div class="dp-editor"><div class="dp-rows">${rows}</div><button type="button" class="btn btn-ghost" data-dp="add">+ Position</button></div>`;
 }
 function readDepotEditor(root, cb) {
   const rows = root ? $$(".dp-row", root) : []; if (!rows.length) return;
-  cb(rows.map((r) => ({ cat: r.querySelector(".dp-cat").value, name: r.querySelector(".dp-name").value.trim().slice(0, 60), value: Number(r.querySelector(".dp-val").value) }))
-    .filter((p) => CAT_IDS.includes(p.cat) && p.value > 0));
+  cb(rows.map((r) => {
+    const nameEl = r.querySelector(".dp-name"), m = matchAny(nameEl.value), ref = m?.ref || (validRef(nameEl.dataset.ref) && nameEl.value.trim() ? nameEl.dataset.ref : "");
+    const qty = Number(r.querySelector(".dp-qty")?.value) || 0, value = Number(r.querySelector(".dp-val").value) || 0;
+    const q = ref ? quoteOf(ref) : null;
+    return { cat: r.querySelector(".dp-cat").value, name: (m?.name || nameEl.value.trim()).slice(0, 60), ...(ref ? { ref } : {}), ...(qty > 0 ? { qty } : {}), value: value || (q && qty ? qty * q.last : 0) };
+  }).filter((p) => CAT_IDS.includes(p.cat) && (p.value > 0 || (p.qty > 0 && p.ref))));
 }
 /** Compares holdings with the plan. Pure: returns shares, deviations and warnings. */
 export function analyzeDepot(list, targets = {}) {
@@ -283,22 +316,28 @@ function radarSays(p, d) {
 }
 export function renderDepot() {
   const el = $("#depotBody"); if (!el) return;
-  const list = depotList(), d = state.data || {};
+  const raw = depotList(), list = liveDepot(raw), d = state.data || {};
+  // crypto prices come live from CoinGecko; re-render once they are there
+  if (raw.some((p) => p.ref?.startsWith("cg:"))) refreshCoinPrices(raw.map((p) => p.ref)).then((changed) => changed && renderDepot());
   let targets = {};
   try { targets = buildPlan(store.get("plan", { once: 5000, monthly: 200, years: 15, profile: store.get("goal", "auto") }), d).weights || {}; } catch { /* no plan yet */ }
   const a = analyzeDepot(list, targets);
-  if (!list.length) {
+  if (!raw.length) {
     el.innerHTML = `<p>Trag ein, was du schon hast. Dann zeigt dir das Radar, wo du vom Plan abweichst, wo ein Klumpenrisiko steckt und was es zu deinen Anlagen sagt. <b>Freiwillig, bleibt auf deinem Gerät.</b></p>${depotEditor([])}<button type="button" class="btn btn-primary" data-dp="save">Depot speichern</button>`;
     return;
   }
   const label = (k) => CATS.find(([c]) => c === k)?.[1] || k;
   const says = list.map((p) => radarSays(p, d)).filter(Boolean);
-  el.innerHTML = `<div class="dp-total">Gesamt <b>${fmt(a.total)} €</b> <span class="fine">in ${list.length} Position${list.length === 1 ? "" : "en"}</span></div>
+  const day = list.reduce((sum, p) => sum + (p.quote && ok(p.quote.chg1d) ? p.value - p.value / (1 + p.quote.chg1d) : 0), 0);
+  const positions = list.map((p) => `<div class="dp-pos"><b>${esc(p.name || label(p.cat))}</b><b>${fmtEur(p.value)}</b>
+    <span class="fine">${esc(label(p.cat))}${p.qty ? ` · ${fmt(p.qty, Number.isInteger(p.qty) ? 0 : p.qty < 10 ? 4 : 2)} Stück` : ""}${p.quote ? ` · Kurs ${fmtEur(p.quote.last)}${ok(p.quote.chg1d) ? ` · heute <span class="${dirCls(p.quote.chg1d)}">${pct(p.quote.chg1d)}</span>` : ""}` : " · Wert von dir eingetragen"}</span></div>`).join("");
+  el.innerHTML = `<div class="dp-total">Gesamt <b>${fmt(a.total)} €</b> <span class="fine">in ${list.length} Position${list.length === 1 ? "" : "en"}${day ? ` · heute <span class="${dirCls(day)}">${day > 0 ? "+" : "−"}${fmt(Math.abs(day))} €</span>` : ""}</span></div>
+    <details class="dp-list"><summary>Alle Positionen mit Live-Kurs</summary>${positions}<p class="fine">Kurse: ETFs und Aktien alle 15 Min. (Yahoo Finance, Dollar-Werte in Euro umgerechnet), Krypto live (CoinGecko). Ohne Stückzahl zählt der Wert, den du eingetragen hast.</p></details>
     <div class="dp-bars">${a.rows.map((r) => `<div class="dp-bar"><span>${esc(label(r.cat))}</span><span class="track"><i style="width:${Math.min(100, r.share * 100)}%"></i>${r.target ? `<em style="left:${Math.min(100, r.target * 100)}%" title="Plan: ${Math.round(r.target * 100)} %"></em>` : ""}</span><b>${Math.round(r.share * 100)} %</b><span class="fine">${r.target ? `Plan ${Math.round(r.target * 100)} %` : "nicht im Plan"}</span></div>`).join("")}</div>
     <p class="fine">Strich = Anteil laut deinem Plan (Ziel ${esc(GOALS[store.get("goal", "ausgewogen")]?.label || "")}).</p>
     ${a.warnings.length ? `<div class="dp-warn"><h3>Das fällt auf</h3><ul>${a.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>` : '<p class="dp-ok">✓ Dein Depot passt gut zu deinem Plan.</p>'}
     ${says.length ? `<h3>Was das Radar zu deinen Anlagen sagt</h3><div class="dp-says">${says.join("")}</div>` : ""}
-    <details class="dp-edit"><summary>Depot bearbeiten</summary>${depotEditor(list)}<button type="button" class="btn btn-primary" data-dp="save">Speichern</button></details>`;
+    <details class="dp-edit"><summary>Depot bearbeiten</summary>${depotEditor(raw)}<button type="button" class="btn btn-primary" data-dp="save">Speichern</button></details>`;
 }
 function depotClick(e) {
   const b = e.target.closest("[data-dp], .dp-del"); if (!b) return false;
@@ -331,7 +370,7 @@ export function renderSummary() {
   // Basics first: if the personal check says "not yet", that line leads and no "invest now" line follows
   const ready = readinessLine();
   const lines = ready ? [["⛔", "Für dich zuerst", ready, "plan:bereit"], ["🚦", "Markt", `${word}`, "heute:check"]] : [["🚦", "Lage", `${word}: ${v.head}`, "heute:check"]];
-  const dep = depotList();
+  const dep = liveDepot();
   if (dep.length) {
     let targets = {}; try { targets = buildPlan({ once: 5000, monthly: 200, years: 15, profile: goal, ...plan }, d).weights || {}; } catch { /* ignore */ }
     const a = analyzeDepot(dep, targets);
@@ -363,6 +402,23 @@ export function initPersonal({ openPrefs, onGoto }) {
     if (e.target.closest("[data-sheet-close]") || e.target === $("#sheet")) closeSheet();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#sheet").hidden) closeSheet(); });
+  // Portfolio editor: list of instruments on focus, fill in the kind automatically, search all crypto coins
+  document.addEventListener("focusin", (e) => { if (e.target.matches?.(".dp-name")) { ensureDatalist(); loadCoins().then(ensureDatalist); } });
+  let coinT;
+  document.addEventListener("input", (e) => {
+    const inp = e.target.closest?.(".dp-name, .dp-qty"); if (!inp) return;
+    const row = inp.closest(".dp-row"), nameEl = row.querySelector(".dp-name"), m = matchAny(nameEl.value);
+    if (inp === nameEl) {
+      nameEl.dataset.ref = m?.ref || "";
+      if (m) row.querySelector(".dp-cat").value = m.kind === "crypto" ? "btc" : m.kind === "stock" ? "stock" : CAT_IDS.includes(m.cat) ? m.cat : "other";
+      else { clearTimeout(coinT); coinT = setTimeout(() => suggestCoins(nameEl), 350); }
+    }
+    const q = m && quoteOf(m.ref), qty = Number(row.querySelector(".dp-qty")?.value) || 0;
+    let hint = row.querySelector(".dp-hint");
+    const text = m ? (q ? `${m.name}: Kurs ${fmtEur(q.last)}${qty ? ` → ${fmtEur(qty * q.last)}` : " · Stück eintragen, dann rechnet das Radar den Wert live"}` : `${m.name}: Kurs wird geladen …`) : "";
+    if (!hint && text) { hint = document.createElement("div"); hint.className = "dp-hint"; row.appendChild(hint); }
+    if (hint) hint.textContent = text;
+  });
   applyInterests(); smartNav();
   const h = location.hash;
   if (!store.get("onboarded", false) && !h.startsWith("#plan=") && !h.startsWith("#thema=") && !h.startsWith("#import=")) setTimeout(openOnboarding, 400);
