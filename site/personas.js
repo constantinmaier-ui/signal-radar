@@ -1,7 +1,7 @@
 // "Dein Radar": one card per investor profile (crypto, AI trends, commodities buyer, real estate, ETF saver).
 // Each card shows live lines from the collected data, one research fact and one common mistake.
 // Rules only, no advice; every line links to its details.
-import { $, esc, fmt, pct, ok, store, state, compact } from "./ui.js";
+import { $, esc, fmt, pct, ok, store, state, compact, myTopics, matchesTopic, ago, safeUrl, growList, googleNews } from "./ui.js";
 
 
 export const PERSONAS = [
@@ -153,8 +153,13 @@ export function renderMyRadar() {
       <ul class="pr-lines">${lines.map((l) => `<li><button type="button" class="pr-line" ${goAttr(l.go)}>${esc(l.t)}<span class="go">›</span></button></li>`).join("") || '<li class="fine">Noch keine Daten, gleich wieder reinschauen.</li>'}</ul>
       ${f ? `<p class="pr-fact">📚 <b>Was die wenigsten wissen:</b> ${esc(f.title)}. <button type="button" class="link-btn" data-goto="wissen:fakt-${f.id}">Mehr</button></p>` : ""}</article>`;
   }).join("");
+  const topics = myTopics(), news = [...(state.live || []), ...(d.news || [])];
+  const topicCard = topics.length ? `<article class="pr-card"><h3>🔎 Deine eigenen Themen</h3><ul class="pr-lines">${topics.map((k) => {
+    const hits = news.filter((n) => n?.title && matchesTopic(n.title, [k])), wk = hits.filter((n) => (n.published || 0) > Date.now() - 7 * 864e5).length;
+    return `<li><button type="button" class="pr-line" data-topic="${esc(k)}"><span><b>${esc(k)}</b>: ${wk ? `${wk} Meldung${wk === 1 ? "" : "en"} in 7 Tagen${hits[0] ? ` · neu: ${esc(hits[0].title.slice(0, 90))}` : ""}` : "gerade keine Meldung im Radar"}</span><span class="go">›</span></button></li>`;
+  }).join("")}</ul><p class="fine">Antippen zeigt alle Meldungen dazu. Ändern unter Menü → „Persönlich einrichten“ oder in der Suche „Als Thema merken“.</p></article>` : "";
   box.innerHTML = `<div class="card-head"><div><h2>Dein Radar</h2><p class="sub">${mine.length ? "Live-Daten und Forschung, passend zu dem, wofür du das Radar nutzt. Antippen führt zu den Details." : "Wofür nutzt du das Radar? Tipp an, was passt (mehrere möglich), dann bekommst du hier deine eigenen Live-Infos."}</p></div></div>
-    <div class="chips-wrap pr-chips">${chips}</div>${cards ? `<div class="pr-grid">${cards}</div>` : ""}
+    <div class="chips-wrap pr-chips">${chips}</div>${cards || topicCard ? `<div class="pr-grid">${topicCard}${cards}</div>` : ""}
     <p class="fine">Quellen: Yahoo Finance, CoinGecko, DefiLlama, EZB, Eurostat, Energy-Charts, Indeed Hiring Lab, PyPI/npm, GitHub. Beobachtungen und Regeln, keine Anlageberatung.</p>`;
 }
 export function renderFacts() {

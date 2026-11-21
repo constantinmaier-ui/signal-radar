@@ -30,3 +30,6 @@ Every important decision with its reason, so it stays traceable.
 | 2026-11-21 | Situation data (age, spending, cash) optional and local only | Customization without collecting personal data; the app works without it |
 | 2026-11-21 | Not using the SuperSync token | SuperSync is Super Productivity's private service with its own data format; using it for another app is unsupported, could break any time and means sharing an account token |
 | 2026-11-21 | Count distinct outlets per story (clustered by shared words), not repeated headlines | "5 portals report it" is a meaningful breadth signal; the old count also counted the same outlet found by several searches. Research: heavy coverage means the news is mostly priced in (Fang & Peress 2009) |
+| 2026-11-21 | Exact age instead of age bands | Years to retirement and the pension gap need the exact number; stored as birth year so it stays right next year |
+| 2026-11-21 | Pension gap with the 4 % rule (×25) in today's money, real return by profile | Simple, widely known and explainable; the card states its limits (longer retirements need less withdrawal) |
+| 2026-11-21 | Portfolio prices: curated list in the collector + CoinGecko in the browser | Browsers cannot call Yahoo directly (CORS); CoinGecko allows it, so every coin is available live; other instruments keep a manual value |

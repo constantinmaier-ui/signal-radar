@@ -43,6 +43,16 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.0) – fully personal (owner request 2026-11-21), by value ÷ effort
+- [x] **Exact age** instead of ranges, retirement age (default 67), years to retirement
+- [x] **Goal**: build wealth, close the pension gap, financial freedom, home, children, own goal (amount + year)
+- [x] **"Dein Ziel & Rentenlücke"** card: gap per month, capital needed (4 % rule, Bengen 1994), monthly saving at the profile's real return; editable in place
+- [x] **Detailed portfolio**: pick a real ETF (name, ticker or ISIN), DAX/US stock or **any crypto coin** (CoinGecko), enter units; value follows the live price (ETFs/stocks every 15 min, crypto live); total change today
+- [x] **More topics at the start**: all 16 trend themes selectable (watchlist) plus **own topics** as free text; own topics in "Dein Radar", a feed filter "Meine Themen", and "remember as topic" in search
+- [ ] Portfolio import from a broker CSV (e.g. Trade Republic, Scalable, ING export)
+- [ ] Any stock or ETF worldwide with a live price (needs a quote source the browser may call; today: 35 popular instruments + all theme stocks, others with a manual value)
+- [ ] Alerts for own topics and holdings (price move, news spike)
+
 ## Now (version 4.1) – one guided path, fully personal (owner request 2026-11-21), by value ÷ effort
 - [x] **Situation step in onboarding** (optional): age, family, rent/own, expensive debts, monthly spending, cash, monthly savings; plus "what do you want to learn"
 - [x] **"Bist du bereit zu investieren?"**: personal readiness check (expensive debts first, emergency fund 3–6 months, horizon, savings, life cycle, family); if basics are missing it leads "Das Wichtigste heute" and no "invest" line is shown

@@ -170,3 +170,9 @@ export function growClick(e) {
   return true;
 }
 export const googleNews = (q) => `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=de&gl=DE&ceid=DE:de`;
+
+// ---------- Own topics (free text, e.g. "Wasserstoff", "Rheinmetall") ----------
+export const cleanTopics = (a) => (Array.isArray(a) ? [...new Set(a.map((x) => String(x || "").trim().replace(/\s+/g, " ")).filter((x) => /^[\p{L}\p{N} .&+\-]{2,40}$/u.test(x)))].slice(0, 15) : []);
+export const myTopics = () => cleanTopics(store.get("mytopics", []));
+/** Headlines mentioning one of the topics (case and umlaut insensitive). */
+export const matchesTopic = (title, topics) => { const t = fold(title); return topics.some((k) => t.includes(fold(k))); };
