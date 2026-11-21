@@ -43,6 +43,13 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.4) – setup that really works (owner request 2026-11-21)
+- [x] **Readiness check editable in place**: missing emergency fund / debts / spending entered right in the card (the old "Situation ändern" opened the wrong step)
+- [x] **Several goals** (e.g. pension gap + home + trip), each with amount and year; total monthly need vs. what you save, with a hint when it does not fit
+- [x] **Wish pension** ("so viel möchte ich im Alter haben") and why net income (not gross) counts
+- [x] **Backup as an onboarding step**: options with what is safe and what not (device only, encrypted file, link, automatic, Dropbox soon, password tips with BSI link); "set up now" opens the backup right after setup
+- [ ] Dropbox sync (waiting for the owner's Dropbox app key)
+
 ## Now (version 5.3) – answers, not just data (owner request 2026-11-21)
 - [x] **SEC secret set by the owner**: 145/146 sources ok (insider buys and superinvestors back)
 - [x] **Short answers to questions** ("Lohnt sich Gold?"): fit with the profile (planned share), state now (trend, distance from high, overheating), timing hint, what research says, link to details

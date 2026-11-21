@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.4 (in progress)
+Several goals with amount and year and a combined monthly need; wish pension; the readiness check can be completed in place; a backup step in the setup that explains the options and what is safe.
+
 ## 5.3 (in progress)
 Answers instead of data: direct short answers to questions like "Lohnt sich Gold?" based on profile, current state and research; consistent news filters with counts and reset; visual news situation per area and theme; one-tap risk profile switch; arrows explained.
 

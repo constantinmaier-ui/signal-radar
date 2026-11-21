@@ -649,3 +649,12 @@ test("quick answers: 'Lohnt sich Gold?' gets a direct, profile-based answer", as
   assert.equal(quickAnswer("Gold", d, "wachstum", true).level, "vorsicht", "basics first");
   assert.equal(questionTarget("Wie wird das Wetter?", d), null);
 });
+
+test("several goals: old single goal migrates, duplicates and junk dropped", async () => {
+  const { cleanSituation, cleanGoals, goalsOf } = await import("../site/situation.js");
+  assert.deepEqual(cleanGoals({ goal: "eigenheim", goalAmount: 50000, goalYear: 2032 }), [{ type: "eigenheim", amount: 50000, year: 2032, name: null }]);
+  const s = cleanSituation({ goals: [{ type: "rente" }, { type: "rente" }, { type: "<x>" }, { type: "eigenes", name: '<b>"Reise"</b>', amount: "8000" }] });
+  assert.deepEqual(s.goals.map((g) => g.type), ["rente", "eigenes"]);
+  assert.doesNotMatch(s.goals[1].name, /[<>"]/); assert.equal(s.goals[1].amount, 8000);
+  assert.equal(goalsOf(cleanSituation({})).length, 0);
+});
