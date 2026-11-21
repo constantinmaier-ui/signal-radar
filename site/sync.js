@@ -36,7 +36,8 @@ const canFile = () => typeof window !== "undefined" && "showSaveFilePicker" in w
 const fileName = () => `signal-radar-${new Date().toISOString().slice(0, 10)}.radar`;
 let paused = false, pendingImport = null, openPrefsFn = () => {};
 
-async function shareOrDownload(text) {
+/** iPhone/Android: share sheet (save to Files, iCloud, Dropbox …); desktop: normal download. */
+export async function shareOrDownload(text) {
   const file = new File([text], fileName(), { type: "application/json" });
   if (navigator.canShare?.({ files: [file] })) {
     try { await navigator.share({ files: [file], title: "Signal-Radar-Sicherung" }); return true; } catch (e) { if (e?.name === "AbortError") return false; }
@@ -66,7 +67,7 @@ async function backupNow(reason) {
 }
 
 async function setup(pass) {
-  if (pass.length < 10) return msg("Bitte oben ein Passwort mit mindestens 10 Zeichen eingeben.");
+  if (pass.length < 10) return needPass("Bitte zuerst oben ein Passwort mit mindestens 10 Zeichen eingeben.");
   let file = null;
   if (canFile()) { // must happen right after the tap, before the slow key derivation
     try { file = await window.showSaveFilePicker({ suggestedName: "signal-radar-auto.radar", types: [{ description: "Signal-Radar-Sicherung", accept: { "application/json": [".radar"] } }] }); }
@@ -85,7 +86,7 @@ async function makeLink(pass) {
   let text;
   if (pass.length >= 10) text = await encryptBackup(collectBackup(), pass);
   else if (a?.key) text = await encryptWithKey(collectBackup(), a.key, a.salt);
-  else return msg("Bitte oben ein Passwort mit mindestens 10 Zeichen eingeben.");
+  else return needPass("Bitte zuerst oben ein Passwort mit mindestens 10 Zeichen eingeben.");
   const url = `${location.origin}${location.pathname}#import=${toLinkPart(text)}`;
   if (navigator.share) { try { await navigator.share({ title: "Signal-Radar: meine Einstellungen", url }); return msg("Link geteilt. Auf dem anderen Gerät öffnen und dasselbe Passwort eingeben."); } catch (e) { if (e?.name === "AbortError") return; } }
   try { await navigator.clipboard.writeText(url); msg("Link kopiert. Schick ihn dir selbst und öffne ihn auf dem anderen Gerät."); }
@@ -99,7 +100,8 @@ async function importNow() {
   } catch { msg("Das hat nicht geklappt: falsches Passwort oder beschädigter Link."); }
 }
 
-const msg = (t) => { const el = $("#autoMsg"); if (el) el.textContent = t; };
+const msg = (t) => { const el = $("#autoMsg"); if (el) el.textContent = t; if (t) toast(t); };
+const needPass = (t) => { msg(t); const f = $("#bkPass"); if (f) { f.focus(); f.classList.add("need"); setTimeout(() => f.classList.remove("need"), 2500); } };
 
 async function render() {
   const box = $("#autoBox"); if (!box) return;
@@ -108,16 +110,13 @@ async function render() {
     ? `<p class="auto-status warn">⏸ Pausiert: Der Browser fragt nach einem Neustart einmal nach Erlaubnis. <button class="btn btn-ghost" type="button" data-auto="resume">Fortsetzen</button></p>`
     : `<p class="auto-status ok">✓ Aktiv${a.file ? `, speichert in „${esc(a.file.name)}“` : ""} · ${at ? `zuletzt gesichert ${ago(Date.parse(at))}` : "noch keine Sicherung"}${dirty && !a.file ? " · <b>neue Änderungen noch nicht gesichert</b>" : ""}</p>`;
   box.innerHTML = `${pendingImport ? `<div class="auto-import"><b>Du hast einen Übertragungs-Link geöffnet.</b> Gib oben das Passwort ein, mit dem er erstellt wurde, und tippe auf „Übernehmen“. Deine bisherigen Einstellungen auf diesem Gerät werden dabei ersetzt.<div class="bk-btns"><button class="btn btn-primary" type="button" data-auto="import">Übernehmen</button></div></div>` : ""}
-    <h3>Automatisch sichern</h3>
+    <h3>⏱️ Automatisch sichern</h3>
     <p class="fine">${canFile()
       ? "Wähle einmal eine Datei, am besten in deinem Dropbox-, OneDrive- oder iCloud-Ordner. Danach legt das Radar nach jeder Änderung automatisch eine verschlüsselte Kopie dort ab. Der Cloud-Dienst lädt sie hoch, sieht aber nur Zeichensalat (Ende-zu-Ende-verschlüsselt)."
       : "Hier (z. B. iPhone oder Firefox) darf eine Webseite nicht selbst in Dateien schreiben. Das Radar merkt sich einen aus deinem Passwort erzeugten Schlüssel (nicht das Passwort) und zeigt, wenn es Neues zu sichern gibt. Ein Tipp auf „Jetzt sichern“ legt die verschlüsselte Datei z. B. in Dateien, iCloud oder Dropbox ab."}</p>
     ${status}
     <div class="bk-btns">${!a?.key ? `<button class="btn btn-primary" type="button" data-auto="setup">Automatische Sicherung einrichten</button>`
       : `${a.file ? "" : `<button class="btn btn-primary" type="button" data-auto="now">Jetzt sichern</button>`}<button class="btn btn-ghost" type="button" data-auto="off">Ausschalten</button>`}</div>
-    <h3>Auf anderes Gerät übertragen</h3>
-    <p class="fine">Erzeugt einen Link, in dem deine Einstellungen verschlüsselt stecken. Schick ihn dir selbst (WhatsApp, E-Mail), öffne ihn auf dem anderen Gerät und gib dasselbe Passwort ein. Der Inhalt steht im Teil hinter dem „#“, den Browser nie an unsere Seite senden. Wer den Link abfängt, braucht trotzdem dein Passwort.</p>
-    <div class="bk-btns"><button class="btn btn-ghost" type="button" data-auto="link">Übertragungs-Link erstellen</button></div>
     <p class="fine" id="autoMsg"></p>`;
   msg(keep);
 }

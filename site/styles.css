@@ -959,3 +959,11 @@ details[open]::details-content { height: auto; }
 .area-row button, .theme-row button { flex: none; }
 .area-row button { font-weight: 600; }
 #themeChips { display: block; }
+/* backup: clear steps, big buttons, visible feedback */
+.bk-step { font-weight: 600; margin: 12px 0 6px; font-size: 14px; }
+.bk-opts { display: grid; gap: 8px; }
+.bk-opts .btn { display: grid; justify-items: start; text-align: left; gap: 2px; padding: 10px 14px; white-space: normal; }
+.bk-opts .btn .fine { font-weight: 400; }
+.bk-opts .btn-primary .fine { color: inherit; opacity: .85; }
+#bkPass.need { outline: 3px solid var(--s2); outline-offset: 1px; }
+#bkMsg:not(:empty) { padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 14px; color: var(--ink); }

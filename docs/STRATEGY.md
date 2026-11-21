@@ -30,7 +30,7 @@ Each profile gets live lines, a research fact and, over time, its own tools.
 | ETF & wealth building | Plan, crash test, cost effect, bubble meter, MSCI World | Savings-plan tracker vs. plan, tax allowance helper (Sparerpauschbetrag), rebalancing reminder |
 | Crypto | BTC/ETH, crypto fear & greed, stablecoin inflows, trending coins | Funding rates and open interest (derivatives positioning), on-chain valuation (MVRV), ETF flows, halving/supply calendar |
 | AI & early trends | AI share of job postings, fastest-growing AI software (PyPI/npm), GitHub, AI bubble check | Hyperscaler capex from SEC XBRL filings, TSMC monthly revenue, arXiv paper counts, Hugging Face downloads by org, IPO pipeline |
-| Commodities / procurement | Prices **in euro** (FX effect), biggest movers, TTF gas, German power | Futures curve (backwardation/contango), CFTC positioning (who is long/short), price alerts per commodity, monthly averages for budgeting |
+| Commodities & precious metals (private investors) | Gold/silver **in euro**, biggest movers in euro, FX effect, how private investors invest (ETC, Xetra-Gold, 5–10 %) | Futures curve (backwardation/contango), CFTC positioning (who is long/short), price alerts per commodity, monthly averages for budgeting |
 | Real estate: entry | Mortgage rate + 1-year change, monthly payment example, house prices | Buy-vs-rent calculator (price-to-rent), affordability by city, regional prices (Destatis) |
 | Real estate: owner | Rate change, follow-up financing effect, house prices | Follow-up financing planner (forward loan), value estimate via regional index, rent yield vs. Bund yield |
 
@@ -75,7 +75,7 @@ Status: ✅ in the app · 🟡 next · ⚪ later or blocked.
 Everything is optional and changeable:
 - profiles;
 - watchlist with alerts (price, insider buy, news spike);
-- own commodities and currencies (procurement);
+- own commodities and currencies;
 - own city (real estate);
 - portfolio (already there);
 - risk profile (already there);
@@ -92,3 +92,37 @@ Everything is optional and changeable:
 7. 🟡 Learning units "How the greats invest" (gamified, documented facts only)
 8. 🟡 Precomputed AI answers for common questions per profile
 9. ⚪ Dropbox two-way sync, passkey unlock (see v3.2)
+
+## USP in one sentence (2026-11-21)
+
+**Signal-Radar is the only free, account-free place that combines early signals from many independent sources into one personal answer: "what is happening, what does it mean for my money, and how well is that backed?"**
+
+Three pillars:
+1. **Earlier**: signals that move before prices and headlines (hiring, developer adoption, insider clusters, attention, specialist press before mainstream, prediction markets). They are collected every 15 minutes, many of them free and official.
+2. **Personal**: every section ends in "what this means for you" (your profile, horizon, portfolio, goal), instead of a generic chart.
+3. **Honest**: evidence level, method, update time and sources on every number; hype is labelled; no product sales.
+
+## How value is created beyond the usual tips
+
+- **Avoid the expensive mistakes** (readiness check, hype labels, crash test, costs). This is the largest, best-documented effect.
+- **Get the core right** (plan, rebalancing, pension gap).
+- **Find the satellite ideas earlier, with discipline**: aggregated early signals per theme, a clear size limit (satellite share by profile) and exit rules (overheating).
+
+## Signal aggregation (planned "Signal-Aggregator", replaces single signals over time)
+
+| Step | What |
+|---|---|
+| 1. Normalise | Each signal becomes a z-score against its own history (robust: median/MAD), so "unusual" means the same everywhere |
+| 2. Weight by evidence | Weight 3/2/1 by the research behind it (e.g. 12-1 momentum 3, insider clusters 2, attention 1); weights are published |
+| 3. Direction and horizon | Each signal says up/down and over which horizon (weeks / months / years); only signals with the same horizon are combined |
+| 4. Agreement = confidence | Score = weighted mean; confidence = how many independent sources agree. One loud source never decides alone |
+| 5. Hype brake | Overheating (2-year doubling, attention without price, euphoria) caps the score |
+| 6. Honest check | Before a score is shown as a signal, it is tested on history (out of sample). If it would not have helped, it is shown as "observation" only |
+| 7. Output | Per theme/asset: tailwind / neutral / headwind, the 3 reasons, evidence level, and what it means for the user's satellite share. Never "buy" |
+
+## Reports and research to add (free, citable, linkable)
+
+- **Official outlooks**: IMF World Economic Outlook, ECB Financial Stability Review, Bundesbank monthly report, BIS quarterly review, World Bank commodity outlook. Summarise and link.
+- **Company data**: SEC filings (10-K/10-Q via XBRL, 8-K events, 13D stakes, S-1 IPO filings), once the SEC contact secret is set.
+- **Bank research**: many large banks publish free summaries (e.g. outlooks, "Top of Mind"). These can only be **linked and summarised in our own words**, not copied.
+- **Academic research**: OpenAlex top journals (every 6 h, already live), NBER/ECB/BIS working papers (live); add SSRN top downloads and arXiv q-fin.

@@ -43,6 +43,15 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.2) – everything works, everything means something (owner request 2026-11-21), by value ÷ effort
+- [x] **Backup fixed for phones**: iPhone/Android open the share sheet (Files, iCloud, Dropbox, Google Drive) instead of a download that silently does nothing; clear steps (1. password, 2. how); every action gives visible feedback
+- [x] **All navigation checked automatically**: 38 menu targets, 14 quick links, 4 menu actions land on a visible target; Profi-only targets switch the view on
+- [x] **Commodities profile for private investors** (not procurement): gold/silver in euro, how to invest (ETC, Xetra-Gold, 5–10 %), research fact
+- [ ] **"Was heißt das für dich?" in every section** (charts, commodities, markets): one line based on profile, horizon and portfolio
+- [ ] **Signal-Aggregator v1** (see STRATEGY.md): evidence-weighted, horizon-matched, agreement as confidence, hype brake, historical check before display
+- [ ] **Sync across devices via Dropbox** – 👤 owner creates a Dropbox app (3 clicks) and sends the app key
+- [ ] Official outlooks and reports (IMF, ECB, Bundesbank, BIS, World Bank) summarised with links; company filings via SEC once the secret is set
+
 ## Now (version 5.1) – clear structure, everything editable and explained (owner request 2026-11-21)
 - [x] **Sub-pages instead of one long page**: each tab is split into areas (e.g. Entdecken: Anlagen · Trends & Chancen · Rohstoffe · Immobilien · Konjunktur & Stimmung); only the chosen area is shown; links, menu, search and back button land on the right one; order follows the user's interests
 - [x] **"👤 Mein Profil"**: everything entered in one place, each part editable on its own (save without going through the whole setup); risk profile explained with real numbers (share in stocks, crash test) and a comparison table
