@@ -516,3 +516,26 @@ test("load more: growList shows n items, hides the rest, counts what is left", a
   assert.equal(growList([], {}), "");
   assert.doesNotMatch(growList(["<li>a</li>"], { n: 3 }), /grow-btn/);
 });
+
+test("same story under different headlines: clustered, distinct outlets counted, reach classified", async () => {
+  const { clusterStories, dedupe, storyReach, outletKind } = await import("../collector/lib.mjs");
+  const raw = [
+    { title: "Nvidia meldet Rekordumsatz dank KI-Chips im dritten Quartal", source: "Handelsblatt", published: 5 },
+    { title: "Rekordumsatz: Nvidia profitiert im dritten Quartal von KI-Chips", source: "tagesschau", published: 4 },
+    { title: "Nvidia meldet Rekordumsatz dank KI-Chips im dritten Quartal", source: "Handelsblatt", published: 3 },
+    { title: "Nvidia Rekordumsatz KI-Chips drittes Quartal Analyse", source: "heise online", published: 2 },
+    { title: "Goldpreis steigt auf neues Rekordhoch", source: "n-tv", published: 1 },
+  ];
+  const out = clusterStories(dedupe(raw));
+  assert.equal(out.length, 2);
+  const nv = out.find((n) => /Nvidia/.test(n.title));
+  assert.equal(nv.echo, 3, "Handelsblatt twice counts once");
+  assert.deepEqual(nv.outlets.sort(), ["Handelsblatt", "heise online", "tagesschau"]);
+  assert.equal(nv.reach, "both");
+  assert.equal(out.find((n) => /Gold/.test(n.title)).echo, 1);
+  assert.equal(outletKind("EZB Pressemitteilungen"), "official");
+  assert.equal(outletKind("BBC Business"), "mainstream");
+  assert.equal(outletKind("Cointelegraph"), "specialist");
+  assert.equal(storyReach(["Decrypt", "CoinDesk"]), "specialist");
+  assert.equal(clusterStories([{ title: "Kurz", source: "x" }, { title: "Kurz", source: "y" }]).length, 2, "too few words: never merged by similarity");
+});

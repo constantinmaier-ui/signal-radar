@@ -166,6 +166,22 @@ export const FEEDS = [
   { name: "MarketWatch", url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", lang: "en" },
   { name: "TechCrunch", url: "https://techcrunch.com/feed/", lang: "en" },
   { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", lang: "en" },
+  // More direct feeds (owner request 2026-11-21): not only Google News, so "how many outlets report it" means something
+  { name: "Zeit Wirtschaft", url: "https://newsfeed.zeit.de/wirtschaft/index", lang: "de" },
+  { name: "Süddeutsche Wirtschaft", url: "https://rss.sueddeutsche.de/rss/Wirtschaft", lang: "de" },
+  { name: "n-tv Wirtschaft", url: "https://www.n-tv.de/wirtschaft/rss", lang: "de" },
+  { name: "manager magazin", url: "https://www.manager-magazin.de/news/index.rss", lang: "de" },
+  { name: "BBC Business", url: "https://feeds.bbci.co.uk/news/business/rss.xml", lang: "en" },
+  { name: "Guardian Business", url: "https://www.theguardian.com/uk/business/rss", lang: "en" },
+  { name: "New York Times Business", url: "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml", lang: "en" },
+  { name: "Wall Street Journal Markets", url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", lang: "en" },
+  { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", lang: "en" },
+  { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", lang: "en" },
+  { name: "Cointelegraph", url: "https://cointelegraph.com/rss", lang: "en" },
+  { name: "Decrypt", url: "https://decrypt.co/feed", lang: "en" },
+  // Official press releases: first-hand, before the media writes about them
+  { name: "EZB Pressemitteilungen", url: "https://www.ecb.europa.eu/rss/press.html", lang: "en", official: true },
+  { name: "US-Notenbank Pressemitteilungen", url: "https://www.federalreserve.gov/feeds/press_all.xml", lang: "en", official: true },
   // Reddit removed: it blocks unauthenticated requests from cloud servers (HTTP 404/429 since 2023/24)
 ];
 

@@ -72,19 +72,75 @@ export function normTitle(t) {
   return t.toLowerCase().replace(/[^a-z0-9äöüß ]/g, "").replace(/\s+/g, " ").trim().slice(0, 70);
 }
 
-/** Entfernt Dubletten (gleicher normalisierter Titel), bevorzugt Einträge mit mehr Themen/früherem Datum. */
+/** Removes duplicates (same normalised title) and counts distinct outlets ("echo"); merges themes, keeps the earliest date. */
 export function dedupe(items) {
   const map = new Map();
-  for (const it of items) {
+  items.forEach((it, i) => {
     const k = normTitle(it.title);
-    if (!k) continue;
+    if (!k) return;
+    const outlet = it.source || `#${i}`; // unknown source still counts once
     const prev = map.get(k);
-    if (!prev) { map.set(k, { ...it, themes: [...(it.themes || [])], echo: 1 }); continue; }
-    prev.echo += 1;
+    if (!prev) { map.set(k, { ...it, themes: [...(it.themes || [])], outlets: new Set([outlet]), echo: 1 }); return; }
+    prev.outlets.add(outlet); prev.echo = prev.outlets.size;
     for (const t of it.themes || []) if (!prev.themes.includes(t)) prev.themes.push(t);
     if (it.published && (!prev.published || it.published < prev.published)) prev.published = it.published;
-  }
+  });
   return [...map.values()];
+}
+
+// ---------- Same story, different headlines: cluster across outlets ----------
+const STORY_STOP = new Set(("this that with from have will what when they their about after over into more than said says just your news live update updates today week year "
+  + "eine einen einem einer eines nach nicht noch oder sich sind über unter wird werden wurde auch aber beim dass dies diese dieser durch gegen heute mehr neue neuen neues nach seit sowie zwei drei").split(" "));
+/** Significant words of a headline (≥ 4 letters, no filler words). */
+export function storyWords(title) {
+  // crude stemming so "dritten"/"drittes" or "rates"/"rate" match
+  return [...new Set(normTitle(title || "").split(" ").filter((w) => w.length >= 4 && !STORY_STOP.has(w)).map((w) => (w.length > 5 ? w.replace(/(en|er|es|em|e|s)$/, "") : w)))];
+}
+// Outlet types: mainstream media, specialist press, official bodies (used for "how far has a story spread")
+const MAINSTREAM = /tagesschau|spiegel|faz|frankfurter|zeit|süddeutsche|sueddeutsche|handelsblatt|n-tv|ntv|wirtschaftswoche|manager magazin|bbc|guardian|new york times|nytimes|wall street journal|wsj|reuters|bloomberg|cnbc|financial times|associated press|ap news|cnn|welt|focus|stern|bild/i;
+const SPECIALIST = /techcrunch|ars technica|the verge|wired|coindesk|cointelegraph|decrypt|the block|hacker news|marketwatch|heise|golem|t3n|seeking alpha|benzinga|electrek|ft alphaville/i;
+const OFFICIAL = /europäische zentralbank|ezb|ecb|federal reserve|us-notenbank|sec\b|securities and exchange|bundesbank|bafin|eu-kommission|european commission/i;
+export function outletKind(name) { return OFFICIAL.test(name) ? "official" : MAINSTREAM.test(name) ? "mainstream" : SPECIALIST.test(name) ? "specialist" : "other"; }
+/** How far a story has spread, from its outlet names. Pure. */
+export function storyReach(outlets) {
+  const kinds = new Set(outlets.map(outletKind));
+  return kinds.has("official") ? "official" : kinds.has("mainstream") && kinds.has("specialist") ? "both" : kinds.has("mainstream") ? "mainstream" : kinds.has("specialist") ? "specialist" : "other";
+}
+/**
+ * Groups headlines about the same story (≥ 3 shared significant words and ≥ 45 % overlap).
+ * Items should be sorted newest first; the first item of a group stays the headline. Pure.
+ */
+export function clusterStories(items, { minShared = 3, minJaccard = 0.45 } = {}) {
+  const groups = [], index = new Map();
+  for (const it of items) {
+    const words = storyWords(it.title);
+    const outlets = it.outlets instanceof Set ? [...it.outlets] : it.source ? [it.source] : [];
+    let best = -1, bestJ = 0;
+    if (words.length >= 3) {
+      const shared = new Map();
+      for (const w of words) for (const g of index.get(w) || []) shared.set(g, (shared.get(g) || 0) + 1);
+      for (const [g, n] of shared) {
+        if (n < minShared) continue;
+        const j = n / (groups[g].words.length + words.length - n);
+        if (j >= minJaccard && j > bestJ) { best = g; bestJ = j; }
+      }
+    }
+    if (best < 0) {
+      const g = groups.length;
+      groups.push({ lead: { ...it, themes: [...(it.themes || [])], signals: [...(it.signals || [])] }, words, outlets: new Set(outlets) });
+      for (const w of words) (index.get(w) || index.set(w, []).get(w)).push(g);
+      continue;
+    }
+    const grp = groups[best];
+    for (const o of outlets) grp.outlets.add(o);
+    for (const t of it.themes || []) if (!grp.lead.themes.includes(t)) grp.lead.themes.push(t);
+    for (const t of it.signals || []) if (!grp.lead.signals.includes(t)) grp.lead.signals.push(t);
+    if (it.published && (!grp.lead.published || it.published < grp.lead.published)) grp.lead.firstSeen = it.published;
+  }
+  return groups.map(({ lead, outlets }) => {
+    const names = [...outlets].filter((o) => !o.startsWith("#"));
+    return { ...lead, echo: Math.max(1, outlets.size), outlets: names.slice(0, 8), reach: storyReach(names) };
+  });
 }
 
 // ---------- Statistik ----------

@@ -289,14 +289,30 @@ function renderChips() {
   const opts = [["all", "Alle"], ...(state.watch.size ? [["watch", "★ Merkliste"]] : []), ...d.themes.map((t) => [t.id, t.short])];
   $("#themeChips").innerHTML = opts.map(([id, l]) => `<button type="button" data-chip="${id}" class="${state.theme === id ? "on" : ""}">${esc(l)}</button>`).join("");
 }
+const REACH = { both: ["Fach- und Leitmedien", "Erst Fachpresse, jetzt auch große Medien: Die Geschichte ist in der breiten Öffentlichkeit angekommen."], official: ["Amtlich", "Kommt direkt von einer Behörde oder Notenbank."], specialist: ["nur Fachpresse", "Bisher nur in Fachmedien: früh dran, aber noch unbestätigt in der breiten Presse."] };
+/** "📰 5 Portale" + where the story has spread. */
+function echoBadge(n) {
+  const who = (n.outlets || []).join(", ");
+  const r = REACH[n.reach];
+  return `${n.echo > 1 ? `<span class="echo ${n.echo >= 4 ? "wide" : ""}" title="${esc(who ? `Berichten: ${who}` : "So viele Portale berichten")}">📰 ${n.echo} Portale</span>` : ""}${r && n.echo > 1 ? `<span class="reach" title="${esc(r[1])}">${esc(r[0])}</span>` : ""}`;
+}
+/** Top stories of the last 24 h by number of outlets, with what that pattern means. */
+function renderWideStories() {
+  const day = Date.now() - 24 * 3600e3;
+  const top = [...(state.data.news || [])].filter((n) => n.echo >= 3 && (n.published || 0) > day).sort((a, b) => b.echo - a.echo).slice(0, 12);
+  $("#wideStories").innerHTML = top.length ? `<div class="wide-box"><h3>📰 Worüber gerade viele berichten <span class="fine">(24 Std.)</span></h3>
+    ${growList(top.map((n) => `<div class="wide-row"><a href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="m">${echoBadge(n)}</div></div>`), { n: 4, step: 8, tag: "div", cls: "wide-list" })}
+    <details class="evid"><summary>Was bedeutet das für Anleger?</summary><p>Viele Berichte heißen: Die Nachricht ist bekannt und meist schon im Kurs. Aktien mit wenig Presse brachten im Schnitt sogar mehr Rendite als viel beachtete (Fang &amp; Peress 2009, Journal of Finance). Stark negative Presse drückt Kurse oft kurzfristig, danach erholen sie sich teilweise (Tetlock 2007, Journal of Finance). Früh dran ist, was erst in der Fachpresse steht.</p></details></div>` : "";
+}
 function renderFeed(freshKeys = new Set()) {
+  safe(renderWideStories);
   const items = feedItems();
   const short = Object.fromEntries(state.data.themes.map((t) => [t.id, t.short]));
   $("#feedCount").textContent = `${items.length} Meldungen`;
   $("#feedList").innerHTML = items.slice(0, state.shown).map((n) => `<li class="${freshKeys.has(normTitle(n.title)) ? "fresh" : ""}">
       <a class="t" href="${safeUrl(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
       <button class="share" type="button" data-share="${esc(n.title)}" data-url="${esc(n.url)}" aria-label="Meldung in WhatsApp teilen">${WA_ICON}</button>
-      <div class="m">${n.live ? '<span class="live-tag">LIVE</span>' : ""}<span>${esc(n.source)}</span><span>${ago(n.published)}</span>${n.echo > 1 ? `<span title="So viele Quellen melden das">×${n.echo}</span>` : ""}${n.points ? `<span>▲ ${fmt(Number(n.points))}</span>` : ""}
+      <div class="m">${n.live ? '<span class="live-tag">LIVE</span>' : ""}<span>${esc(n.source)}</span><span>${ago(n.published)}</span>${echoBadge(n)}${n.points ? `<span>▲ ${fmt(Number(n.points))}</span>` : ""}
       ${(n.signals || []).map((s) => `<span class="sig ${esc(s)}">${esc(s)}</span>`).join("")}${(n.themes || []).slice(0, 3).map((t) => `<span class="tt">${esc(short[t] || t)}</span>`).join("")}</div></li>`).join("") || '<li class="empty">Keine Treffer.</li>';
   const rest = items.length - state.shown;
   $("#moreBtn").hidden = rest <= 0;

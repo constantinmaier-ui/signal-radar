@@ -25,7 +25,7 @@ const META = {
   perlen: [1, "Yahoo-Finance-Analystenkonsens, Kurse", "Analysten-Kursziele treffen selten (Bradshaw, Brown & Huang 2013). Ideen zum Prüfen, mehr nicht."],
   ipo: [2, "Nachrichten, Wikipedia, Polymarket", "Hype-Börsengänge laufen langfristig im Schnitt schwächer (Ritter 1991)."],
   profis: [2, "US-Börsenaufsicht SEC (13F, Form 4), Yahoo-Konsens, Nachrichten", "Insider-Käufe gingen im Schnitt besseren Kursen voraus, am stärksten bei kleinen Firmen (Lakonishok & Lee 2001). Am aussagekräftigsten sind Käufe außerhalb des üblichen Musters einer Person (Cohen, Malloy & Pomorski 2012); diese Unterscheidung macht das Radar noch nicht. Das Nachbilden von 13F-Depots zeigt gemischte Ergebnisse."],
-  feed: [0, "9 Nachrichtenportale, Google News, Forschung, siehe „Unsere Quellen“", "Rohe Meldungen. Erst im Signal-Leser werden sie eingeordnet."],
+  feed: [0, "21 Nachrichtenportale, amtliche Mitteilungen, Google News, siehe „Unsere Quellen“", "Rohe Meldungen. Erst im Signal-Leser werden sie eingeordnet."],
   forschung: [3, "Begutachtete Fachzeitschriften und Arbeitspapiere", "Arbeitspapiere sind noch nicht begutachtet und deshalb gekennzeichnet."],
 };
 const LEVEL = { 3: ["stark belegt", "ev3"], 2: ["mittel belegt", "ev2"], 1: ["schwach belegt", "ev1"], 0: ["Fakten & Daten", "ev0"] };
