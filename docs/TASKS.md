@@ -47,6 +47,9 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [x] **Backup fixed for phones**: iPhone/Android open the share sheet (Files, iCloud, Dropbox, Google Drive) instead of a download that silently does nothing; clear steps (1. password, 2. how); every action gives visible feedback
 - [x] **All navigation checked automatically**: 38 menu targets, 14 quick links, 4 menu actions land on a visible target; Profi-only targets switch the view on
 - [x] **Commodities profile for private investors** (not procurement): gold/silver in euro, how to invest (ETC, Xetra-Gold, 5–10 %), research fact
+- [x] **Every click explains first** (owner: "redirects are illogical"): lines in "Dein Radar", summary chance/risk, signals and trends open an explanation of exactly that item (history, what it is, what it means for you, source) with "Mehr dazu: <area> →" below; no more jumps to unrelated pages; IPO rows go to that company's card; 34 clicks verified automatically
+- [x] **"Dein nächster Schritt"**: progress of the personal setup and the next 2 useful steps (use, risk profile, age & goal, portfolio, backup, install), each one tap away
+- [x] **Commodities for both**: "Rohstoffe & Edelmetalle als Anlage" and "Rohstoffe beruflich (Einkauf)" as separate profiles; procurement tips as an optional box
 - [ ] **"Was heißt das für dich?" in every section** (charts, commodities, markets): one line based on profile, horizon and portfolio
 - [ ] **Signal-Aggregator v1** (see STRATEGY.md): evidence-weighted, horizon-matched, agreement as confidence, hype brake, historical check before display
 - [ ] **Sync across devices via Dropbox** – 👤 owner creates a Dropbox app (3 clicks) and sends the app key

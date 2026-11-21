@@ -73,3 +73,18 @@ export function hashFor(view, anchor) {
   const sub = subFor(view, secId);
   return sub ? `#${view}/${sub}` : `#${view}`;
 }
+
+/** Where a signal's details live (view:anchor). */
+export function anchorOf(id = "") {
+  const map = [[/^(quiet|hot|noise)-/, "entdecken:karte"], [/^ipo-/, "entdecken:ipo"], [/^gem-/, "entdecken:perlen"], [/^com-|^power-/, "entdecken:rohstoffe"],
+    [/^mortgage-/, "entdecken:immobilien"], [/^move-|^world-|^crypto-|^stablecoin-/, "entdecken:anlagen"], [/^(curve|credit|sahm)/, "entdecken:frueh"],
+    [/^(cons|insider|voices)-/, "profis:profis"], [/^event-/, "profis:eventsSec"]];
+  return map.find(([re]) => re.test(id))?.[1] || "heute:signals";
+}
+
+/** Readable name of the place a "view:anchor" target lives, e.g. "Entdecken → Trends & Chancen". */
+const VIEW_NAMES = { heute: "Heute", plan: "Mein Geld", entdecken: "Entdecken", profis: "Profis & News", wissen: "Wissen" };
+export function placeName(goto) {
+  const [v, a] = String(goto || "").split(":"), sub = (SUBS[v] || []).find(([k]) => k === subFor(v, a));
+  return sub ? `${VIEW_NAMES[v] || v} → ${sub[1].replace(/^\S+\s/, "")}` : VIEW_NAMES[v] || v;
+}

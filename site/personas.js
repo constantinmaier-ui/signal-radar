@@ -9,6 +9,7 @@ export const PERSONAS = [
   { id: "krypto", icon: "₿", label: "Krypto", interests: ["crypto"] },
   { id: "ki", icon: "🤖", label: "KI & neue Trends früh erkennen", interests: ["themes", "stocks"] },
   { id: "rohstoffe", icon: "🥇", label: "Rohstoffe & Edelmetalle als Anlage", interests: ["commodities", "macro"] },
+  { id: "einkauf", icon: "🏭", label: "Rohstoffe beruflich (Einkauf)", interests: ["commodities", "macro"] },
   { id: "immo_neu", icon: "🔑", label: "Immobilien: Einstieg", interests: ["realestate", "macro"] },
   { id: "immo_haben", icon: "🏠", label: "Immobilien: habe schon", interests: ["realestate", "macro"] },
 ];
@@ -58,11 +59,11 @@ export const FACTS = [
     text: "Routinemäßige Käufe (jedes Jahr zur selben Zeit) sagen nichts voraus. Aussagekräftig sind ungewöhnliche Käufe, mit denen Vorstände von ihrem Muster abweichen.",
     so: "Das Radar hebt deshalb Käufe hervor, bei denen mehrere Insider gleichzeitig kaufen.",
     cite: "Cohen, Malloy & Pomorski (2012), Journal of Finance", q: "Cohen Malloy Pomorski Decoding inside information" },
-  { id: "terminkurve", tags: ["rohstoffe"], title: "Die Terminkurve verrät Knappheit",
+  { id: "terminkurve", tags: ["rohstoffe", "einkauf"], title: "Die Terminkurve verrät Knappheit",
     text: "Liegt der Preis für spätere Lieferung unter dem heutigen Preis (Backwardation), ist eine Ware knapp. Dieser Preisabstand („Carry“) sagt über viele Märkte hinweg die Renditen von Rohstoff-Terminkontrakten voraus.",
     so: "Für Anleger heißt das: Bei Rohstoff-ETCs zählt nicht nur der heutige Preis, sondern auch, ob spätere Monate teurer oder billiger sind. Das entscheidet mit über die Rendite.",
     cite: "Koijen, Moskowitz, Pedersen & Vrugt (2018), Journal of Financial Economics", q: "Koijen Moskowitz Pedersen Vrugt Carry" },
-  { id: "trends-halten", tags: ["rohstoffe", "etf"], title: "Preistrends halten oft rund ein Jahr",
+  { id: "trends-halten", tags: ["rohstoffe", "einkauf", "etf"], title: "Preistrends halten oft rund ein Jahr",
     text: "In 58 Terminmärkten (Rohstoffe, Währungen, Anleihen, Aktienindizes) setzte sich die Richtung der letzten 12 Monate im Schnitt fort, über längere Zeit kehrte sie sich teilweise um.",
     so: "Ein Preis, der ein Jahr lang gestiegen ist, ist nicht automatisch „zu hoch“. Dauerhaft steigt er aber auch nicht.",
     cite: "Moskowitz, Ooi & Pedersen (2012), Journal of Financial Economics", q: "Moskowitz Ooi Pedersen Time series momentum" },
@@ -108,17 +109,17 @@ export function personaLines(id, d = {}, ctx = {}) {
   }
   if (id === "krypto") {
     for (const k of ["btc", "eth"]) { const a = asset(k); if (a && ok(a.chg1m)) add(`${a.name}: ${pct(a.chg1m)} in 1 Monat${ok(a.fromHigh) ? `, ${pct(a.fromHigh, 0)} vom Jahreshoch` : ""}.`, `detail:asset:${k}`); }
-    if (ok(d.fearGreed?.value)) add(`Krypto-Stimmung: ${d.fearGreed.value}/100${d.fearGreed.value >= 75 ? " (Gier)" : d.fearGreed.value <= 25 ? " (Angst)" : ""}.`, "entdecken:stimmung");
+    if (ok(d.fearGreed?.value)) add(`Krypto-Stimmung: ${d.fearGreed.value}/100${d.fearGreed.value >= 75 ? " (Gier)" : d.fearGreed.value <= 25 ? " (Angst)" : ""}.`, "detail:info:cryptofng");
     const sc = d.cryptoFlows?.stablecoins;
-    if (sc && ok(sc.chg30)) add(`Stablecoins (Krypto-Bargeld): ${compact(sc.value)} $, ${pct(sc.chg30)} in 30 Tagen. ${sc.chg30 > 0 ? "Frisches Geld fließt in den Markt." : "Geld fließt eher ab."}`, "entdecken:trends");
+    if (sc && ok(sc.chg30)) add(`Stablecoins (Krypto-Bargeld): ${compact(sc.value)} $, ${pct(sc.chg30)} in 30 Tagen. ${sc.chg30 > 0 ? "Frisches Geld fließt in den Markt." : "Geld fließt eher ab."}`, "detail:info:stablecoins");
     const tr = (d.cryptoTrending || []).slice(0, 3).map((c) => c.name).filter(Boolean);
-    if (tr.length) add(`Gerade am meisten gesucht: ${tr.join(", ")}. Suchinteresse ist ein Frühsignal, aber auch ein Hype-Zeichen.`, "entdecken:stimmung");
+    if (tr.length) add(`Gerade am meisten gesucht: ${tr.join(", ")}. Suchinteresse ist ein Frühsignal, aber auch ein Hype-Zeichen.`, "detail:info:cryptotrend");
   }
   if (id === "ki") {
     const j = d.aiJobs?.DE;
-    if (j && ok(j.share)) add(`Frühsignal Stellenanzeigen: ${fmt(j.share * 100, 1)} % aller Jobs in Deutschland erwähnen KI${ok(j.yearAgo) ? ` (vor einem Jahr ${fmt(j.yearAgo * 100, 1)} %)` : ""}. Firmen stellen ein, bevor Umsätze sichtbar werden.`, "entdecken:trends");
+    if (j && ok(j.share)) add(`Frühsignal Stellenanzeigen: ${fmt(j.share * 100, 1)} % aller Jobs in Deutschland erwähnen KI${ok(j.yearAgo) ? ` (vor einem Jahr ${fmt(j.yearAgo * 100, 1)} %)` : ""}. Firmen stellen ein, bevor Umsätze sichtbar werden.`, "detail:info:aijobs");
     const ad = [...(d.adoption || [])].filter((a) => ok(a.growth)).sort((a, b) => b.growth - a.growth)[0];
-    if (ad) add(`Am schnellsten wachsende KI-Software: ${ad.name}, ${pct(ad.growth, 0)} Downloads zur Vorwoche (echte Nutzung durch Entwickler).`, "entdecken:trends");
+    if (ad) add(`Am schnellsten wachsende KI-Software: ${ad.name}, ${pct(ad.growth, 0)} Downloads zur Vorwoche (echte Nutzung durch Entwickler).`, "detail:info:adoption");
     const r = d.tech?.repos?.[0];
     if (r) add(`Meiste neue Lesezeichen auf GitHub: ${r.name}${r.ticker ? ` (dahinter: ${r.ticker})` : ""}.`, "detail:repo:0");
     if (ok(d.bubble?.score)) { const nv = find(d.bubble.components, "id", "nvda"); add(`KI-Blasen-Check: ${d.bubble.score}/100 (${d.bubble.zone})${nv && ok(nv.raw) ? `, Nvidia ${pct(nv.raw, 0)} gegenüber dem 200-Tage-Schnitt` : ""}.`, "heute:lage"); }
@@ -131,17 +132,28 @@ export function personaLines(id, d = {}, ctx = {}) {
     }
     const moves = (d.commodities || []).map((c) => ({ c, e: eur(c) })).filter((x) => ok(x.e)).sort((a, b) => Math.abs(b.e) - Math.abs(a.e)).slice(0, 3);
     if (moves.length) add(`Größte Bewegungen in Euro (1 Monat): ${moves.map((x) => `${x.c.name} ${pct(x.e, 0)}`).join(", ")}. Starke Ausschläge sind bei Rohstoffen normal.`, `detail:com:${moves[0].c.id}`);
-    if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. Rohstoffe kosten in Dollar, ein stärkerer Euro drückt deinen Gewinn in Euro.`, "heute:market");
+    if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. Rohstoffe kosten in Dollar, ein stärkerer Euro drückt deinen Gewinn in Euro.`, "detail:mkt:EURUSD=X");
     add("So legen Privatanleger an: Gold physisch oder als Xetra-Gold (nach 1 Jahr Haltedauer steuerfrei), sonst breit gestreute Rohstoff-ETCs statt Einzelwetten. Als Beimischung von etwa 5–10 %, nicht als Kern.", "entdecken:rohstoffe");
+  }
+  if (id === "einkauf") {
+    const fx = find(d.market, "sym", "EURUSD=X");
+    if (fx && ok(fx.chg1m)) add(`Euro zum Dollar: ${pct(fx.chg1m)} in 1 Monat. In Dollar gehandelte Rohstoffe werden dadurch für Euro-Käufer ${fx.chg1m > 0 ? "billiger" : "teurer"}.`, "detail:mkt:EURUSD=X");
+    const moves = (d.commodities || []).map((c) => ({ c, e: /€/.test(c.unit || "") ? c.chg1m : inEuro(c.chg1m, fx?.chg1m) })).filter((x) => ok(x.e)).sort((a, b) => Math.abs(b.e) - Math.abs(a.e)).slice(0, 3);
+    if (moves.length) add(`Größte Preisbewegungen in Euro (1 Monat): ${moves.map((x) => `${x.c.name} ${pct(x.e, 0)}`).join(", ")}.`, `detail:com:${moves[0].c.id}`);
+    const near = (d.commodities || []).filter((c) => ok(c.pos52) && c.pos52 <= 0.15).map((c) => c.name).slice(0, 4);
+    if (near.length) add(`Nahe am Jahrestief: ${near.join(", ")}. Zeitpunkt, um Preise für die nächsten Monate festzuschreiben, zu prüfen.`, "entdecken:rohstoffe");
+    const ttf = find(d.commodities, "id", "ttf");
+    if (ttf && ok(ttf.last)) add(`Erdgas Europa (TTF): ${fmt(ttf.last, 1)} €/MWh, ${pct(ttf.chg1m)} in 1 Monat.`, "detail:com:ttf");
+    if (ok(d.power?.avg)) add(`Strom Deutschland (Börse): heute im Schnitt ${fmt(d.power.avg)} €/MWh${ok(d.power.avg30) ? `, 30-Tage-Schnitt ${fmt(d.power.avg30)} €/MWh` : ""}.`, "detail:info:power");
   }
   if (id === "immo_neu" || id === "immo_haben") {
     const m = d.realEstate?.mortgage, s = m?.series || [];
     const yr = s.length > 12 ? s[s.length - 13].value / 100 : null;
-    if (m && ok(m.rate)) add(`Bauzinsen (EZB-Statistik, ${m.period || ""}): ${fmt(m.rate * 100, 2)} %${ok(yr) ? `, vor einem Jahr ${fmt(yr * 100, 2)} %` : ""}.`, "entdecken:immobilien");
+    if (m && ok(m.rate)) add(`Bauzinsen (EZB-Statistik, ${m.period || ""}): ${fmt(m.rate * 100, 2)} %${ok(yr) ? `, vor einem Jahr ${fmt(yr * 100, 2)} %` : ""}.`, "detail:info:mortgage");
     if (id === "immo_neu" && m && ok(m.rate)) add(`Beispiel: 300.000 € Kredit mit 2 % Tilgung kosten bei diesem Zins rund ${nf0(loanPayment(300000, m.rate))} € im Monat.`, "entdecken:immobilien");
     if (id === "immo_haben" && m && ok(m.rate)) add(`Anschlussfinanzierung: Jeder Prozentpunkt mehr Zins kostet bei 200.000 € Restschuld rund ${nf0(loanPayment(200000, 0.01, 0))} € mehr im Monat. Mit einem Forward-Darlehen lassen sich Zinsen meist bis zu 5 Jahre vorab festschreiben.`, "entdecken:immobilien");
     const h = d.realEstate?.hpi;
-    if (h && ok(h.yoy)) add(`Hauspreise Deutschland: ${pct(h.yoy)} zum Vorjahr (Eurostat, ${h.period || ""}).`, "entdecken:immobilien");
+    if (h && ok(h.yoy)) add(`Hauspreise Deutschland: ${pct(h.yoy)} zum Vorjahr (Eurostat, ${h.period || ""}).`, "detail:info:hpi");
   }
   return L;
 }

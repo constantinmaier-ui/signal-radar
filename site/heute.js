@@ -1,4 +1,4 @@
-import { applySub } from "./subnav.js";
+import { applySub, anchorOf, placeName } from "./subnav.js";
 // Ansicht „Heute“ (Tages-Check + Signale) und die Bereichs-Navigation.
 import { $, $$, esc, fmt, state, store } from "./ui.js";
 import { buildSignals, dailyVerdict, ideasFor, GOALS } from "./signals.js";
@@ -67,7 +67,7 @@ export function renderSignals() {
         ${s.hype ? `<p class="hype-why"><b>Warum Hype:</b> ${esc(s.hype)}</p>` : ""}
         <p>${esc(s.text)}</p>
         <p class="sig-todo"><b>Möglicher nächster Schritt:</b> ${esc(s.todo)}</p>
-        ${s.view && s.view !== "heute" ? `<a class="sig-link" href="#${viewOf(s.view)}">Details in „${VIEW_LABEL[viewOf(s.view)]}“ →</a>` : ""}
+        ${anchorOf(s.id) !== "heute:signals" ? `<button type="button" class="sig-link link-btn" data-goto="${esc(anchorOf(s.id))}">Mehr dazu: ${esc(placeName(anchorOf(s.id)))} →</button>` : ""}
       </div></article>`;
   }).join("") : '<div class="empty">Gerade keine auffälligen Signale. Das ist ein gutes Zeichen: einfach beim Plan bleiben.</div>';
   const more = $("#sigMore");

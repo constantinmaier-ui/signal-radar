@@ -154,9 +154,9 @@ export function renderTrends() {
   for (const t of d.themes || []) if (t.price) rows.push({ name: t.name, kind: "Thema", chg: t.price.chg1m, z: norm({ chg1m: t.price.chg1m, vol: t.price.vol }), theme: t.id });
   const upAll = rows.filter((r) => ok(r.z) && r.z >= 1).sort((a, b) => b.z - a.z);
   const downAll = rows.filter((r) => ok(r.z) && r.z <= -1).sort((a, b) => a.z - b.z);
-  const attnAll = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom, hype: hypeInfo(t), theme: t.id })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom }))]
+  const attnAll = [...(d.themes || []).map((t) => ({ name: t.name, mom: t.attention?.mom, hype: hypeInfo(t), theme: t.id })), ...(d.ipoWatch || []).map((w) => ({ name: w.name, mom: w.attention?.mom, ipo: w.id }))]
     .filter((x) => ok(x.mom) && x.mom > 0.25).sort((a, b) => b.mom - a.mom);
-  const attr = (r) => (r.theme ? `data-open="${esc(r.theme)}"` : r.detail ? `data-detail="${esc(r.detail)}"` : "");
+  const attr = (r) => (r.theme ? `data-open="${esc(r.theme)}"` : r.detail ? `data-detail="${esc(r.detail)}"` : r.ipo ? `data-goto="entdecken:ipo-${esc(r.ipo)}"` : "");
   const row = (r, i) => `<li><button type="button" class="rowbtn" ${attr(r)}><span class="rank">${i + 1}</span><b>${esc(r.name)}</b><span class="fine">${esc(r.kind)}</span></button><span class="${r.chg >= 0 ? "up" : "down"}">${pct(r.chg, 0)}</span><span class="zbadge" title="So viele typische Monats-Schwankungen weit">${fmt(Math.abs(r.z), 1)}×</span></li>`;
   const t = d.tech || {};
   const tech = [
@@ -326,6 +326,7 @@ export function initBackup() {
     try {
       const { shareOrDownload } = await import("./sync.js");
       const done = await shareOrDownload(await encryptBackup(collectBackup(), pass));
+      if (done) store.set("backupAt", new Date().toISOString());
       msg(done ? "Sicherung erstellt. Passwort gut merken: Ohne Passwort lässt sie sich nicht öffnen." : "Abgebrochen, nichts gespeichert.");
     } catch { msg("Das hat nicht geklappt. Bitte noch einmal versuchen."); }
   };

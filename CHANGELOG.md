@@ -1,7 +1,7 @@
 # Changelog
 
 ## 5.2 (in progress)
-Backup works on phones (share sheet instead of a silent download), clearer backup steps with visible feedback; every menu and quick link verified to land on a visible target; commodities profile reworked for private investors.
+Backup works on phones (share sheet instead of a silent download), clearer backup steps with visible feedback; every menu and quick link verified to land on a visible target; commodities profile reworked for private investors. Every click now opens an explanation of exactly that item first (with a link to the matching area below); "Dein nächster Schritt" guides through what is still missing; a separate profile for professional procurement.
 
 ## 5.1 (in progress)
 Clear structure: tabs split into sub-pages so areas never mix; "Mein Profil" to view and change every input on its own, with the risk profiles explained in numbers; an "ⓘ" box on every gauge and section (how it is made, evidence, what it means now for your profile, last update and frequency, further reading); news filter by area and 7 more specialist sources; renewable energy and India as themes; feedback when switching Einsteiger/Profi.
