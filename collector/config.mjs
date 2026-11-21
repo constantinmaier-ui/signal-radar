@@ -139,12 +139,9 @@ export const FEEDS = [
   { name: "CNBC", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", lang: "en" },
   { name: "CNBC Tech", url: "https://www.cnbc.com/id/19854910/device/rss/rss.html", lang: "en" },
   { name: "MarketWatch", url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", lang: "en" },
-  { name: "Yahoo Finance", url: "https://finance.yahoo.com/news/rssindex", lang: "en" },
   { name: "TechCrunch", url: "https://techcrunch.com/feed/", lang: "en" },
   { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", lang: "en" },
-  { name: "r/wallstreetbets", url: "https://www.reddit.com/r/wallstreetbets/top/.rss?t=day", lang: "en", social: true },
-  { name: "r/stocks", url: "https://www.reddit.com/r/stocks/top/.rss?t=day", lang: "en", social: true },
-  { name: "r/Finanzen", url: "https://www.reddit.com/r/Finanzen/top/.rss?t=day", lang: "de", social: true },
+  // Reddit removed: it blocks unauthenticated requests from cloud servers (HTTP 404/429 since 2023/24)
 ];
 
 // Signal-Wörter: markieren Schlagzeilen, die eher "Ereignis" als Rauschen sind.
