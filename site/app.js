@@ -12,6 +12,7 @@ import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { initSync } from "./sync.js";
 import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
+import { renderReadiness } from "./situation.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -305,7 +306,7 @@ function renderBanner() {
 
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -529,6 +530,7 @@ $("#prefsBtn").addEventListener("click", openPrefs);
 initPersonal({ openPrefs, onGoto: goTo });
 safe(() => initSync({ openPrefs }));
 safe(renderFacts);
+safe(renderReadiness);
 safe(renderMyRadar);
 initPersonas(() => safe(renderSummary));
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });

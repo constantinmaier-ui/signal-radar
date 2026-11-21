@@ -43,6 +43,22 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 4.1) – one guided path, fully personal (owner request 2026-11-21), by value ÷ effort
+- [x] **Situation step in onboarding** (optional): age, family, rent/own, expensive debts, monthly spending, cash, monthly savings; plus "what do you want to learn"
+- [x] **"Bist du bereit zu investieren?"**: personal readiness check (expensive debts first, emergency fund 3–6 months, horizon, savings, life cycle, family); if basics are missing it leads "Das Wichtigste heute" and no "invest" line is shown
+- [x] **Less text at once**: short line first, details on tap; smooth open/close and tab transitions (View Transitions, `interpolate-size`)
+- [ ] 👤 **SEC_USER_AGENT secret with a real e-mail** – the SEC answers HTTP 403 to the noreply address (insider buys, superinvestors are empty until then)
+- [ ] **Sync across devices via Dropbox** (end-to-end encrypted, PKCE, no server) – 👤 owner creates a free Dropbox app and sends the app key
+- [ ] **"Wann investieren, wann nicht?" market panel**: valuation (CAPE, Shiller data), trend (200-day), stress (VIX, credit spreads), euphoria; evidence and limits per indicator
+- [ ] **Events calendar**: ECB/Fed meetings, earnings, IPO filings (SEC S-1), takeover early signs (SEC 13D stakes, tender offers, Bundeskartellamt merger list) – needs the SEC fix
+- [ ] **Interactive maps**: rents and house prices by city (incl. Leipzig, Dresden), self-hosted map, no tracking
+- [ ] **Monthly budget** by category → savings potential (optional, local)
+- [ ] **Learning paths** from the "what do you want to learn" answers, incl. curated videos (youtube-nocookie, verified official channels only)
+- [ ] **"Wer sagt was" person check** (e.g. Michael Saylor): role, conflicts of interest, documented track record
+- [ ] **Own AI key (optional)**: Gemini/Claude/OpenAI key stored only in the browser for answers inside the app; watch "Sign in with ChatGPT" (partner program)
+- [ ] **X posts** via the official pay-per-use API (~$0.005 per post read) – 👤 owner decides on a budget; Bluesky (free API) first
+- [ ] **Startups & business angels (Munich)**: networks, crowdinvesting rules, evidence on angel returns and failure rates
+
 ## Now (version 4.0) – real added value per investor type (owner request 2026-11-21), by value ÷ effort
 Full reasoning: [STRATEGY.md](STRATEGY.md)
 - [x] **Profiles + "Dein Radar"**: ETF, crypto, AI trends, commodities/procurement, real estate entry/owner; live lines with links, daily research fact; chosen in onboarding or directly on the card
