@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.3 (in progress)
+Answers instead of data: direct short answers to questions like "Lohnt sich Gold?" based on profile, current state and research; consistent news filters with counts and reset; visual news situation per area and theme; one-tap risk profile switch; arrows explained.
+
 ## 5.2 (in progress)
 Backup works on phones (share sheet instead of a silent download), clearer backup steps with visible feedback; every menu and quick link verified to land on a visible target; commodities profile reworked for private investors. Every click now opens an explanation of exactly that item first (with a link to the matching area below); "Dein nächster Schritt" guides through what is still missing; a separate profile for professional procurement.
 

@@ -6,6 +6,8 @@ import { buildSignals } from "./signals.js";
 import { PERSONAS, FACTS } from "./personas.js";
 import { aiPrompt } from "./trust.js";
 import { hashFor } from "./subnav.js";
+import { quickAnswer, answerHtml } from "./answers.js";
+import { readinessLine } from "./situation.js";
 
 const VIEW_LABEL = { heute: "Heute", plan: "Mein Geld", entdecken: "Entdecken", profis: "Profis & News", wissen: "Wissen" };
 const GROUPS = [
@@ -128,8 +130,9 @@ function render(q) {
   const keep = canKeep ? `<button type="button" class="btn btn-ghost btn-sm" data-keep-topic="${esc(q.trim())}">＋ „${esc(q.trim())}“ als eigenes Thema merken</button>` : "";
   const ai = `${keep}<div class="sr-ai">🤖 <b>Frag deine KI:</b> „${esc(q)}“, zusammen mit dem, was das Radar dazu weiß. Öffnet dein eigenes Konto, das Radar sieht nichts davon.
     <div class="bk-btns"><a class="btn btn-ghost" href="https://claude.ai/new?q=${enc}" target="_blank" rel="noopener">Claude fragen ↗</a><a class="btn btn-ghost" href="https://chatgpt.com/?q=${enc}" target="_blank" rel="noopener">ChatGPT fragen ↗</a></div></div>`;
-  if (!hits.length) { box.innerHTML = `<div class="empty">Nichts gefunden für „${esc(q)}“. Versuch ein kürzeres Wort oder frag die KI.</div>${ai}`; return; }
-  box.innerHTML = GROUPS.map(([g, label]) => {
+  let ans = ""; try { ans = answerHtml(quickAnswer(q, state.data || {}, store.get("goal", "ausgewogen"), !!readinessLine())); } catch { /* no answer */ }
+  if (!hits.length) { box.innerHTML = `${ans}<div class="empty">Nichts gefunden für „${esc(q)}“. Versuch ein kürzeres Wort oder frag die KI.</div>${ai}`; return; }
+  box.innerHTML = ans + GROUPS.map(([g, label]) => {
     const list = hits.filter((h) => h.g === g); if (!list.length) return "";
     return `<div class="sr-group"><h4>${label} <span class="fine">${list.length}</span></h4>${list.slice(0, g === "news" ? 6 : 5).map((h) => {
       const body = `<b>${esc(h.title)}</b><span class="fine">${esc(h.g === "lex" ? h.sub : h.sub.slice(0, 140))}</span>`;
@@ -172,6 +175,8 @@ export function initSearch(openDetailFor) {
     if (kt) { store.set("mytopics", cleanTopics([...myTopics(), kt.dataset.keepTopic])); kt.remove(); toast(`„${kt.dataset.keepTopic}“ gemerkt: erscheint unter „Dein Radar“ und im Feed`); window.dispatchEvent(new Event("radar:topics")); return; }
     const s = e.target.closest("[data-suggest]"); if (s) { $("#searchInput").value = s.dataset.suggest; render(s.dataset.suggest); return; }
     const r = e.target.closest("[data-sr]"); if (r) { go(index[+r.dataset.sr], openDetailFor); return; }
+    const ad = e.target.closest(".sr-answer [data-detail], .sr-answer [data-open], .sr-answer [data-goto]");
+    if (ad) { close(); if (ad.dataset.detail) { e.stopPropagation(); openDetailFor(ad.dataset.detail); } return; }
     if (e.target.closest("a.sr-item")) close();
   });
   let t; $("#searchInput").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => render(e.target.value), 80); });

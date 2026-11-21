@@ -4,6 +4,7 @@ import { riskScale } from "./plan.js";
 
 // ---------- Lexikon ----------
 export const LEX = {
+  "Pfeile ▲ ▼": "Grüner Pfeil nach oben = der Kurs ist gestiegen, roter Pfeil nach unten = gefallen. Die Zahl daneben sagt, um wie viel Prozent und in welchem Zeitraum (meist seit gestern Abend). Ein einzelner Tag sagt wenig: Für langfristige Anleger zählt der Trend über Monate.",
   "ETF": "Ein Fonds, der an der Börse gehandelt wird und einfach einen Index nachbildet, z. B. 1.400 Firmen auf einmal. Günstig, breit gestreut, ideal für Einsteiger.",
   "Index": "Eine Liste von Firmen, deren Kurse zusammen gemessen werden, z. B. DAX (40 deutsche Firmen) oder MSCI World (rund 1.400 weltweit).",
   "MSCI World": "Index mit rund 1.400 großen Firmen aus 23 Industrieländern. Der beliebteste Baustein für langfristiges Sparen.",

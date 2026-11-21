@@ -410,6 +410,10 @@ export function renderSummary() {
   if (risk) lines.push(["⚠️", "Risiko", risk.title, `detail:sig:${risk.id}`]);
   const ev = [...(d.events || [])].filter((e) => e.n48h > 0).sort((x, y) => y.n48h - x.n48h)[0];
   if (ev && (all || mine.includes("news") || mine.includes("macro"))) lines.push([ev.icon || "📰", "Nachrichtenlage", `${ev.name}: ${ev.n48h} Meldungen in 48 Stunden`, "profis:eventsSec"]);
+  const pill = $("#profilePill");
+  if (pill) pill.innerHTML = `<button type="button" class="pp-btn" data-pp-toggle aria-expanded="false">🎯 Dein Profil: <b>${esc(GOALS[goal]?.label || "Ausgewogen")}</b> <span class="fine">ändern</span></button>
+    <div class="pp-choices" hidden>${Object.keys(GOALS).map((k) => `<button type="button" class="chip-btn ${k === goal ? "on" : ""}" data-pp="${k}">${esc(GOALS[k].label)}</button>`).join("")}
+      <p class="fine pp-why">${profileText(goal)}</p></div>`;
   el.innerHTML = lines.slice(0, 5).map(([i, k, t, g]) => `<li><button type="button" class="sum-item" ${g.startsWith("detail:") ? `data-detail="${esc(g.slice(7))}"` : `data-goto="${esc(g)}"`}><span class="ico">${esc(i)}</span><span><b>${esc(k)}:</b> ${esc(t)}</span><span class="go">›</span></button></li>`).join("");
   const chips = [...QUICK.filter(([t]) => t && !all && mine.includes(t)), ...QUICK.filter(([t]) => !t), ...QUICK.filter(([t]) => t && (all || !mine.includes(t)))];
   const seen = new Set();
@@ -451,6 +455,16 @@ export function initPersonal({ openPrefs, onGoto }) {
     const g = e.target.closest("[data-goto]");
     if (g) { e.preventDefault(); closeSheet(); const dr = $("#drawer"); if (dr && !dr.hidden) { dr.hidden = true; document.body.style.overflow = ""; } const [v, a] = g.dataset.goto.split(":"); (onGoto || goTo)(v, a); return; }
     const act = e.target.closest("[data-act]");
+    // quick risk-profile switch on "Heute": one tap, everything follows
+    if (e.target.closest("[data-pp-toggle]")) { const c = $("#profilePill .pp-choices"); c.hidden = !c.hidden; e.target.closest("[data-pp-toggle]").setAttribute("aria-expanded", String(!c.hidden)); return; }
+    const pp = e.target.closest("[data-pp]");
+    if (pp) {
+      const k = pp.dataset.pp; store.set("goal", k);
+      const plan = store.get("plan", {}) || {}; store.set("plan", { ...plan, profile: k });
+      document.dispatchEvent(new CustomEvent("radar:goal", { detail: k }));
+      renderSummary(); const c = $("#profilePill .pp-choices"); if (c) c.hidden = false;
+      toast(`Profil „${GOALS[k].label}“: Hinweise, Plan und Erklärungen sind angepasst.`); return;
+    }
     const ed = e.target.closest("[data-edit]");
     if (ed) { openOnboarding(Number(ed.dataset.edit) || 0, true); return; }
     if (e.target.closest("#profileBtn, [data-act='profile']")) { openProfile(openPrefs); return; }

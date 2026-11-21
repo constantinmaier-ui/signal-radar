@@ -43,6 +43,16 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.3) – answers, not just data (owner request 2026-11-21)
+- [x] **SEC secret set by the owner**: 145/146 sources ok (insider buys and superinvestors back)
+- [x] **Short answers to questions** ("Lohnt sich Gold?"): fit with the profile (planned share), state now (trend, distance from high, overheating), timing hint, what research says, link to details
+- [x] **Feed filters that never contradict**: area → theme (themes belong to an area), counts on every chip, tap again = off, active filters with ✕ and reset
+- [x] **Visual news situation**: stories per area (24 h vs. usual), themes with most news and their tempo; tap filters
+- [x] **Risk profile one tap away** on "Heute"; onboarding no longer changes the profile before "Speichern"
+- [x] **Arrows explained** (legend under the market tiles, glossary entry)
+- [ ] Short answers also inside every detail and theme view ("Lohnt sich das für mich?")
+- [ ] Trend map: themes on a chart over time (attention vs. price), not just today
+
 ## Now (version 5.2) – everything works, everything means something (owner request 2026-11-21), by value ÷ effort
 - [x] **Backup fixed for phones**: iPhone/Android open the share sheet (Files, iCloud, Dropbox, Google Drive) instead of a download that silently does nothing; clear steps (1. password, 2. how); every action gives visible feedback
 - [x] **All navigation checked automatically**: 38 menu targets, 14 quick links, 4 menu actions land on a visible target; Profi-only targets switch the view on

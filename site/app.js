@@ -1,6 +1,6 @@
 // Signal-Radar – Oberfläche. Keine Abhängigkeiten, alles inline-SVG.
 
-import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews, myTopics, matchesTopic } from "./ui.js";
+import { $, $$, FNG_DE, QUAD, WA_ICON, ago, arrow, compact, dayLabels, dirCls, esc, fmt, hideTip, lineChart, linePath, nf, ok, pct, priceFmt, safeUrl, scaleFn, showTip, spark, state, store, themeById, tipEl, toast, limitList, moreBtn, toggleMore, growList, growClick, googleNews, myTopics, matchesTopic, filterNews, THEME_AREA, AREAS, newsPulse } from "./ui.js";
 import { initPlan, renderPlan } from "./plan.js";
 import { renderCheck, renderSignals, initSignalControls, showView, initGoalPicker } from "./heute.js";
 import { hypeInfo } from "./signals.js";
@@ -279,19 +279,24 @@ function ipoNews(w) {
     .filter((n) => n?.title && (w.top?.includes(n) || (word.length >= 3 && n.title.toLowerCase().includes(word))) && !seen.has(n.title) && seen.add(n.title));
 }
 function feedItems() {
-  const all = [...state.live, ...state.data.news];
-  const q = state.q.trim().toLowerCase();
-  const mine = state.theme === "mine" ? myTopics() : null, area = state.area || "all";
-  return all.filter((n) => (area === "all" || (n.areas || []).includes(area)) && (state.theme === "all" || (mine ? matchesTopic(n.title, mine) : state.theme === "watch" ? n.themes.some((t) => state.watch.has(t)) : n.themes.includes(state.theme)))
-    && (!state.onlySignals || n.signals?.length)
-    && (!q || `${n.title} ${n.source}`.toLowerCase().includes(q)));
+  return filterNews([...state.live, ...state.data.news], { q: state.q, onlySignals: state.onlySignals, area: state.area || "all", theme: state.theme, watch: state.watch, mine: myTopics() }).items;
 }
 function renderChips() {
-  const d = state.data;
-  const opts = [["all", "Alle"], ...(myTopics().length ? [["mine", "🔎 Meine Themen"]] : []), ...(state.watch.size ? [["watch", "★ Merkliste"]] : []), ...d.themes.map((t) => [t.id, t.short])];
-  const areas = [["all", "Alle Bereiche"], ["wirtschaft", "Wirtschaft & Märkte"], ["tech", "Tech & KI"], ["krypto", "Krypto"], ["energie", "Energie"], ["rohstoffe", "Rohstoffe"], ["gesundheit", "Gesundheit"], ["politik", "Politik & Notenbanken"], ["amtlich", "Amtlich"]];
-  $("#themeChips").innerHTML = `<div class="area-row" role="group" aria-label="Bereich">${areas.map(([id, l]) => `<button type="button" data-area="${id}" class="${(state.area || "all") === id ? "on" : ""}">${esc(l)}</button>`).join("")}</div>
-    <div class="theme-row" role="group" aria-label="Thema">${opts.map(([id, l]) => `<button type="button" data-chip="${id}" class="${state.theme === id ? "on" : ""}">${esc(l)}</button>`).join("")}</div>`;
+  const d = state.data, area = state.area || "all";
+  const f = filterNews([...state.live, ...d.news], { q: state.q, onlySignals: state.onlySignals, watch: state.watch, mine: myTopics() });
+  const areaCount = (a) => f.base.filter((n) => f.inArea(n, a)).length;
+  const inThisArea = f.base.filter((n) => f.inArea(n, area));
+  const themeOpts = [["all", "Alle Themen"], ...(myTopics().length ? [["mine", "🔎 Meine Themen"]] : []), ...(state.watch.size ? [["watch", "★ Merkliste"]] : []),
+    ...d.themes.filter((t) => area === "all" || THEME_AREA[t.id] === area).map((t) => [t.id, t.short])]
+    .map(([id, l]) => [id, l, id === "all" ? inThisArea.length : inThisArea.filter((n) => f.inTheme(n, id)).length])
+    .filter(([id, , n]) => id === "all" || id === state.theme || n > 0);
+  const chip = (attr, id, label, n, on) => `<button type="button" data-${attr}="${id}" class="${on ? "on" : ""}" aria-pressed="${on}">${esc(label)} <span class="cnt">${n}</span></button>`;
+  const active = [area !== "all" ? `<button type="button" class="af" data-area="all">${esc(AREAS.find(([k]) => k === area)?.[1] || area)} ✕</button>` : "",
+    state.theme !== "all" ? `<button type="button" class="af" data-chip="all">${esc(themeOpts.find(([k]) => k === state.theme)?.[1] || d.themes.find((t) => t.id === state.theme)?.short || state.theme)} ✕</button>` : "",
+    state.q ? `<button type="button" class="af" data-clear-q>„${esc(state.q)}“ ✕</button>` : ""].filter(Boolean);
+  $("#themeChips").innerHTML = `<p class="filter-label">Bereich</p><div class="area-row" role="group" aria-label="Bereich">${AREAS.map(([id, l]) => chip("area", id, l, areaCount(id), area === id)).join("")}</div>
+    <p class="filter-label">Thema${area !== "all" ? ` in „${esc(AREAS.find(([k]) => k === area)?.[1])}“` : ""}</p><div class="theme-row" role="group" aria-label="Thema">${themeOpts.map(([id, l, n]) => chip("chip", id, l, n, state.theme === id)).join("")}</div>
+    ${active.length ? `<div class="active-filters"><span class="fine">Aktiv:</span>${active.join("")}<button type="button" class="link-btn" data-clear-all>alles zurücksetzen</button></div>` : ""}`;
 }
 const REACH = { both: ["Fach- und Leitmedien", "Erst Fachpresse, jetzt auch große Medien: Die Geschichte ist in der breiten Öffentlichkeit angekommen."], official: ["Amtlich", "Kommt direkt von einer Behörde oder Notenbank."], specialist: ["nur Fachpresse", "Bisher nur in Fachmedien: früh dran, aber noch unbestätigt in der breiten Presse."] };
 /** "📰 5 Portale" + where the story has spread. */
@@ -299,6 +304,21 @@ function echoBadge(n) {
   const who = (n.outlets || []).join(", ");
   const r = REACH[n.reach];
   return `${n.echo > 1 ? `<span class="echo ${n.echo >= 4 ? "wide" : ""}" title="${esc(who ? `Berichten: ${who}` : "So viele Portale berichten")}">📰 ${n.echo} Portale</span>` : ""}${r && n.echo > 1 ? `<span class="reach" title="${esc(r[1])}">${esc(r[0])}</span>` : ""}`;
+}
+/** Visual news situation: how much is reported per area (24 h) and whether it is more than usual; themes heating up. Tap = filter. */
+function renderNewsMap() {
+  const box = $("#newsMap"); if (!box) return;
+  const pulse = newsPulse([...state.live, ...(state.data.news || [])]).sort((a, b) => b.d1 - a.d1);
+  const max = Math.max(1, ...pulse.map((x) => Math.max(x.d1, x.avg)));
+  const themes = [...(state.data.themes || [])].filter((t) => t.news48h > 0).sort((a, b) => b.news48h - a.news48h).slice(0, 8);
+  const tmax = Math.max(1, ...themes.map((t) => t.news48h));
+  const tag = (r) => (r === null ? "" : r >= 1.5 ? `<span class="nm-hot">${fmt(r, 1)}× mehr als sonst</span>` : r <= 0.6 ? `<span class="nm-cold">ruhiger als sonst</span>` : "");
+  box.innerHTML = pulse.length ? `<div class="nm"><h3>📊 Nachrichtenlage: worüber gerade berichtet wird</h3>
+    <div class="nm-grid">${pulse.map((x) => `<button type="button" class="nm-row" data-area="${esc(x.id)}" title="Antippen: nur diese Meldungen">
+      <span class="nm-l">${esc(x.label)}</span><span class="nm-bar"><i style="width:${(x.d1 / max) * 100}%"></i><em style="left:${(x.avg / max) * 100}%" title="Durchschnitt der Vortage"></em></span><b>${x.d1}</b>${tag(x.ratio)}</button>`).join("")}</div>
+    <p class="fine">Balken = Geschichten der letzten 24 Std. (gleiche Meldung aus mehreren Portalen zählt einmal). Strich = Tagesschnitt der 6 Tage davor. Antippen filtert den Feed.</p>
+    ${themes.length ? `<h4>Themen mit den meisten Meldungen (48 Std.)</h4><div class="nm-grid">${themes.map((t) => `<button type="button" class="nm-row" data-open="${esc(t.id)}"><span class="nm-l">${esc(t.short)}</span><span class="nm-bar th"><i style="width:${(t.news48h / tmax) * 100}%"></i></span><b>${t.news48h}</b>${ok(t.newsAccel) && t.newsAccel >= 1.5 ? `<span class="nm-hot">Tempo ${fmt(t.newsAccel, 1)}×</span>` : ""}</button>`).join("")}</div>` : ""}
+    <details class="evid"><summary>Was sagt die Forschung zu Nachrichten?</summary><p>Viel Berichterstattung heißt meist: Die Nachricht ist schon im Kurs (Fang &amp; Peress 2009). Stark negative Presse drückt Kurse oft nur kurzfristig (Tetlock 2007). Ein plötzlicher Anstieg der Berichte zeigt, wo sich gerade etwas tut, aber nicht, in welche Richtung der Kurs geht.</p></details></div>` : "";
 }
 /** Top stories of the last 24 h by number of outlets, with what that pattern means. */
 function renderWideStories() {
@@ -309,7 +329,7 @@ function renderWideStories() {
     <details class="evid"><summary>Was bedeutet das für Anleger?</summary><p>Viele Berichte heißen: Die Nachricht ist bekannt und meist schon im Kurs. Aktien mit wenig Presse brachten im Schnitt sogar mehr Rendite als viel beachtete (Fang &amp; Peress 2009, Journal of Finance). Stark negative Presse drückt Kurse oft kurzfristig, danach erholen sie sich teilweise (Tetlock 2007, Journal of Finance). Früh dran ist, was erst in der Fachpresse steht.</p></details></div>` : "";
 }
 function renderFeed(freshKeys = new Set()) {
-  safe(renderWideStories);
+  safe(renderWideStories); safe(renderNewsMap);
   const items = feedItems();
   const short = Object.fromEntries(state.data.themes.map((t) => [t.id, t.short]));
   $("#feedCount").textContent = `${items.length} Meldungen`;
@@ -527,9 +547,16 @@ function bindEvents() {
     const open = e.target.closest("[data-open]");
     if (open) { openTheme(open.dataset.open); return; }
     const chip = e.target.closest("[data-chip]");
-    if (chip) { state.theme = chip.dataset.chip; state.shown = 40; renderChips(); renderFeed(); return; }
+    // tap an active chip again = off; changing the area drops a theme that is not part of it
+    if (chip) { const id = chip.dataset.chip; state.theme = state.theme === id && id !== "all" ? "all" : id; state.shown = 40; renderChips(); renderFeed(); return; }
     const ar = e.target.closest("[data-area]");
-    if (ar) { state.area = ar.dataset.area; state.shown = 40; renderChips(); renderFeed(); return; }
+    if (ar) {
+      const id = ar.dataset.area; state.area = (state.area || "all") === id && id !== "all" ? "all" : id;
+      if (state.area !== "all" && THEME_AREA[state.theme] && THEME_AREA[state.theme] !== state.area) state.theme = "all";
+      state.shown = 40; renderChips(); renderFeed(); return;
+    }
+    if (e.target.closest("[data-clear-q]")) { state.q = ""; const si = $("#search"); if (si) si.value = ""; renderChips(); renderFeed(); return; }
+    if (e.target.closest("[data-clear-all]")) { state.q = ""; state.area = "all"; state.theme = "all"; const si = $("#search"); if (si) si.value = ""; renderChips(); renderFeed(); return; }
     const sh = e.target.closest("[data-share]");
     if (sh) { share(`${sh.dataset.share}\n${sh.dataset.url}\n\n📡 Mehr Signale: ${pageUrl()}`); return; }
     if (e.target.closest("[data-close]")) { closeDrawer(); return; }
@@ -547,8 +574,8 @@ function bindEvents() {
   document.addEventListener("pointermove", (e) => { const t = e.target.closest("[data-tip]"); if (t) showTip(e, t.dataset.tip); });
   document.addEventListener("pointerout", (e) => { if (e.target.closest("[data-tip]") && !e.relatedTarget?.closest?.("[data-tip]")) hideTip(); });
   let st;
-  $("#search").addEventListener("input", (e) => { clearTimeout(st); st = setTimeout(() => { state.q = e.target.value; state.shown = 40; renderFeed(); }, 150); });
-  $("#onlySignals").addEventListener("change", (e) => { state.onlySignals = e.target.checked; renderFeed(); });
+  $("#search").addEventListener("input", (e) => { clearTimeout(st); st = setTimeout(() => { state.q = e.target.value; state.shown = 40; renderChips(); renderFeed(); }, 150); });
+  $("#onlySignals").addEventListener("change", (e) => { state.onlySignals = e.target.checked; renderChips(); renderFeed(); });
   $("#moreBtn").addEventListener("click", () => { state.shown += 40; renderFeed(); });
   // load the next 40 automatically when the user scrolls to the end of the list
   if ("IntersectionObserver" in window) new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting) && !$("#moreBtn").hidden) { state.shown += 40; renderFeed(); } }, { rootMargin: "300px" }).observe($("#moreBtn"));
@@ -579,6 +606,7 @@ safe(renderReadiness);
 safe(goalCard);
 safe(renderNextSteps);
 addEventListener("radar:store", () => safe(renderNextSteps));
+document.addEventListener("radar:goal", () => state.data && [renderCheck, renderSignals, renderPlan, renderMyRadar, renderReadiness, goalCard, renderMeta, renderDepot, renderSummary].forEach(safe));
 initGoal(() => [goalCard, renderReadiness, renderSummary].forEach(safe));
 addEventListener("radar:topics", () => state.data && [renderMyRadar, renderChips].forEach(safe));
 safe(renderMyRadar);

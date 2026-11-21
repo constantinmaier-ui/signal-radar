@@ -176,3 +176,27 @@ export const cleanTopics = (a) => (Array.isArray(a) ? [...new Set(a.map((x) => S
 export const myTopics = () => cleanTopics(store.get("mytopics", []));
 /** Headlines mentioning one of the topics (case and umlaut insensitive). */
 export const matchesTopic = (title, topics) => { const t = fold(title); return topics.some((k) => t.includes(fold(k))); };
+
+// Which area each theme belongs to (same as the collector), so area and theme filters never contradict each other
+export const THEME_AREA = { ai: "tech", chips: "tech", power: "energie", nuclear: "energie", defense: "politik", crypto: "krypto", gold: "rohstoffe", quantum: "tech", robotics: "tech", space: "tech", health: "gesundheit", cyber: "tech", ipo: "wirtschaft", rareearth: "rohstoffe", battery: "energie", genome: "gesundheit", renewables: "energie", india: "wirtschaft" };
+export const AREAS = [["all", "Alle"], ["wirtschaft", "Wirtschaft & Märkte"], ["tech", "Tech & KI"], ["krypto", "Krypto"], ["energie", "Energie"], ["rohstoffe", "Rohstoffe"], ["gesundheit", "Gesundheit"], ["politik", "Politik & Notenbanken"], ["amtlich", "Amtlich"]];
+/** Pure filter: base (search, signals only), then area, then theme. */
+export function filterNews(all, { q = "", onlySignals = false, area = "all", theme = "all", watch = new Set(), mine = [] } = {}) {
+  const ql = q.trim().toLowerCase();
+  const base = all.filter((n) => (!onlySignals || n.signals?.length) && (!ql || `${n.title} ${n.source}`.toLowerCase().includes(ql)));
+  const inArea = (n, a) => a === "all" || (n.areas || []).includes(a) || (n.themes || []).some((t) => THEME_AREA[t] === a);
+  const inTheme = (n, t) => t === "all" || (t === "mine" ? matchesTopic(n.title, mine) : t === "watch" ? (n.themes || []).some((x) => watch.has(x)) : (n.themes || []).includes(t));
+  return { base, inArea, inTheme, items: base.filter((n) => inArea(n, area) && inTheme(n, theme)) };
+}
+
+/** News pulse per area: stories in the last 24 h and how that compares with the daily average of the 6 days before. Pure. */
+export function newsPulse(news, now = Date.now()) {
+  const day = 864e5, out = {};
+  for (const [a] of AREAS.slice(1)) out[a] = { d1: 0, prev: 0 };
+  for (const n of news) {
+    const age = now - (n.published || 0); if (!(age >= 0) || age > 7 * day) continue;
+    const areas = new Set([...(n.areas || []), ...(n.themes || []).map((t) => THEME_AREA[t]).filter(Boolean)]);
+    for (const a of areas) if (out[a]) age <= day ? out[a].d1++ : out[a].prev++;
+  }
+  return AREAS.slice(1).map(([id, label]) => { const o = out[id], avg = o.prev / 6; return { id, label, d1: o.d1, avg, ratio: avg > 0 ? o.d1 / avg : null }; }).filter((x) => x.d1 + x.avg > 0);
+}
