@@ -98,6 +98,31 @@ export const THEMES = [
     kw: ["cyber", "crowdstrike", "palo alto", "zscaler", "ransomware", "hacker", "datenleck", "sicherheitslücke", "breach"],
     etf: "CIBR", tickers: ["CRWD", "PANW", "ZS"],
   },
+  // Niche themes (owner request 2026-11-21): high upside, high risk – the hype check matters most here
+  {
+    id: "rareearth", name: "Seltene Erden & kritische Rohstoffe", short: "Seltene Erden",
+    wiki: ["Rare-earth_element", "MP_Materials", "Neodymium_magnet"],
+    news: ["rare earths OR \"critical minerals\" OR \"MP Materials\" OR Lynas", "Seltene Erden Exportstopp China Rohstoffe"],
+    hn: "rare earth",
+    kw: ["rare earth", "seltene erden", "critical mineral", "kritische rohstoffe", "mp materials", "lynas", "neodym", "gallium", "germanium"],
+    etf: "REMX", tickers: ["MP"],
+  },
+  {
+    id: "battery", name: "Batterien & Lithium", short: "Batterien",
+    wiki: ["Lithium-ion_battery", "Solid-state_battery", "Albemarle_Corporation", "QuantumScape"],
+    news: ["lithium OR \"solid-state battery\" OR Albemarle OR QuantumScape OR CATL", "Batterie Lithium Feststoffbatterie"],
+    hn: "battery",
+    kw: ["lithium", "batterie", "battery", "feststoff", "solid-state", "albemarle", "quantumscape", "catl", "akku"],
+    etf: "LIT", tickers: ["ALB", "SQM", "QS"],
+  },
+  {
+    id: "genome", name: "Gen-Editierung & Genomik", short: "Gen-Editierung",
+    wiki: ["CRISPR_gene_editing", "CRISPR_Therapeutics", "Intellia_Therapeutics", "Base_editing"],
+    news: ["CRISPR OR \"gene editing\" OR \"CRISPR Therapeutics\" OR Intellia OR \"Beam Therapeutics\"", "Genschere CRISPR Therapie Zulassung"],
+    hn: "CRISPR",
+    kw: ["crispr", "gene editing", "genschere", "gen-editierung", "gentherapie", "gene therapy", "intellia", "beam therapeutics", "base editing"],
+    etf: "ARKG", tickers: ["CRSP", "NTLA", "BEAM"],
+  },
   {
     id: "ipo", name: "IPOs & Börsengänge", short: "IPOs",
     wiki: ["Initial_public_offering", "Anthropic", "OpenAI", "SpaceX", "Databricks"],
