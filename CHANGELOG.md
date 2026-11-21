@@ -1,5 +1,8 @@
 # Changelog
 
+## 5.1 (in progress)
+Clear structure: tabs split into sub-pages so areas never mix; "Mein Profil" to view and change every input on its own, with the risk profiles explained in numbers; an "ⓘ" box on every gauge and section (how it is made, evidence, what it means now for your profile, last update and frequency, further reading); news filter by area and 7 more specialist sources; renewable energy and India as themes; feedback when switching Einsteiger/Profi.
+
 ## 5.0 (in progress)
 Fully personal: exact age and retirement age, a main goal, a pension-gap and goal calculator that can be edited in place; detailed portfolio with real ETFs (search by name, ticker or ISIN), stocks and every crypto coin, units and live values; all trend themes and free-text own topics selectable at the start and from search.
 

@@ -43,6 +43,14 @@ function readForm() {
 }
 
 /** Ermittelt Profil, Gewichte und Begründungen aus Eingaben + aktueller Marktlage. */
+/** Share in stocks/trends/crypto, in safe assets, and the loss in a crash (stocks −50 %), from the profile's allocation. Pure. */
+export function profileFacts(k) {
+  const pr = PROFILES[k]; if (!pr) return null;
+  const w = (id) => (pr[id] || 0) / 100;
+  const risky = w("world") + w("em") + w("themes") + w("btc"), safe = w("bonds") + w("cash") + w("gold");
+  const crash = BUCKETS.reduce((s, b) => s + w(b.id) * b.crash, 0);
+  return { risky: Math.round(risky * 100), safe: Math.round(safe * 100), crash: Math.round(crash * 100) };
+}
 export function buildPlan(inp, d) {
   const notes = [];
   const score = inp.q.reduce((s, x) => s + x, 0);

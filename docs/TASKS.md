@@ -43,6 +43,17 @@ Status: `[x]` done · `[~]` in progress · `[ ]` open · 👤 = owner has to do 
 - [ ] 👤 Optional: secret `SEC_USER_AGENT` with a real contact e-mail (SEC fair-access policy)
 - [ ] Next: every chart point and news item opens context; guided tour
 
+## Now (version 5.1) – clear structure, everything editable and explained (owner request 2026-11-21)
+- [x] **Sub-pages instead of one long page**: each tab is split into areas (e.g. Entdecken: Anlagen · Trends & Chancen · Rohstoffe · Immobilien · Konjunktur & Stimmung); only the chosen area is shown; links, menu, search and back button land on the right one; order follows the user's interests
+- [x] **"👤 Mein Profil"**: everything entered in one place, each part editable on its own (save without going through the whole setup); risk profile explained with real numbers (share in stocks, crash test) and a comparison table
+- [x] **"ⓘ Wie entsteht das?"** on every gauge and section: how it is made, evidence level, what it means now for the user's profile, update time and frequency, further reading
+- [x] **News by area** (Wirtschaft, Tech & KI, Krypto, Energie, Rohstoffe, Gesundheit, Politik, Amtlich) and 7 more trusted specialist sources (heise, Golem, MIT Technology Review, pv magazine, Electrek, The Block, DW)
+- [x] **New themes**: renewable energy (ICLN), India (INDA)
+- [x] **Einsteiger/Profi switch**: visible feedback on what changes
+- [ ] Profi mode with more visible differences on every page (key figures inline, charts expanded)
+- [ ] Audit of the event categories (e.g. "Politik"): split into narrower, research-backed types (central bank decisions, tariffs, sanctions, elections, fiscal policy) with event-study evidence each
+- [ ] Cautious, aggregated outlook per theme ("Nischen-Scanner") with an honest historical check
+
 ## Now (version 5.0) – fully personal (owner request 2026-11-21), by value ÷ effort
 - [x] **Exact age** instead of ranges, retirement age (default 67), years to retirement
 - [x] **Goal**: build wealth, close the pension gap, financial freedom, home, children, own goal (amount + year)

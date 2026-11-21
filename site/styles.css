@@ -940,3 +940,22 @@ details[open]::details-content { height: auto; }
 .goal-edit summary { cursor: pointer; font-weight: 600; margin-top: 8px; }
 .ob-topics { display: grid; gap: 4px; margin-top: 10px; font-size: 14px; }
 .ob-topics input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); font: 16px var(--font); }
+/* Sub-pages inside a tab: one clear area at a time */
+.subnav { position: sticky; top: var(--subnav-top, 64px); z-index: 5; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 2px; margin: 0 0 6px; background: var(--page); }
+.subnav::-webkit-scrollbar { display: none; }
+.subnav a { flex: none; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--ring); background: var(--surface); color: var(--ink); text-decoration: none; font: 500 14px var(--font); white-space: nowrap; }
+.subnav a.on { background: var(--s1); border-color: var(--s1); color: #fff; }
+/* Mein Profil */
+.pf-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--ring); }
+.pf-row > div { display: grid; gap: 2px; font-size: 14px; }
+.pf-now { font-size: 14px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+.pf-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.pf-table th, .pf-table td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--ring); }
+.info-box { margin-top: 8px; font-size: 13.5px; }
+.info-box summary { cursor: pointer; color: var(--s1); font-weight: 600; }
+.info-box p { margin: 6px 0; }
+.info-box a { color: var(--s1); }
+.area-row, .theme-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+.area-row button, .theme-row button { flex: none; }
+.area-row button { font-weight: 600; }
+#themeChips { display: block; }

@@ -1,3 +1,4 @@
+import { applySub } from "./subnav.js";
 // Ansicht „Heute“ (Tages-Check + Signale) und die Bereichs-Navigation.
 import { $, $$, esc, fmt, state, store } from "./ui.js";
 import { buildSignals, dailyVerdict, ideasFor, GOALS } from "./signals.js";
@@ -85,14 +86,14 @@ export function initSignalControls() {
 // ---------- Bereiche (Hash-Navigation) ----------
 const VIEWS = ["heute", "plan", "entdecken", "profis", "wissen"];
 export function currentView() {
-  const h = viewOf(location.hash.replace("#", ""));
+  const h = viewOf(location.hash.replace("#", "").split("/")[0]);
   if (h.startsWith("thema=")) return "entdecken";
   if (h.startsWith("plan=")) return "plan";
   return VIEWS.includes(h) ? h : "heute";
 }
 export function showView(onShow) {
   const v = currentView();
-  const swap = () => $$(".view").forEach((el) => (el.hidden = el.dataset.view !== v));
+  const swap = () => { $$(".view").forEach((el) => (el.hidden = el.dataset.view !== v)); applySub(v); };
   // smooth cross-fade between tabs where the browser supports View Transitions (and the user allows motion)
   const motion = typeof matchMedia === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (document.startViewTransition && motion && $$(".view").some((el) => !el.hidden && el.dataset.view !== v)) document.startViewTransition(swap);

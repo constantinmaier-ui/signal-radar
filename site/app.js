@@ -7,10 +7,11 @@ import { hypeInfo } from "./signals.js";
 import { renderMeta, applyPrefs, renderPrefs, renderTrends, renderLevers, renderFitness, initBackup, renderUsage } from "./trust.js";
 import { renderEvents, renderResearch, renderSourcesTable, renderRealEstate, initRealEstateForm, initMode, renderInstruments, renderInsiders, renderMacro, initMietspiegel, renderMood, renderOfficialMood, renderKpis, renderCommodities, commodityShareText } from "./insights.js";
 import { openDetailFor } from "./detail.js";
-import { initPersonal, renderDepot, renderSummary, goTo, liveDepot } from "./personal.js";
+import { initPersonal, renderDepot, renderSummary, goTo, liveDepot, interests } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
 import { initSync } from "./sync.js";
+import { initSubnav } from "./subnav.js";
 import { renderMyRadar, renderFacts, initPersonas } from "./personas.js";
 import { renderReadiness, renderGoal, initGoal } from "./situation.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
@@ -280,15 +281,17 @@ function ipoNews(w) {
 function feedItems() {
   const all = [...state.live, ...state.data.news];
   const q = state.q.trim().toLowerCase();
-  const mine = state.theme === "mine" ? myTopics() : null;
-  return all.filter((n) => (state.theme === "all" || (mine ? matchesTopic(n.title, mine) : state.theme === "watch" ? n.themes.some((t) => state.watch.has(t)) : n.themes.includes(state.theme)))
+  const mine = state.theme === "mine" ? myTopics() : null, area = state.area || "all";
+  return all.filter((n) => (area === "all" || (n.areas || []).includes(area)) && (state.theme === "all" || (mine ? matchesTopic(n.title, mine) : state.theme === "watch" ? n.themes.some((t) => state.watch.has(t)) : n.themes.includes(state.theme)))
     && (!state.onlySignals || n.signals?.length)
     && (!q || `${n.title} ${n.source}`.toLowerCase().includes(q)));
 }
 function renderChips() {
   const d = state.data;
   const opts = [["all", "Alle"], ...(myTopics().length ? [["mine", "🔎 Meine Themen"]] : []), ...(state.watch.size ? [["watch", "★ Merkliste"]] : []), ...d.themes.map((t) => [t.id, t.short])];
-  $("#themeChips").innerHTML = opts.map(([id, l]) => `<button type="button" data-chip="${id}" class="${state.theme === id ? "on" : ""}">${esc(l)}</button>`).join("");
+  const areas = [["all", "Alle Bereiche"], ["wirtschaft", "Wirtschaft & Märkte"], ["tech", "Tech & KI"], ["krypto", "Krypto"], ["energie", "Energie"], ["rohstoffe", "Rohstoffe"], ["gesundheit", "Gesundheit"], ["politik", "Politik & Notenbanken"], ["amtlich", "Amtlich"]];
+  $("#themeChips").innerHTML = `<div class="area-row" role="group" aria-label="Bereich">${areas.map(([id, l]) => `<button type="button" data-area="${id}" class="${(state.area || "all") === id ? "on" : ""}">${esc(l)}</button>`).join("")}</div>
+    <div class="theme-row" role="group" aria-label="Thema">${opts.map(([id, l]) => `<button type="button" data-chip="${id}" class="${state.theme === id ? "on" : ""}">${esc(l)}</button>`).join("")}</div>`;
 }
 const REACH = { both: ["Fach- und Leitmedien", "Erst Fachpresse, jetzt auch große Medien: Die Geschichte ist in der breiten Öffentlichkeit angekommen."], official: ["Amtlich", "Kommt direkt von einer Behörde oder Notenbank."], specialist: ["nur Fachpresse", "Bisher nur in Fachmedien: früh dran, aber noch unbestätigt in der breiten Presse."] };
 /** "📰 5 Portale" + where the story has spread. */
@@ -339,7 +342,7 @@ function renderBanner() {
 function goalCard() { renderGoal(liveDepot().reduce((s, p) => s + p.value, 0)); }
 function safe(fn) { try { fn(); } catch (e) { console.error(fn.name, e); } }
 function renderAll() {
-  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard].forEach(safe);
+  [renderBanner, renderStamp, renderCheck, renderSignals, renderEvents, renderResearch, renderRealEstate, renderInsiders, renderMacro, renderMood, renderOfficialMood, renderCommodities, renderTrends, renderUsage, renderLevers, renderGauge, renderBriefing, renderMarket, renderPlan, renderAssets, renderScatter, renderThemes, renderGems, renderProfis, renderIpo, renderPoly, renderCnn, renderFng, renderChips, () => renderFeed(), renderSources, renderDepot, renderSummary, renderMyRadar, renderReadiness, goalCard, renderMeta].forEach(safe);
 }
 
 // ---------- Detail-Ansicht ----------
@@ -525,6 +528,8 @@ function bindEvents() {
     if (open) { openTheme(open.dataset.open); return; }
     const chip = e.target.closest("[data-chip]");
     if (chip) { state.theme = chip.dataset.chip; state.shown = 40; renderChips(); renderFeed(); return; }
+    const ar = e.target.closest("[data-area]");
+    if (ar) { state.area = ar.dataset.area; state.shown = 40; renderChips(); renderFeed(); return; }
     const sh = e.target.closest("[data-share]");
     if (sh) { share(`${sh.dataset.share}\n${sh.dataset.url}\n\n📡 Mehr Signale: ${pageUrl()}`); return; }
     if (e.target.closest("[data-close]")) { closeDrawer(); return; }
@@ -566,6 +571,7 @@ safe(renderFitness);
 safe(initBackup);
 const openPrefs = () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; };
 $("#prefsBtn").addEventListener("click", openPrefs);
+initSubnav(() => { const l = interests(); return l.length >= 8 ? [] : l; });
 initPersonal({ openPrefs, onGoto: goTo });
 safe(() => initSync({ openPrefs }));
 safe(renderFacts);

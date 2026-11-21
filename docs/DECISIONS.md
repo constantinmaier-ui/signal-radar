@@ -33,3 +33,5 @@ Every important decision with its reason, so it stays traceable.
 | 2026-11-21 | Exact age instead of age bands | Years to retirement and the pension gap need the exact number; stored as birth year so it stays right next year |
 | 2026-11-21 | Pension gap with the 4 % rule (×25) in today's money, real return by profile | Simple, widely known and explainable; the card states its limits (longer retirements need less withdrawal) |
 | 2026-11-21 | Portfolio prices: curated list in the collector + CoinGecko in the browser | Browsers cannot call Yahoo directly (CORS); CoinGecko allows it, so every coin is available live; other instruments keep a manual value |
+| 2026-11-21 | Sub-pages per tab instead of one long scrolling page | Tapping "Immobilien" must show real estate only; mixing areas confused users. Interests now order the sub-pages instead of folding sections |
+| 2026-11-21 | Explanations on tap ("ⓘ") instead of more text on the page | Progressive disclosure: short first, details for those who want them; every gauge states how it is made, how well it is backed and when it was updated |
