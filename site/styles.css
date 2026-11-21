@@ -877,3 +877,7 @@ tr.clickable:hover td { background: var(--surface-2); }
 .ob-more summary { cursor: pointer; font-weight: 600; color: var(--accent, inherit); }
 .ob-more ul { margin: 6px 0; padding-left: 18px; }
 .ob-more li { margin: 3px 0; }
+.auto-status { font-size: 14px; margin: 6px 0; }
+.auto-status.ok { color: var(--up, #2e7d32); }
+.auto-status.warn { color: var(--warn, #b26a00); }
+.auto-import { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); margin-bottom: 10px; font-size: 14px; }

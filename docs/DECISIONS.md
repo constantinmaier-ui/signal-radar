@@ -19,3 +19,6 @@ Every important decision with its reason, so it stays traceable.
 | 2026-11-19 | GitHub in English, app in German | International-friendly repository, German-speaking target users |
 | 2026-11-19 | Daily verdict depends on the user's goal and horizon | Research: optimal risk share depends on horizon and risk tolerance (Merton 1969); one-size-fits-all caution leaves money on the table for long-horizon investors |
 | 2026-11-19 | Lump sum "invest now" for growth/bold profiles with ≥ 10 years | Lump sum beat dollar-cost averaging in ~2 of 3 historical cases (Vanguard 2012); staggering is offered as regret insurance |
+| 2026-11-21 | Automatic backup to a user-chosen file + encrypted transfer link instead of an own sync server | No server, no account, no running costs; Dropbox/OneDrive/iCloud only store ciphertext (end-to-end). Same idea as Super Productivity's "bring your own storage" sync |
+| 2026-11-21 | No use of Super Productivity's SuperSync server | It is their service for their app; running our own would need a server (costs, maintenance, attack surface). The MIT-licensed code may be reused with attribution if needed |
+| 2026-11-21 | Passkey unlock (WebAuthn PRF) postponed | Best practice for passwordless end-to-end encryption, but browser/password-manager support is still uneven in 2026 (Safari, Firefox); password + PBKDF2 works everywhere |

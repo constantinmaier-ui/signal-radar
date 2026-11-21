@@ -416,3 +416,23 @@ test("Executive summary: every signal type links to its details", async () => {
   assert.equal(anchorOf("insider-NVDA"), "profis:profis"); assert.equal(anchorOf("sahm"), "entdecken:frueh");
   assert.equal(anchorOf("bubble-high"), "heute:signals");
 });
+
+test("auto backup: key-based encryption opens with the password, link encoding round-trips, reminder rule", async () => {
+  const { deriveKey, encryptWithKey, decryptBackup } = await import("../site/trust.js");
+  const { toLinkPart, fromLinkPart, needsReminder } = await import("../site/sync.js");
+  const salt = crypto.getRandomValues(new Uint8Array(16)), data = { goal: "mutig", portfolio: [{ cat: "etf", name: "MSCI World", value: 8000 }] };
+  const key = await deriveKey("richtig-langes-passwort", salt);
+  const a = await encryptWithKey(data, key, salt), b = await encryptWithKey(data, key, salt);
+  assert.notEqual(JSON.parse(a).iv, JSON.parse(b).iv, "fresh IV every time");
+  assert.deepEqual(await decryptBackup(a, "richtig-langes-passwort"), data);
+  const part = toLinkPart(a);
+  assert.match(part, /^[\w-]+$/);
+  assert.equal(fromLinkPart(part), a);
+  assert.throws(() => fromLinkPart("<script>"));
+  const now = Date.parse("2026-11-21T12:00:00Z");
+  assert.equal(needsReminder({ hasFile: false, dirty: true, at: null, now }), true);
+  assert.equal(needsReminder({ hasFile: false, dirty: true, at: "2026-11-19T12:00:00Z", now }), false);
+  assert.equal(needsReminder({ hasFile: false, dirty: true, at: "2026-11-10T12:00:00Z", now }), true);
+  assert.equal(needsReminder({ hasFile: true, dirty: true, at: null, now }), false);
+  assert.equal(needsReminder({ hasFile: false, dirty: false, at: null, now }), false);
+});

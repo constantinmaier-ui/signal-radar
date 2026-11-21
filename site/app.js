@@ -10,6 +10,7 @@ import { openDetailFor } from "./detail.js";
 import { initPersonal, renderDepot, renderSummary, goTo } from "./personal.js";
 import { initSearch } from "./search.js";
 import { setTechKind } from "./trust.js";
+import { initSync } from "./sync.js";
 import { renderAssets, renderGems, renderProfis, renderCnn, renderLexikon, shareImage } from "./extras.js";
 
 // ---------- Matcher (für live nachgeladene Meldungen) ----------
@@ -525,6 +526,7 @@ safe(initBackup);
 const openPrefs = () => { renderPrefs(() => state.data && [renderSignals, renderCheck].forEach(safe)); $("#prefsPanel").hidden = false; };
 $("#prefsBtn").addEventListener("click", openPrefs);
 initPersonal({ openPrefs, onGoto: goTo });
+safe(() => initSync({ openPrefs }));
 document.addEventListener("click", (e) => { if (e.target.closest("[data-close-prefs]")) $("#prefsPanel").hidden = true; });
 $("#planForm").addEventListener("input", () => setTimeout(() => safe(renderLevers), 200));
 $("#shareCom").addEventListener("click", () => state.data && share(commodityShareText(state.data, pageUrl())));

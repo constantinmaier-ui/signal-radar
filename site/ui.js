@@ -3,7 +3,11 @@ export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const store = {
   get(k, d) { try { const v = localStorage.getItem("radar:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem("radar:" + k, JSON.stringify(v)); } catch { /* privat-modus */ } },
+  set(k, v) {
+    try { localStorage.setItem("radar:" + k, JSON.stringify(v)); } catch { /* privat-modus */ }
+    // lets the automatic backup notice changes
+    if (typeof dispatchEvent === "function" && typeof CustomEvent === "function") dispatchEvent(new CustomEvent("radar:store", { detail: k }));
+  },
 };
 
 export const state = {

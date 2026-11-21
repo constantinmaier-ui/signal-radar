@@ -166,6 +166,7 @@ function finishOnboarding() {
   store.set("mode", ob.mode === "pro" ? "pro" : "easy");
   store.set("portfolio", ob.depot);
   store.set("onboarded", true);
+  navigator.storage?.persist?.().catch(() => {}); // ask the browser not to clear these settings when space runs low
   closeSheet(); toast("Eingerichtet. Alles jederzeit änderbar über das Menü.");
   setTimeout(() => location.reload(), 700);
 }
@@ -325,5 +326,5 @@ export function initPersonal({ openPrefs, onGoto }) {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#sheet").hidden) closeSheet(); });
   applyInterests(); smartNav();
   const h = location.hash;
-  if (!store.get("onboarded", false) && !h.startsWith("#plan=") && !h.startsWith("#thema=")) setTimeout(openOnboarding, 400);
+  if (!store.get("onboarded", false) && !h.startsWith("#plan=") && !h.startsWith("#thema=") && !h.startsWith("#import=")) setTimeout(openOnboarding, 400);
 }

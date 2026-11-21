@@ -182,7 +182,7 @@ function renderQuiz() {
 
 // ---------- Verschlüsselte Sicherung: auf andere Geräte übertragen ----------
 // Password → key (PBKDF2-SHA256, 600,000 rounds as recommended by OWASP 2023) → AES-256-GCM. All local in the browser.
-const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal", "interests", "onboarded", "portfolio"];
+export const KEYS = ["plan", "watch", "prefs", "fit", "quiz", "mode", "theme", "goal", "interests", "onboarded", "portfolio"];
 const KDF_ITER = 600000, KDF_ITER_V1 = 310000;
 // A restored backup is untrusted (someone could send a crafted file): keep only known keys with sane values.
 const SAFE_STR = /^[\w\-äöüÄÖÜß .,]{0,60}$/;
@@ -217,16 +217,23 @@ export function sanitizeBackup(obj) {
 }
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-async function deriveKey(pass, salt, iterations = KDF_ITER) {
+export async function deriveKey(pass, salt, iterations = KDF_ITER) {
   const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
-export async function encryptBackup(obj, pass) {
-  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(pass, salt);
+/** Encrypts with an already derived key (used by the automatic backup, which keeps the key, never the password). */
+export async function encryptWithKey(obj, key, salt, it = KDF_ITER) {
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // fresh random IV for every file
   const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
-  return JSON.stringify({ app: "signal-radar", v: 2, kdf: "PBKDF2-SHA256", it: KDF_ITER, cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
+  return JSON.stringify({ app: "signal-radar", v: 2, kdf: "PBKDF2-SHA256", it, cipher: "AES-256-GCM", salt: b64(salt), iv: b64(iv), data: b64(ct) });
 }
+export async function encryptBackup(obj, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return encryptWithKey(obj, await deriveKey(pass, salt), salt);
+}
+export const collectBackup = () => Object.fromEntries(KEYS.map((k) => [k, store.get(k, null)]).filter(([, v]) => v !== null));
+/** Restores untrusted backup content: only known keys with sane values. */
+export function applyBackup(obj) { for (const [k, v] of Object.entries(sanitizeBackup(obj))) if (KEYS.includes(k)) store.set(k, v); }
 export async function decryptBackup(text, pass) {
   const f = JSON.parse(text);
   if (f.app !== "signal-radar") throw new Error("Keine Signal-Radar-Sicherung");
@@ -242,20 +249,18 @@ export function initBackup() {
     <p class="fine">Plan, Merkliste, Interessen und Fitness-Fortschritt werden mit deinem Passwort verschlüsselt (AES-256). Die Datei kannst du in deine Cloud legen (OneDrive, iCloud, Dropbox) oder dir selbst schicken. Ohne Passwort kann sie niemand lesen, auch nicht der Betreiber dieser Seite.</p>
     <label class="bk-label">Passwort (mind. 10 Zeichen)<input id="bkPass" type="password" autocomplete="new-password" minlength="10"></label>
     <div class="bk-btns"><button class="btn btn-primary" type="button" id="bkSave">Sicherung erstellen</button><label class="btn btn-ghost bk-file">Sicherung laden<input id="bkFile" type="file" accept=".radar,application/json" hidden></label></div>
-    <p class="fine" id="bkMsg"></p>`;
+    <p class="fine" id="bkMsg"></p><div id="autoBox"></div>`;
   const msg = (t) => ($("#bkMsg").textContent = t);
   $("#bkSave").onclick = async () => {
     const pass = $("#bkPass").value; if (pass.length < 10) return msg("Bitte ein Passwort mit mindestens 10 Zeichen wählen.");
-    const obj = Object.fromEntries(KEYS.map((k) => [k, store.get(k, null)]).filter(([, v]) => v !== null));
-    const blob = new Blob([await encryptBackup(obj, pass)], { type: "application/json" });
+    const blob = new Blob([await encryptBackup(collectBackup(), pass)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `signal-radar-${new Date().toISOString().slice(0, 10)}.radar`; a.click();
     msg("Sicherung erstellt. Passwort gut merken: Ohne Passwort ist sie nicht wiederherstellbar.");
   };
   $("#bkFile").onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     try {
-      const obj = await decryptBackup(await file.text(), $("#bkPass").value);
-      for (const [k, v] of Object.entries(sanitizeBackup(obj))) if (KEYS.includes(k)) store.set(k, v);
+      applyBackup(await decryptBackup(await file.text(), $("#bkPass").value));
       msg("Sicherung geladen. Die Seite lädt neu …"); setTimeout(() => location.reload(), 900);
     } catch { msg("Das hat nicht geklappt: falsches Passwort oder keine gültige Sicherungsdatei."); }
     e.target.value = "";

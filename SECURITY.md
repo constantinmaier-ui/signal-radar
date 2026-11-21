@@ -6,6 +6,7 @@
 |---|---|
 | No user data on servers | Inputs (plan, watchlist, calculators) stay in the browser (localStorage) |
 | Encrypted backup | Optional export encrypted client-side: PBKDF2-SHA256 (600,000 iterations, OWASP 2023) → AES-256-GCM; older 310,000-round files still open. A restored file is treated as untrusted: only known keys with validated values are kept |
+| Automatic backup & device transfer | The password is never stored. The key derived from it is kept as a non-extractable `CryptoKey` in IndexedDB (it can encrypt, it cannot be read out). Chrome/Edge desktop write the encrypted file after each change into a file the user picked (e.g. inside a Dropbox/OneDrive folder, so the cloud only sees ciphertext); other browsers remind the user and save via the share sheet. Transfer links carry the encrypted backup in the URL fragment (`#import=…`), which browsers never send to the server; restoring requires the password and goes through the same validation as a backup file |
 | Foreign code blocked | Content-Security-Policy: scripts only from the site itself, network requests only to whitelisted data sources |
 | No injected content | All third-party text is escaped before rendering; links restricted to `http(s)` |
 | Transport | GitHub Pages serves HTTPS only |
