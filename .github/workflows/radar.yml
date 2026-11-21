@@ -19,13 +19,14 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: signal-radar
-  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Only one collection at a time; the waiting "next" job of an earlier run must not block new runs
+    concurrency:
+      group: signal-radar-build
+      cancel-in-progress: false
     timeout-minutes: 15
     permissions:
       contents: read    # the collector handles untrusted external data, so it gets no write access
